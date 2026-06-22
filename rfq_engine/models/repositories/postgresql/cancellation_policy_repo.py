@@ -206,7 +206,7 @@ class CancellationPolicyPGRepository(EntityRepository):
                 logger.error(traceback.format_exc())
             raise e
 
-    def get_type(self, info: ResolveInfo, row: Any) -> CancellationPolicyType:
+    def get_type(self, info: ResolveInfo, row: Any) -> CancellationPolicyType | None:
         """Convert a SQLAlchemy row to CancellationPolicyType."""
         data = normalize_row(row)
         if data is None:

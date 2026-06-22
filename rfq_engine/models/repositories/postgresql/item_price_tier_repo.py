@@ -241,7 +241,7 @@ class ItemPriceTierPGRepository(EntityRepository):
                 logger.error(traceback.format_exc())
             raise e
 
-    def get_type(self, info: ResolveInfo, row: Any) -> ItemPriceTierType:
+    def get_type(self, info: ResolveInfo, row: Any) -> ItemPriceTierType | None:
         """Convert a SQLAlchemy row to ItemPriceTierType."""
         data = normalize_row(row)
         if data is None:

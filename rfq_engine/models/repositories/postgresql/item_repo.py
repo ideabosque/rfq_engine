@@ -232,7 +232,7 @@ class ItemPGRepository(EntityRepository):
                 logger.error(traceback.format_exc())
             raise e
 
-    def get_type(self, info: ResolveInfo, row: Any) -> ItemType:
+    def get_type(self, info: ResolveInfo, row: Any) -> ItemType | None:
         """Convert a SQLAlchemy row to ItemType."""
         data = normalize_row(row)
         if data is None:

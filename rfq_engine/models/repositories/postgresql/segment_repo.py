@@ -228,7 +228,7 @@ class SegmentPGRepository(EntityRepository):
                 logger.error(traceback.format_exc())
             raise e
 
-    def get_type(self, info: ResolveInfo, row: Any) -> SegmentType:
+    def get_type(self, info: ResolveInfo, row: Any) -> SegmentType | None:
         """Convert a SQLAlchemy row to SegmentType."""
         data = normalize_row(row)
         if data is None:

@@ -210,7 +210,7 @@ class FxRatePGRepository(EntityRepository):
                 logger.error(traceback.format_exc())
             raise e
 
-    def get_type(self, info: ResolveInfo, row: Any) -> FxRateType:
+    def get_type(self, info: ResolveInfo, row: Any) -> FxRateType | None:
         """Convert a SQLAlchemy row to FxRateType."""
         data = normalize_row(row)
         if data is None:
