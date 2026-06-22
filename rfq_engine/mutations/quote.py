@@ -1,0 +1,62 @@
+# -*- coding: utf-8 -*-
+from __future__ import print_function
+
+__author__ = "bibow"
+
+import traceback
+from typing import Any, Dict
+
+from graphene import Boolean, DateTime, Field, Mutation, String
+from silvaengine_utility import SafeFloat as Float
+
+from ..models.repositories import get_repo
+from ..types.quote import QuoteType
+
+
+class InsertUpdateQuote(Mutation):
+    quote = Field(QuoteType)
+
+    class Arguments:
+        request_uuid = String(required=True)
+        quote_uuid = String(required=False)
+        provider_corp_external_id = String(required=False)
+        sales_rep_email = String(required=False)
+        shipping_method = String(required=False)
+        shipping_amount = Float(required=False)
+        currency = String(required=False)
+        display_currency = String(required=False)
+        fx_rate = Float(required=False)
+        fx_rate_locked_at = DateTime(required=False)
+        notes = String(required=False)
+        status = String(required=False)
+        updated_by = String(required=True)
+
+    @staticmethod
+    def mutate(root: Any, info: Any, **kwargs: Dict[str, Any]) -> "InsertUpdateQuote":
+        try:
+            quote = get_repo("quote").insert_update(info, **kwargs)
+        except Exception as e:
+            log = traceback.format_exc()
+            info.context.get("logger").error(log)
+            raise e
+
+        return InsertUpdateQuote(quote=quote)
+
+
+class DeleteQuote(Mutation):
+    ok = Boolean()
+
+    class Arguments:
+        request_uuid = String(required=True)
+        quote_uuid = String(required=True)
+
+    @staticmethod
+    def mutate(root: Any, info: Any, **kwargs: Dict[str, Any]) -> "DeleteQuote":
+        try:
+            ok = get_repo("quote").delete(info, **kwargs)
+        except Exception as e:
+            log = traceback.format_exc()
+            info.context.get("logger").error(log)
+            raise e
+
+        return DeleteQuote(ok=ok)
