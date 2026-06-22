@@ -1,0 +1,4529 @@
+[
+  {
+    "sid": "INT-003 create",
+    "doc": "mutation CreateItem($type:String,$name:String,$uom:String,$by:String!){insertUpdateItem(itemType:$type,itemName:$name,uom:$uom,updatedBy:$by){item{itemUuid itemName itemType}}}",
+    "vars": {
+      "type": "dynamodb_test",
+      "name": "DynamoDB Test Item",
+      "uom": "each",
+      "by": "cert"
+    },
+    "resp": {
+      "data": {
+        "insertUpdateItem": {
+          "item": {
+            "itemUuid": "34920436016887120000",
+            "itemName": "DynamoDB Test Item",
+            "itemType": "dynamodb_test"
+          }
+        }
+      }
+    },
+    "ms": 2187,
+    "status": "pass"
+  },
+  {
+    "sid": "INT-003 query",
+    "doc": "query GetItem($uuid:String!){item(itemUuid:$uuid){itemUuid itemName itemType}}",
+    "vars": {
+      "uuid": "34920436016887120000"
+    },
+    "resp": {
+      "data": {
+        "item": {
+          "itemUuid": "34920436016887120000",
+          "itemName": "DynamoDB Test Item",
+          "itemType": "dynamodb_test"
+        }
+      }
+    },
+    "ms": 94,
+    "status": "pass"
+  },
+  {
+    "sid": "INT-003 update",
+    "doc": "mutation UpdateItem($uuid:String!,$name:String,$by:String!){insertUpdateItem(itemUuid:$uuid,itemName:$name,updatedBy:$by){item{itemName}}}",
+    "vars": {
+      "uuid": "34920436016887120000",
+      "name": "DynamoDB Test Item v2",
+      "by": "cert"
+    },
+    "resp": {
+      "data": {
+        "insertUpdateItem": {
+          "item": {
+            "itemName": "DynamoDB Test Item v2"
+          }
+        }
+      }
+    },
+    "ms": 475,
+    "status": "pass"
+  },
+  {
+    "sid": "INT-003 list",
+    "doc": "query ItemList($type:String,$limit:Int){itemList(itemType:$type,limit:$limit){itemList{itemUuid itemName}total}}",
+    "vars": {
+      "type": "dynamodb_test",
+      "limit": 10
+    },
+    "resp": {
+      "data": {
+        "itemList": {
+          "itemList": [
+            {
+              "itemUuid": "34920436016887120000",
+              "itemName": "DynamoDB Test Item v2"
+            }
+          ],
+          "total": 1
+        }
+      }
+    },
+    "ms": 104,
+    "status": "pass"
+  },
+  {
+    "sid": "INT-003 delete",
+    "doc": "mutation DeleteItem($uuid:String!){deleteItem(itemUuid:$uuid){ok}}",
+    "vars": {
+      "uuid": "34920436016887120000"
+    },
+    "resp": {
+      "data": {
+        "deleteItem": {
+          "ok": true
+        }
+      }
+    },
+    "ms": 431,
+    "status": "pass"
+  },
+  {
+    "sid": "INT-003 post-delete",
+    "doc": "query GetItem($uuid:String!){item(itemUuid:$uuid){itemUuid}}",
+    "vars": {
+      "uuid": "34920436016887120000"
+    },
+    "resp": {
+      "data": {
+        "item": null
+      }
+    },
+    "ms": 62,
+    "status": "pass"
+  },
+  {
+    "sid": "INT-005 scopes",
+    "doc": "query DPL($limit:Int){discountPromptList(limit:$limit){discountPromptList{discountPromptUuid scope status priority}total}}",
+    "vars": {
+      "limit": 100
+    },
+    "resp": {
+      "data": {
+        "discountPromptList": {
+          "discountPromptList": [
+            {
+              "discountPromptUuid": "39743702329131548800",
+              "scope": "global",
+              "status": "active",
+              "priority": 2
+            },
+            {
+              "discountPromptUuid": "34741236891406844032",
+              "scope": "global",
+              "status": "active",
+              "priority": 7
+            },
+            {
+              "discountPromptUuid": "29118858989597114496",
+              "scope": "global",
+              "status": "active",
+              "priority": 10
+            },
+            {
+              "discountPromptUuid": "64880488857998475392",
+              "scope": "segment",
+              "status": "in_review",
+              "priority": 1
+            },
+            {
+              "discountPromptUuid": "81566856437527756928",
+              "scope": "segment",
+              "status": "active",
+              "priority": 6
+            },
+            {
+              "discountPromptUuid": "88260199481366036608",
+              "scope": "segment",
+              "status": "in_review",
+              "priority": 6
+            },
+            {
+              "discountPromptUuid": "69103555801175310464",
+              "scope": "segment",
+              "status": "active",
+              "priority": 4
+            },
+            {
+              "discountPromptUuid": "75558255088469295232",
+              "scope": "segment",
+              "status": "active",
+              "priority": 2
+            },
+            {
+              "discountPromptUuid": "51786962208663027840",
+              "scope": "segment",
+              "status": "active",
+              "priority": 5
+            },
+            {
+              "discountPromptUuid": "97753296252210004096",
+              "scope": "item",
+              "status": "active",
+              "priority": 5
+            },
+            {
+              "discountPromptUuid": "32912026401397293184",
+              "scope": "provider_item",
+              "status": "active",
+              "priority": 4
+            },
+            {
+              "discountPromptUuid": "04080074100165329024",
+              "scope": "item",
+              "status": "active",
+              "priority": 3
+            },
+            {
+              "discountPromptUuid": "13527748563737526400",
+              "scope": "provider_item",
+              "status": "active",
+              "priority": 4
+            },
+            {
+              "discountPromptUuid": "92704822808028397696",
+              "scope": "item",
+              "status": "active",
+              "priority": 1
+            },
+            {
+              "discountPromptUuid": "43579183285732917376",
+              "scope": "provider_item",
+              "status": "active",
+              "priority": 6
+            },
+            {
+              "discountPromptUuid": "87759969798493061248",
+              "scope": "item",
+              "status": "active",
+              "priority": 5
+            },
+            {
+              "discountPromptUuid": "88308794075899773056",
+              "scope": "provider_item",
+              "status": "active",
+              "priority": 2
+            },
+            {
+              "discountPromptUuid": "86205451492871127168",
+              "scope": "item",
+              "status": "active",
+              "priority": 9
+            },
+            {
+              "discountPromptUuid": "51478647032935104640",
+              "scope": "provider_item",
+              "status": "active",
+              "priority": 10
+            },
+            {
+              "discountPromptUuid": "74016050403706159232",
+              "scope": "global",
+              "status": "active",
+              "priority": 10
+            },
+            {
+              "discountPromptUuid": "62186715060465844352",
+              "scope": "global",
+              "status": "in_review",
+              "priority": 9
+            },
+            {
+              "discountPromptUuid": "83655032155864580224",
+              "scope": "global",
+              "status": "active",
+              "priority": 8
+            },
+            {
+              "discountPromptUuid": "98179126107724333184",
+              "scope": "segment",
+              "status": "active",
+              "priority": 8
+            },
+            {
+              "discountPromptUuid": "78820703100347629696",
+              "scope": "segment",
+              "status": "active",
+              "priority": 5
+            },
+            {
+              "discountPromptUuid": "07626658355819331712",
+              "scope": "segment",
+              "status": "active",
+              "priority": 3
+            },
+            {
+              "discountPromptUuid": "26450961299175129216",
+              "scope": "segment",
+              "status": "active",
+              "priority": 5
+            },
+            {
+              "discountPromptUuid": "65843300910943453312",
+              "scope": "segment",
+              "status": "in_review",
+              "priority": 3
+            },
+            {
+              "discountPromptUuid": "20319311148620988544",
+              "scope": "segment",
+              "status": "active",
+              "priority": 1
+            },
+            {
+              "discountPromptUuid": "67708289058520187008",
+              "scope": "item",
+              "status": "active",
+              "priority": 3
+            },
+            {
+              "discountPromptUuid": "96711480454287474816",
+              "scope": "provider_item",
+              "status": "active",
+              "priority": 3
+            },
+            {
+              "discountPromptUuid": "77559325418070229120",
+              "scope": "item",
+              "status": "in_review",
+              "priority": 7
+            },
+            {
+              "discountPromptUuid": "96732404710619758720",
+              "scope": "provider_item",
+              "status": "active",
+              "priority": 1
+            },
+            {
+              "discountPromptUuid": "05649670246480494720",
+              "scope": "item",
+              "status": "in_review",
+              "priority": 1
+            },
+            {
+              "discountPromptUuid": "46282453789493444736",
+              "scope": "provider_item",
+              "status": "in_review",
+              "priority": 9
+            },
+            {
+              "discountPromptUuid": "97887262508758089856",
+              "scope": "item",
+              "status": "active",
+              "priority": 10
+            },
+            {
+              "discountPromptUuid": "86288478683845902464",
+              "scope": "provider_item",
+              "status": "active",
+              "priority": 6
+            },
+            {
+              "discountPromptUuid": "09257008758392897664",
+              "scope": "item",
+              "status": "active",
+              "priority": 7
+            },
+            {
+              "discountPromptUuid": "57805040070540935296",
+              "scope": "provider_item",
+              "status": "active",
+              "priority": 6
+            },
+            {
+              "discountPromptUuid": "04111458880109691008",
+              "scope": "global",
+              "status": "active",
+              "priority": 5
+            },
+            {
+              "discountPromptUuid": "53711723630325416064",
+              "scope": "global",
+              "status": "active",
+              "priority": 7
+            },
+            {
+              "discountPromptUuid": "66044072765552607360",
+              "scope": "global",
+              "status": "active",
+              "priority": 2
+            },
+            {
+              "discountPromptUuid": "36175273454998667392",
+              "scope": "segment",
+              "status": "active",
+              "priority": 10
+            },
+            {
+              "discountPromptUuid": "79575434135209001088",
+              "scope": "segment",
+              "status": "active",
+              "priority": 3
+            },
+            {
+              "discountPromptUuid": "60273988204172951680",
+              "scope": "segment",
+              "status": "in_review",
+              "priority": 7
+            },
+            {
+              "discountPromptUuid": "64370749167759278208",
+              "scope": "segment",
+              "status": "active",
+              "priority": 3
+            },
+            {
+              "discountPromptUuid": "56725165474628780160",
+              "scope": "segment",
+              "status": "active",
+              "priority": 7
+            },
+            {
+              "discountPromptUuid": "45946312966796230784",
+              "scope": "segment",
+              "status": "in_review",
+              "priority": 1
+            },
+            {
+              "discountPromptUuid": "05589113088663109760",
+              "scope": "item",
+              "status": "active",
+              "priority": 4
+            },
+            {
+              "discountPromptUuid": "96581293389620723840",
+              "scope": "provider_item",
+              "status": "active",
+              "priority": 3
+            },
+            {
+              "discountPromptUuid": "02435028060508012672",
+              "scope": "item",
+              "status": "active",
+              "priority": 10
+            },
+            {
+              "discountPromptUuid": "37643111692737986688",
+              "scope": "provider_item",
+              "status": "active",
+              "priority": 2
+            },
+            {
+              "discountPromptUuid": "00778451671516725376",
+              "scope": "item",
+              "status": "in_review",
+              "priority": 7
+            },
+            {
+              "discountPromptUuid": "75214539293193158784",
+              "scope": "provider_item",
+              "status": "active",
+              "priority": 4
+            },
+            {
+              "discountPromptUuid": "94244589124835098752",
+              "scope": "item",
+              "status": "active",
+              "priority": 5
+            },
+            {
+              "discountPromptUuid": "27788026950872744064",
+              "scope": "provider_item",
+              "status": "in_review",
+              "priority": 4
+            },
+            {
+              "discountPromptUuid": "82505304066539667584",
+              "scope": "item",
+              "status": "in_review",
+              "priority": 5
+            },
+            {
+              "discountPromptUuid": "69144106906648854656",
+              "scope": "provider_item",
+              "status": "active",
+              "priority": 10
+            }
+          ],
+          "total": 57
+        }
+      }
+    },
+    "ms": 270,
+    "status": "pass"
+  },
+  {
+    "sid": "INT-006 quotes",
+    "doc": "query QL($limit:Int){quoteList(limit:$limit){quoteList{quoteUuid requestUuid totalQuoteAmount totalQuoteDiscount finalTotalQuoteAmount shippingAmount currency displayCurrency fxRate rounds status}total}}",
+    "vars": {
+      "limit": 100
+    },
+    "resp": {
+      "data": {
+        "quoteList": {
+          "quoteList": [
+            {
+              "quoteUuid": "84988149065228238976",
+              "requestUuid": "46755069105998413952",
+              "totalQuoteAmount": "1200.0",
+              "totalQuoteDiscount": "0.0",
+              "finalTotalQuoteAmount": "1200.0",
+              "shippingAmount": "0.0",
+              "currency": null,
+              "displayCurrency": null,
+              "fxRate": null,
+              "rounds": 0,
+              "status": "initial"
+            },
+            {
+              "quoteUuid": "65959305287509753984",
+              "requestUuid": "62491367637112602752",
+              "totalQuoteAmount": "450.0",
+              "totalQuoteDiscount": "0.0",
+              "finalTotalQuoteAmount": "450.0",
+              "shippingAmount": "0.0",
+              "currency": null,
+              "displayCurrency": null,
+              "fxRate": null,
+              "rounds": 0,
+              "status": "initial"
+            },
+            {
+              "quoteUuid": "27495815163899035776",
+              "requestUuid": "61461521176712986752",
+              "totalQuoteAmount": "0.0",
+              "totalQuoteDiscount": "0.0",
+              "finalTotalQuoteAmount": "300.0",
+              "shippingAmount": "300.0",
+              "currency": null,
+              "displayCurrency": null,
+              "fxRate": null,
+              "rounds": 2,
+              "status": "confirmed"
+            },
+            {
+              "quoteUuid": "30256741032799518848",
+              "requestUuid": "61461521176712986752",
+              "totalQuoteAmount": "3600.0",
+              "totalQuoteDiscount": "50.0",
+              "finalTotalQuoteAmount": "3575.0",
+              "shippingAmount": "25.0",
+              "currency": null,
+              "displayCurrency": null,
+              "fxRate": null,
+              "rounds": 0,
+              "status": "completed"
+            },
+            {
+              "quoteUuid": "87443550831956213888",
+              "requestUuid": "61461521176712986752",
+              "totalQuoteAmount": "0.0",
+              "totalQuoteDiscount": "0.0",
+              "finalTotalQuoteAmount": "300.0",
+              "shippingAmount": "300.0",
+              "currency": null,
+              "displayCurrency": null,
+              "fxRate": null,
+              "rounds": 1,
+              "status": "confirmed"
+            },
+            {
+              "quoteUuid": "79594151911335411840",
+              "requestUuid": "56988671421313990784",
+              "totalQuoteAmount": "3480.8085",
+              "totalQuoteDiscount": "0.0",
+              "finalTotalQuoteAmount": "3480.8085",
+              "shippingAmount": "0.0",
+              "currency": "USD",
+              "displayCurrency": "HKD",
+              "fxRate": "7.73513",
+              "rounds": 0,
+              "status": "initial"
+            },
+            {
+              "quoteUuid": "39549219814635487360",
+              "requestUuid": "96071956715833147520",
+              "totalQuoteAmount": "900.0",
+              "totalQuoteDiscount": "0.0",
+              "finalTotalQuoteAmount": "1200.0",
+              "shippingAmount": "300.0",
+              "currency": null,
+              "displayCurrency": null,
+              "fxRate": null,
+              "rounds": 1,
+              "status": "confirmed"
+            },
+            {
+              "quoteUuid": "62682588455586775168",
+              "requestUuid": "96071956715833147520",
+              "totalQuoteAmount": "0.0",
+              "totalQuoteDiscount": "0.0",
+              "finalTotalQuoteAmount": "0.0",
+              "shippingAmount": "0.0",
+              "currency": null,
+              "displayCurrency": null,
+              "fxRate": null,
+              "rounds": 0,
+              "status": "initial"
+            },
+            {
+              "quoteUuid": "73102885886453891200",
+              "requestUuid": "96071956715833147520",
+              "totalQuoteAmount": "900.0",
+              "totalQuoteDiscount": "0.0",
+              "finalTotalQuoteAmount": "1200.0",
+              "shippingAmount": "300.0",
+              "currency": null,
+              "displayCurrency": null,
+              "fxRate": null,
+              "rounds": 2,
+              "status": "confirmed"
+            },
+            {
+              "quoteUuid": "56414101690191462528",
+              "requestUuid": "16753151209545678976",
+              "totalQuoteAmount": "450.0",
+              "totalQuoteDiscount": "0.0",
+              "finalTotalQuoteAmount": "450.0",
+              "shippingAmount": "0.0",
+              "currency": null,
+              "displayCurrency": null,
+              "fxRate": null,
+              "rounds": 0,
+              "status": "in_progress"
+            },
+            {
+              "quoteUuid": "86833326763387404416",
+              "requestUuid": "49666577159663140992",
+              "totalQuoteAmount": "825.0",
+              "totalQuoteDiscount": "0.0",
+              "finalTotalQuoteAmount": "825.0",
+              "shippingAmount": "0.0",
+              "currency": null,
+              "displayCurrency": null,
+              "fxRate": null,
+              "rounds": 0,
+              "status": "initial"
+            },
+            {
+              "quoteUuid": "39412068575306858624",
+              "requestUuid": "26699108493000982656",
+              "totalQuoteAmount": "900.0",
+              "totalQuoteDiscount": "50.0",
+              "finalTotalQuoteAmount": "875.0",
+              "shippingAmount": "25.0",
+              "currency": null,
+              "displayCurrency": null,
+              "fxRate": null,
+              "rounds": 0,
+              "status": "completed"
+            },
+            {
+              "quoteUuid": "23192587828709048448",
+              "requestUuid": "92466809727529009280",
+              "totalQuoteAmount": "1000.0",
+              "totalQuoteDiscount": "0.0",
+              "finalTotalQuoteAmount": "1000.0",
+              "shippingAmount": "0.0",
+              "currency": null,
+              "displayCurrency": null,
+              "fxRate": null,
+              "rounds": 0,
+              "status": "accepted"
+            },
+            {
+              "quoteUuid": "06265305898006102144",
+              "requestUuid": "06680840983522852992",
+              "totalQuoteAmount": "900.0",
+              "totalQuoteDiscount": "0.0",
+              "finalTotalQuoteAmount": "925.0",
+              "shippingAmount": "25.0",
+              "currency": null,
+              "displayCurrency": null,
+              "fxRate": null,
+              "rounds": 0,
+              "status": "in_progress"
+            },
+            {
+              "quoteUuid": "24933966679596089472",
+              "requestUuid": "24924584017127293056",
+              "totalQuoteAmount": "3282.7536",
+              "totalQuoteDiscount": "0.0",
+              "finalTotalQuoteAmount": "3282.7536",
+              "shippingAmount": "0.0",
+              "currency": "USD",
+              "displayCurrency": "EUR",
+              "fxRate": "0.911876",
+              "rounds": 0,
+              "status": "initial"
+            },
+            {
+              "quoteUuid": "22326271210615226496",
+              "requestUuid": "69820641974736142464",
+              "totalQuoteAmount": "900.0",
+              "totalQuoteDiscount": "50.0",
+              "finalTotalQuoteAmount": "875.0",
+              "shippingAmount": "25.0",
+              "currency": null,
+              "displayCurrency": null,
+              "fxRate": null,
+              "rounds": 0,
+              "status": "confirmed"
+            },
+            {
+              "quoteUuid": "38519946161268211840",
+              "requestUuid": "76217578501911363712",
+              "totalQuoteAmount": "900.0",
+              "totalQuoteDiscount": "0.0",
+              "finalTotalQuoteAmount": "1200.0",
+              "shippingAmount": "300.0",
+              "currency": null,
+              "displayCurrency": null,
+              "fxRate": null,
+              "rounds": 1,
+              "status": "confirmed"
+            },
+            {
+              "quoteUuid": "79659630911987662976",
+              "requestUuid": "76217578501911363712",
+              "totalQuoteAmount": "900.0",
+              "totalQuoteDiscount": "50.0",
+              "finalTotalQuoteAmount": "875.0",
+              "shippingAmount": "25.0",
+              "currency": null,
+              "displayCurrency": null,
+              "fxRate": null,
+              "rounds": 0,
+              "status": "completed"
+            },
+            {
+              "quoteUuid": "92058928492620824704",
+              "requestUuid": "76217578501911363712",
+              "totalQuoteAmount": "900.0",
+              "totalQuoteDiscount": "0.0",
+              "finalTotalQuoteAmount": "1200.0",
+              "shippingAmount": "300.0",
+              "currency": null,
+              "displayCurrency": null,
+              "fxRate": null,
+              "rounds": 2,
+              "status": "confirmed"
+            },
+            {
+              "quoteUuid": "82681485742934343808",
+              "requestUuid": "93486578053808144512",
+              "totalQuoteAmount": "900.0",
+              "totalQuoteDiscount": "50.0",
+              "finalTotalQuoteAmount": "875.0",
+              "shippingAmount": "25.0",
+              "currency": null,
+              "displayCurrency": null,
+              "fxRate": null,
+              "rounds": 0,
+              "status": "completed"
+            },
+            {
+              "quoteUuid": "31958872949267644544",
+              "requestUuid": "17280028482182594688",
+              "totalQuoteAmount": "500.0",
+              "totalQuoteDiscount": "0.0",
+              "finalTotalQuoteAmount": "500.0",
+              "shippingAmount": "0.0",
+              "currency": null,
+              "displayCurrency": null,
+              "fxRate": null,
+              "rounds": 0,
+              "status": "initial"
+            },
+            {
+              "quoteUuid": "90196658928596566144",
+              "requestUuid": "92318534130092490880",
+              "totalQuoteAmount": "900.0",
+              "totalQuoteDiscount": "50.0",
+              "finalTotalQuoteAmount": "875.0",
+              "shippingAmount": "25.0",
+              "currency": null,
+              "displayCurrency": null,
+              "fxRate": null,
+              "rounds": 0,
+              "status": "completed"
+            },
+            {
+              "quoteUuid": "70501841090293809280",
+              "requestUuid": "87100957126828245120",
+              "totalQuoteAmount": "450.0",
+              "totalQuoteDiscount": "0.0",
+              "finalTotalQuoteAmount": "450.0",
+              "shippingAmount": "0.0",
+              "currency": null,
+              "displayCurrency": null,
+              "fxRate": null,
+              "rounds": 0,
+              "status": "confirmed"
+            },
+            {
+              "quoteUuid": "00590008742461849728",
+              "requestUuid": "67908676305440227456",
+              "totalQuoteAmount": "18000.0",
+              "totalQuoteDiscount": "0.0",
+              "finalTotalQuoteAmount": "18000.0",
+              "shippingAmount": "0.0",
+              "currency": "USD",
+              "displayCurrency": null,
+              "fxRate": null,
+              "rounds": 0,
+              "status": "initial"
+            },
+            {
+              "quoteUuid": "64158521298974163072",
+              "requestUuid": "67908676305440227456",
+              "totalQuoteAmount": "0.0",
+              "totalQuoteDiscount": "0.0",
+              "finalTotalQuoteAmount": "0.0",
+              "shippingAmount": "28.07",
+              "currency": "USD",
+              "displayCurrency": null,
+              "fxRate": null,
+              "rounds": 0,
+              "status": "initial"
+            },
+            {
+              "quoteUuid": "64906169450838900864",
+              "requestUuid": "67908676305440227456",
+              "totalQuoteAmount": "0.0",
+              "totalQuoteDiscount": "0.0",
+              "finalTotalQuoteAmount": "0.0",
+              "shippingAmount": "0.0",
+              "currency": "USD",
+              "displayCurrency": null,
+              "fxRate": null,
+              "rounds": 0,
+              "status": "initial"
+            },
+            {
+              "quoteUuid": "25579080753713528960",
+              "requestUuid": "86212203523812114560",
+              "totalQuoteAmount": "500.0",
+              "totalQuoteDiscount": "0.0",
+              "finalTotalQuoteAmount": "500.0",
+              "shippingAmount": "0.0",
+              "currency": null,
+              "displayCurrency": null,
+              "fxRate": null,
+              "rounds": 0,
+              "status": "initial"
+            },
+            {
+              "quoteUuid": "46408735338345283712",
+              "requestUuid": "24848770540565971072",
+              "totalQuoteAmount": "450.0",
+              "totalQuoteDiscount": "0.0",
+              "finalTotalQuoteAmount": "450.0",
+              "shippingAmount": "0.0",
+              "currency": null,
+              "displayCurrency": null,
+              "fxRate": null,
+              "rounds": 0,
+              "status": "confirmed"
+            },
+            {
+              "quoteUuid": "58349990864728637568",
+              "requestUuid": "04164148463719694464",
+              "totalQuoteAmount": "3313805.1480000005",
+              "totalQuoteDiscount": "0.0",
+              "finalTotalQuoteAmount": "3313805.1480000005",
+              "shippingAmount": "0.0",
+              "currency": "USD",
+              "displayCurrency": "JPY",
+              "fxRate": "153.416905",
+              "rounds": 0,
+              "status": "initial"
+            },
+            {
+              "quoteUuid": "29143488708686659712",
+              "requestUuid": "86157098911544656000",
+              "totalQuoteAmount": "2250.0",
+              "totalQuoteDiscount": "218.18",
+              "finalTotalQuoteAmount": "2031.82",
+              "shippingAmount": "0.0",
+              "currency": "USD",
+              "displayCurrency": null,
+              "fxRate": null,
+              "rounds": 0,
+              "status": "initial"
+            },
+            {
+              "quoteUuid": "54002658672698736768",
+              "requestUuid": "86157098911544656000",
+              "totalQuoteAmount": "0.0",
+              "totalQuoteDiscount": "0.0",
+              "finalTotalQuoteAmount": "0.0",
+              "shippingAmount": "0.0",
+              "currency": "USD",
+              "displayCurrency": "AUD",
+              "fxRate": "1.549142",
+              "rounds": 0,
+              "status": "initial"
+            },
+            {
+              "quoteUuid": "32379322671902507136",
+              "requestUuid": "75085134857986130048",
+              "totalQuoteAmount": "0.0",
+              "totalQuoteDiscount": "0.0",
+              "finalTotalQuoteAmount": "0.0",
+              "shippingAmount": "0.0",
+              "currency": "USD",
+              "displayCurrency": null,
+              "fxRate": null,
+              "rounds": 0,
+              "status": "initial"
+            },
+            {
+              "quoteUuid": "44616066019679551616",
+              "requestUuid": "75085134857986130048",
+              "totalQuoteAmount": "31500.0",
+              "totalQuoteDiscount": "124.48",
+              "finalTotalQuoteAmount": "31375.52",
+              "shippingAmount": "0.0",
+              "currency": "USD",
+              "displayCurrency": null,
+              "fxRate": null,
+              "rounds": 0,
+              "status": "initial"
+            },
+            {
+              "quoteUuid": "62163650606429913216",
+              "requestUuid": "75085134857986130048",
+              "totalQuoteAmount": "0.0",
+              "totalQuoteDiscount": "0.0",
+              "finalTotalQuoteAmount": "0.0",
+              "shippingAmount": "0.0",
+              "currency": "USD",
+              "displayCurrency": null,
+              "fxRate": null,
+              "rounds": 0,
+              "status": "pending"
+            },
+            {
+              "quoteUuid": "28968787357267411072",
+              "requestUuid": "76072955795966279808",
+              "totalQuoteAmount": "450.0",
+              "totalQuoteDiscount": "0.0",
+              "finalTotalQuoteAmount": "450.0",
+              "shippingAmount": "0.0",
+              "currency": null,
+              "displayCurrency": null,
+              "fxRate": null,
+              "rounds": 0,
+              "status": "confirmed"
+            },
+            {
+              "quoteUuid": "56928011205851758720",
+              "requestUuid": "07570937618629673088",
+              "totalQuoteAmount": "0.0",
+              "totalQuoteDiscount": "0.0",
+              "finalTotalQuoteAmount": "0.0",
+              "shippingAmount": "0.0",
+              "currency": "USD",
+              "displayCurrency": "GBP",
+              "fxRate": "0.802151",
+              "rounds": 0,
+              "status": "initial"
+            },
+            {
+              "quoteUuid": "90861560704607993984",
+              "requestUuid": "07570937618629673088",
+              "totalQuoteAmount": "5576.9112000000005",
+              "totalQuoteDiscount": "0.0",
+              "finalTotalQuoteAmount": "5576.9112000000005",
+              "shippingAmount": "0.0",
+              "currency": "USD",
+              "displayCurrency": "AUD",
+              "fxRate": "1.549142",
+              "rounds": 0,
+              "status": "initial"
+            },
+            {
+              "quoteUuid": "53829765503716966528",
+              "requestUuid": "35422771453437689984",
+              "totalQuoteAmount": "500.0",
+              "totalQuoteDiscount": "0.0",
+              "finalTotalQuoteAmount": "500.0",
+              "shippingAmount": "0.0",
+              "currency": null,
+              "displayCurrency": null,
+              "fxRate": null,
+              "rounds": 0,
+              "status": "initial"
+            },
+            {
+              "quoteUuid": "01722231087768289408",
+              "requestUuid": "77606345509747835008",
+              "totalQuoteAmount": "3600.0",
+              "totalQuoteDiscount": "50.0",
+              "finalTotalQuoteAmount": "3575.0",
+              "shippingAmount": "25.0",
+              "currency": null,
+              "displayCurrency": null,
+              "fxRate": null,
+              "rounds": 0,
+              "status": "in_progress"
+            },
+            {
+              "quoteUuid": "41608659486675845248",
+              "requestUuid": "44709823787841896576",
+              "totalQuoteAmount": "0.0",
+              "totalQuoteDiscount": "0.0",
+              "finalTotalQuoteAmount": "300.0",
+              "shippingAmount": "300.0",
+              "currency": null,
+              "displayCurrency": null,
+              "fxRate": null,
+              "rounds": 1,
+              "status": "confirmed"
+            },
+            {
+              "quoteUuid": "75628288392953872512",
+              "requestUuid": "44709823787841896576",
+              "totalQuoteAmount": "0.0",
+              "totalQuoteDiscount": "0.0",
+              "finalTotalQuoteAmount": "300.0",
+              "shippingAmount": "300.0",
+              "currency": null,
+              "displayCurrency": null,
+              "fxRate": null,
+              "rounds": 2,
+              "status": "confirmed"
+            },
+            {
+              "quoteUuid": "83362299391391056000",
+              "requestUuid": "44709823787841896576",
+              "totalQuoteAmount": "0.0",
+              "totalQuoteDiscount": "0.0",
+              "finalTotalQuoteAmount": "25.0",
+              "shippingAmount": "25.0",
+              "currency": null,
+              "displayCurrency": null,
+              "fxRate": null,
+              "rounds": 0,
+              "status": "completed"
+            },
+            {
+              "quoteUuid": "06086118673104257152",
+              "requestUuid": "37099861459585745024",
+              "totalQuoteAmount": "450.0",
+              "totalQuoteDiscount": "0.0",
+              "finalTotalQuoteAmount": "450.0",
+              "shippingAmount": "0.0",
+              "currency": null,
+              "displayCurrency": null,
+              "fxRate": null,
+              "rounds": 0,
+              "status": "confirmed"
+            },
+            {
+              "quoteUuid": "20894467729251123328",
+              "requestUuid": "22821355584988659840",
+              "totalQuoteAmount": "0.0",
+              "totalQuoteDiscount": "0.0",
+              "finalTotalQuoteAmount": "0.0",
+              "shippingAmount": "19.12",
+              "currency": "USD",
+              "displayCurrency": "CNY",
+              "fxRate": "7.081345",
+              "rounds": 0,
+              "status": "pending"
+            },
+            {
+              "quoteUuid": "65282445974679076992",
+              "requestUuid": "22821355584988659840",
+              "totalQuoteAmount": "0.0",
+              "totalQuoteDiscount": "0.0",
+              "finalTotalQuoteAmount": "0.0",
+              "shippingAmount": "0.0",
+              "currency": "USD",
+              "displayCurrency": null,
+              "fxRate": null,
+              "rounds": 0,
+              "status": "pending"
+            },
+            {
+              "quoteUuid": "88836315202799550592",
+              "requestUuid": "22821355584988659840",
+              "totalQuoteAmount": "36000.0",
+              "totalQuoteDiscount": "0.0",
+              "finalTotalQuoteAmount": "36000.0",
+              "shippingAmount": "0.0",
+              "currency": "USD",
+              "displayCurrency": null,
+              "fxRate": null,
+              "rounds": 0,
+              "status": "pending"
+            },
+            {
+              "quoteUuid": "10014866253261324416",
+              "requestUuid": "70995999880740094080",
+              "totalQuoteAmount": "500.0",
+              "totalQuoteDiscount": "0.0",
+              "finalTotalQuoteAmount": "500.0",
+              "shippingAmount": "0.0",
+              "currency": null,
+              "displayCurrency": null,
+              "fxRate": null,
+              "rounds": 0,
+              "status": "initial"
+            },
+            {
+              "quoteUuid": "18318134560484769920",
+              "requestUuid": "52570611249921933440",
+              "totalQuoteAmount": "3540.6724999999997",
+              "totalQuoteDiscount": "0.0",
+              "finalTotalQuoteAmount": "3540.6724999999997",
+              "shippingAmount": "0.0",
+              "currency": "USD",
+              "displayCurrency": "CNY",
+              "fxRate": "7.081345",
+              "rounds": 0,
+              "status": "initial"
+            },
+            {
+              "quoteUuid": "05985713052092219520",
+              "requestUuid": "33471038364200222848",
+              "totalQuoteAmount": "0.0",
+              "totalQuoteDiscount": "0.0",
+              "finalTotalQuoteAmount": "0.0",
+              "shippingAmount": "0.0",
+              "currency": null,
+              "displayCurrency": null,
+              "fxRate": null,
+              "rounds": 2,
+              "status": "initial"
+            },
+            {
+              "quoteUuid": "23027013911964565632",
+              "requestUuid": "33471038364200222848",
+              "totalQuoteAmount": "0.0",
+              "totalQuoteDiscount": "0.0",
+              "finalTotalQuoteAmount": "300.0",
+              "shippingAmount": "300.0",
+              "currency": null,
+              "displayCurrency": null,
+              "fxRate": null,
+              "rounds": 1,
+              "status": "confirmed"
+            },
+            {
+              "quoteUuid": "97934283632753524864",
+              "requestUuid": "33471038364200222848",
+              "totalQuoteAmount": "3600.0",
+              "totalQuoteDiscount": "50.0",
+              "finalTotalQuoteAmount": "3575.0",
+              "shippingAmount": "25.0",
+              "currency": null,
+              "displayCurrency": null,
+              "fxRate": null,
+              "rounds": 0,
+              "status": "confirmed"
+            },
+            {
+              "quoteUuid": "01689638593037877376",
+              "requestUuid": "04062760323955835008",
+              "totalQuoteAmount": "0.0",
+              "totalQuoteDiscount": "0.0",
+              "finalTotalQuoteAmount": "300.0",
+              "shippingAmount": "300.0",
+              "currency": null,
+              "displayCurrency": null,
+              "fxRate": null,
+              "rounds": 2,
+              "status": "confirmed"
+            },
+            {
+              "quoteUuid": "43726892810135158912",
+              "requestUuid": "04062760323955835008",
+              "totalQuoteAmount": "3600.0",
+              "totalQuoteDiscount": "50.0",
+              "finalTotalQuoteAmount": "3575.0",
+              "shippingAmount": "25.0",
+              "currency": null,
+              "displayCurrency": null,
+              "fxRate": null,
+              "rounds": 0,
+              "status": "completed"
+            },
+            {
+              "quoteUuid": "72617805830433030272",
+              "requestUuid": "04062760323955835008",
+              "totalQuoteAmount": "0.0",
+              "totalQuoteDiscount": "0.0",
+              "finalTotalQuoteAmount": "300.0",
+              "shippingAmount": "300.0",
+              "currency": null,
+              "displayCurrency": null,
+              "fxRate": null,
+              "rounds": 1,
+              "status": "confirmed"
+            },
+            {
+              "quoteUuid": "60187438571235328128",
+              "requestUuid": "03075416831792529536",
+              "totalQuoteAmount": "900.0",
+              "totalQuoteDiscount": "50.0",
+              "finalTotalQuoteAmount": "875.0",
+              "shippingAmount": "25.0",
+              "currency": null,
+              "displayCurrency": null,
+              "fxRate": null,
+              "rounds": 0,
+              "status": "confirmed"
+            },
+            {
+              "quoteUuid": "65236276464333111424",
+              "requestUuid": "73374122512956276864",
+              "totalQuoteAmount": "1200.0",
+              "totalQuoteDiscount": "0.0",
+              "finalTotalQuoteAmount": "1200.0",
+              "shippingAmount": "0.0",
+              "currency": null,
+              "displayCurrency": null,
+              "fxRate": null,
+              "rounds": 0,
+              "status": "initial"
+            },
+            {
+              "quoteUuid": "09264210633191080064",
+              "requestUuid": "60148758433262223488",
+              "totalQuoteAmount": "450.0",
+              "totalQuoteDiscount": "0.0",
+              "finalTotalQuoteAmount": "450.0",
+              "shippingAmount": "0.0",
+              "currency": null,
+              "displayCurrency": null,
+              "fxRate": null,
+              "rounds": 0,
+              "status": "confirmed"
+            },
+            {
+              "quoteUuid": "53638073952415793280",
+              "requestUuid": "85808508615366033536",
+              "totalQuoteAmount": "770.0",
+              "totalQuoteDiscount": "0.0",
+              "finalTotalQuoteAmount": "770.0",
+              "shippingAmount": "0.0",
+              "currency": null,
+              "displayCurrency": null,
+              "fxRate": null,
+              "rounds": 0,
+              "status": "initial"
+            },
+            {
+              "quoteUuid": "51485446173562519680",
+              "requestUuid": "87119168162060320896",
+              "totalQuoteAmount": "1000.0",
+              "totalQuoteDiscount": "50.0",
+              "finalTotalQuoteAmount": "950.0",
+              "shippingAmount": "0.0",
+              "currency": "USD",
+              "displayCurrency": null,
+              "fxRate": null,
+              "rounds": 0,
+              "status": "initial"
+            },
+            {
+              "quoteUuid": "30367734106097205376",
+              "requestUuid": "60372956451198484608",
+              "totalQuoteAmount": "4050.0",
+              "totalQuoteDiscount": "0.0",
+              "finalTotalQuoteAmount": "4050.0",
+              "shippingAmount": "0.0",
+              "currency": "USD",
+              "displayCurrency": null,
+              "fxRate": null,
+              "rounds": 0,
+              "status": "initial"
+            },
+            {
+              "quoteUuid": "94434537109412921472",
+              "requestUuid": "81512660998979338368",
+              "totalQuoteAmount": "450.0",
+              "totalQuoteDiscount": "0.0",
+              "finalTotalQuoteAmount": "450.0",
+              "shippingAmount": "0.0",
+              "currency": null,
+              "displayCurrency": null,
+              "fxRate": null,
+              "rounds": 0,
+              "status": "confirmed"
+            },
+            {
+              "quoteUuid": "79693618463698337920",
+              "requestUuid": "92354267804600385664",
+              "totalQuoteAmount": "770.0",
+              "totalQuoteDiscount": "0.0",
+              "finalTotalQuoteAmount": "770.0",
+              "shippingAmount": "0.0",
+              "currency": null,
+              "displayCurrency": null,
+              "fxRate": null,
+              "rounds": 0,
+              "status": "initial"
+            },
+            {
+              "quoteUuid": "80201242951216545920",
+              "requestUuid": "27070051781756076160",
+              "totalQuoteAmount": "900.0",
+              "totalQuoteDiscount": "50.0",
+              "finalTotalQuoteAmount": "875.0",
+              "shippingAmount": "25.0",
+              "currency": null,
+              "displayCurrency": null,
+              "fxRate": null,
+              "rounds": 0,
+              "status": "confirmed"
+            },
+            {
+              "quoteUuid": "54736353505707049088",
+              "requestUuid": "02415370114039824512",
+              "totalQuoteAmount": "1000.0",
+              "totalQuoteDiscount": "0.0",
+              "finalTotalQuoteAmount": "1000.0",
+              "shippingAmount": "0.0",
+              "currency": null,
+              "displayCurrency": null,
+              "fxRate": null,
+              "rounds": 0,
+              "status": "initial"
+            },
+            {
+              "quoteUuid": "10376715591950024832",
+              "requestUuid": "21544236780387057792",
+              "totalQuoteAmount": "900.0",
+              "totalQuoteDiscount": "0.0",
+              "finalTotalQuoteAmount": "1200.0",
+              "shippingAmount": "300.0",
+              "currency": null,
+              "displayCurrency": null,
+              "fxRate": null,
+              "rounds": 2,
+              "status": "confirmed"
+            },
+            {
+              "quoteUuid": "59107483713757266048",
+              "requestUuid": "21544236780387057792",
+              "totalQuoteAmount": "900.0",
+              "totalQuoteDiscount": "50.0",
+              "finalTotalQuoteAmount": "875.0",
+              "shippingAmount": "25.0",
+              "currency": null,
+              "displayCurrency": null,
+              "fxRate": null,
+              "rounds": 0,
+              "status": "completed"
+            },
+            {
+              "quoteUuid": "72878111383758061696",
+              "requestUuid": "21544236780387057792",
+              "totalQuoteAmount": "900.0",
+              "totalQuoteDiscount": "0.0",
+              "finalTotalQuoteAmount": "1200.0",
+              "shippingAmount": "300.0",
+              "currency": null,
+              "displayCurrency": null,
+              "fxRate": null,
+              "rounds": 1,
+              "status": "confirmed"
+            },
+            {
+              "quoteUuid": "31038949121456095360",
+              "requestUuid": "74921795627915427968",
+              "totalQuoteAmount": "0.0",
+              "totalQuoteDiscount": "0.0",
+              "finalTotalQuoteAmount": "0.0",
+              "shippingAmount": "34.09",
+              "currency": "USD",
+              "displayCurrency": "JPY",
+              "fxRate": "153.416905",
+              "rounds": 0,
+              "status": "initial"
+            },
+            {
+              "quoteUuid": "98513172062733877376",
+              "requestUuid": "74921795627915427968",
+              "totalQuoteAmount": "1800.0",
+              "totalQuoteDiscount": "0.0",
+              "finalTotalQuoteAmount": "1800.0",
+              "shippingAmount": "0.0",
+              "currency": "USD",
+              "displayCurrency": null,
+              "fxRate": null,
+              "rounds": 0,
+              "status": "initial"
+            },
+            {
+              "quoteUuid": "77141716998417301632",
+              "requestUuid": "06621945833049833600",
+              "totalQuoteAmount": "450.0",
+              "totalQuoteDiscount": "0.0",
+              "finalTotalQuoteAmount": "450.0",
+              "shippingAmount": "0.0",
+              "currency": null,
+              "displayCurrency": null,
+              "fxRate": null,
+              "rounds": 0,
+              "status": "confirmed"
+            },
+            {
+              "quoteUuid": "92330358954951458944",
+              "requestUuid": "83677256205419430016",
+              "totalQuoteAmount": "1200.0",
+              "totalQuoteDiscount": "0.0",
+              "finalTotalQuoteAmount": "1200.0",
+              "shippingAmount": "0.0",
+              "currency": null,
+              "displayCurrency": null,
+              "fxRate": null,
+              "rounds": 0,
+              "status": "initial"
+            },
+            {
+              "quoteUuid": "10423396324955144320",
+              "requestUuid": "16724921855370084480",
+              "totalQuoteAmount": "0.0",
+              "totalQuoteDiscount": "0.0",
+              "finalTotalQuoteAmount": "25.0",
+              "shippingAmount": "25.0",
+              "currency": null,
+              "displayCurrency": null,
+              "fxRate": null,
+              "rounds": 0,
+              "status": "completed"
+            },
+            {
+              "quoteUuid": "11647469202401411200",
+              "requestUuid": "16724921855370084480",
+              "totalQuoteAmount": "0.0",
+              "totalQuoteDiscount": "0.0",
+              "finalTotalQuoteAmount": "0.0",
+              "shippingAmount": "0.0",
+              "currency": null,
+              "displayCurrency": null,
+              "fxRate": null,
+              "rounds": 2,
+              "status": "confirmed"
+            },
+            {
+              "quoteUuid": "79111495521977516160",
+              "requestUuid": "16724921855370084480",
+              "totalQuoteAmount": "0.0",
+              "totalQuoteDiscount": "0.0",
+              "finalTotalQuoteAmount": "0.0",
+              "shippingAmount": "0.0",
+              "currency": null,
+              "displayCurrency": null,
+              "fxRate": null,
+              "rounds": 1,
+              "status": "confirmed"
+            },
+            {
+              "quoteUuid": "19450419734386851968",
+              "requestUuid": "48871474724327145600",
+              "totalQuoteAmount": "900.0",
+              "totalQuoteDiscount": "0.0",
+              "finalTotalQuoteAmount": "1200.0",
+              "shippingAmount": "300.0",
+              "currency": null,
+              "displayCurrency": null,
+              "fxRate": null,
+              "rounds": 2,
+              "status": "confirmed"
+            },
+            {
+              "quoteUuid": "59882695090073780352",
+              "requestUuid": "48871474724327145600",
+              "totalQuoteAmount": "900.0",
+              "totalQuoteDiscount": "50.0",
+              "finalTotalQuoteAmount": "875.0",
+              "shippingAmount": "25.0",
+              "currency": null,
+              "displayCurrency": null,
+              "fxRate": null,
+              "rounds": 0,
+              "status": "completed"
+            },
+            {
+              "quoteUuid": "87693521885660725376",
+              "requestUuid": "48871474724327145600",
+              "totalQuoteAmount": "900.0",
+              "totalQuoteDiscount": "0.0",
+              "finalTotalQuoteAmount": "1200.0",
+              "shippingAmount": "300.0",
+              "currency": null,
+              "displayCurrency": null,
+              "fxRate": null,
+              "rounds": 1,
+              "status": "confirmed"
+            },
+            {
+              "quoteUuid": "17085938257088233600",
+              "requestUuid": "80943086792617246848",
+              "totalQuoteAmount": "450.0",
+              "totalQuoteDiscount": "0.0",
+              "finalTotalQuoteAmount": "450.0",
+              "shippingAmount": "0.0",
+              "currency": null,
+              "displayCurrency": null,
+              "fxRate": null,
+              "rounds": 0,
+              "status": "confirmed"
+            },
+            {
+              "quoteUuid": "33381958003215843456",
+              "requestUuid": "03524304194674638976",
+              "totalQuoteAmount": "900.0",
+              "totalQuoteDiscount": "50.0",
+              "finalTotalQuoteAmount": "875.0",
+              "shippingAmount": "25.0",
+              "currency": null,
+              "displayCurrency": null,
+              "fxRate": null,
+              "rounds": 0,
+              "status": "completed"
+            },
+            {
+              "quoteUuid": "46818404653468762240",
+              "requestUuid": "03524304194674638976",
+              "totalQuoteAmount": "900.0",
+              "totalQuoteDiscount": "0.0",
+              "finalTotalQuoteAmount": "1200.0",
+              "shippingAmount": "300.0",
+              "currency": null,
+              "displayCurrency": null,
+              "fxRate": null,
+              "rounds": 1,
+              "status": "confirmed"
+            },
+            {
+              "quoteUuid": "90871222124412944512",
+              "requestUuid": "03524304194674638976",
+              "totalQuoteAmount": "900.0",
+              "totalQuoteDiscount": "0.0",
+              "finalTotalQuoteAmount": "1200.0",
+              "shippingAmount": "300.0",
+              "currency": null,
+              "displayCurrency": null,
+              "fxRate": null,
+              "rounds": 2,
+              "status": "confirmed"
+            },
+            {
+              "quoteUuid": "18989738284247171200",
+              "requestUuid": "57089135014062342272",
+              "totalQuoteAmount": "0.0",
+              "totalQuoteDiscount": "0.0",
+              "finalTotalQuoteAmount": "0.0",
+              "shippingAmount": "0.0",
+              "currency": null,
+              "displayCurrency": null,
+              "fxRate": null,
+              "rounds": 0,
+              "status": "initial"
+            },
+            {
+              "quoteUuid": "52305551686775095424",
+              "requestUuid": "75901854733732692096",
+              "totalQuoteAmount": "0.0",
+              "totalQuoteDiscount": "0.0",
+              "finalTotalQuoteAmount": "25.0",
+              "shippingAmount": "25.0",
+              "currency": null,
+              "displayCurrency": null,
+              "fxRate": null,
+              "rounds": 0,
+              "status": "initial"
+            },
+            {
+              "quoteUuid": "75080726366953422976",
+              "requestUuid": "46915773638499123328",
+              "totalQuoteAmount": "721.9359",
+              "totalQuoteDiscount": "197.72",
+              "finalTotalQuoteAmount": "524.2158999999999",
+              "shippingAmount": "0.0",
+              "currency": "USD",
+              "displayCurrency": "GBP",
+              "fxRate": "0.802151",
+              "rounds": 0,
+              "status": "initial"
+            },
+            {
+              "quoteUuid": "10699501884046065792",
+              "requestUuid": "40731868813728956544",
+              "totalQuoteAmount": "14360.4",
+              "totalQuoteDiscount": "0.0",
+              "finalTotalQuoteAmount": "14360.4",
+              "shippingAmount": "0.0",
+              "currency": null,
+              "displayCurrency": null,
+              "fxRate": null,
+              "rounds": 0,
+              "status": "initial"
+            },
+            {
+              "quoteUuid": "73511615923161677952",
+              "requestUuid": "73277941123544793216",
+              "totalQuoteAmount": "1200.0",
+              "totalQuoteDiscount": "0.0",
+              "finalTotalQuoteAmount": "1200.0",
+              "shippingAmount": "0.0",
+              "currency": null,
+              "displayCurrency": null,
+              "fxRate": null,
+              "rounds": 0,
+              "status": "initial"
+            },
+            {
+              "quoteUuid": "98907580494131511424",
+              "requestUuid": "21836801067784880256",
+              "totalQuoteAmount": "0.0",
+              "totalQuoteDiscount": "0.0",
+              "finalTotalQuoteAmount": "0.0",
+              "shippingAmount": "0.0",
+              "currency": null,
+              "displayCurrency": null,
+              "fxRate": null,
+              "rounds": 0,
+              "status": "initial"
+            },
+            {
+              "quoteUuid": "57219996349268770944",
+              "requestUuid": "54478697750657515648",
+              "totalQuoteAmount": "450.0",
+              "totalQuoteDiscount": "0.0",
+              "finalTotalQuoteAmount": "450.0",
+              "shippingAmount": "0.0",
+              "currency": null,
+              "displayCurrency": null,
+              "fxRate": null,
+              "rounds": 0,
+              "status": "confirmed"
+            },
+            {
+              "quoteUuid": "68668121193940795520",
+              "requestUuid": "87205469718895935616",
+              "totalQuoteAmount": "14360.4",
+              "totalQuoteDiscount": "0.0",
+              "finalTotalQuoteAmount": "14360.4",
+              "shippingAmount": "0.0",
+              "currency": null,
+              "displayCurrency": null,
+              "fxRate": null,
+              "rounds": 0,
+              "status": "initial"
+            },
+            {
+              "quoteUuid": "12616028676071374976",
+              "requestUuid": "96306650268729098368",
+              "totalQuoteAmount": "0.0",
+              "totalQuoteDiscount": "0.0",
+              "finalTotalQuoteAmount": "0.0",
+              "shippingAmount": "0.0",
+              "currency": null,
+              "displayCurrency": null,
+              "fxRate": null,
+              "rounds": 0,
+              "status": "disapproved"
+            },
+            {
+              "quoteUuid": "42458963099238023296",
+              "requestUuid": "96306650268729098368",
+              "totalQuoteAmount": "0.0",
+              "totalQuoteDiscount": "0.0",
+              "finalTotalQuoteAmount": "0.0",
+              "shippingAmount": "0.0",
+              "currency": "USD",
+              "displayCurrency": "CAD",
+              "fxRate": "1.335005",
+              "rounds": 0,
+              "status": "disapproved"
+            },
+            {
+              "quoteUuid": "83893620897501692032",
+              "requestUuid": "96306650268729098368",
+              "totalQuoteAmount": "0.0",
+              "totalQuoteDiscount": "0.0",
+              "finalTotalQuoteAmount": "25.0",
+              "shippingAmount": "25.0",
+              "currency": "USD",
+              "displayCurrency": "CNY",
+              "fxRate": "7.081345",
+              "rounds": 0,
+              "status": "completed"
+            },
+            {
+              "quoteUuid": "90576430806318727296",
+              "requestUuid": "61921685612389220480",
+              "totalQuoteAmount": "0.0",
+              "totalQuoteDiscount": "0.0",
+              "finalTotalQuoteAmount": "0.0",
+              "shippingAmount": "0.0",
+              "currency": null,
+              "displayCurrency": null,
+              "fxRate": null,
+              "rounds": 2,
+              "status": "initial"
+            },
+            {
+              "quoteUuid": "91108378636367970432",
+              "requestUuid": "61921685612389220480",
+              "totalQuoteAmount": "0.0",
+              "totalQuoteDiscount": "0.0",
+              "finalTotalQuoteAmount": "0.0",
+              "shippingAmount": "0.0",
+              "currency": null,
+              "displayCurrency": null,
+              "fxRate": null,
+              "rounds": 1,
+              "status": "initial"
+            },
+            {
+              "quoteUuid": "93785705723675558016",
+              "requestUuid": "61921685612389220480",
+              "totalQuoteAmount": "0.0",
+              "totalQuoteDiscount": "0.0",
+              "finalTotalQuoteAmount": "0.0",
+              "shippingAmount": "0.0",
+              "currency": null,
+              "displayCurrency": null,
+              "fxRate": null,
+              "rounds": 0,
+              "status": "initial"
+            },
+            {
+              "quoteUuid": "33500471212226134144",
+              "requestUuid": "63263752551381614720",
+              "totalQuoteAmount": "0.0",
+              "totalQuoteDiscount": "0.0",
+              "finalTotalQuoteAmount": "0.0",
+              "shippingAmount": "0.0",
+              "currency": null,
+              "displayCurrency": null,
+              "fxRate": null,
+              "rounds": 0,
+              "status": "initial"
+            },
+            {
+              "quoteUuid": "08270767097670287488",
+              "requestUuid": "12038105023789416576",
+              "totalQuoteAmount": "721.9359",
+              "totalQuoteDiscount": "88.38",
+              "finalTotalQuoteAmount": "633.5559",
+              "shippingAmount": "0.0",
+              "currency": "USD",
+              "displayCurrency": "GBP",
+              "fxRate": "0.802151",
+              "rounds": 0,
+              "status": "initial"
+            },
+            {
+              "quoteUuid": "37635925163423842432",
+              "requestUuid": "12038105023789416576",
+              "totalQuoteAmount": "19519.1892",
+              "totalQuoteDiscount": "146.46",
+              "finalTotalQuoteAmount": "19372.7292",
+              "shippingAmount": "0.0",
+              "currency": "USD",
+              "displayCurrency": "AUD",
+              "fxRate": "1.549142",
+              "rounds": 0,
+              "status": "initial"
+            },
+            {
+              "quoteUuid": "98655539497196863616",
+              "requestUuid": "12038105023789416576",
+              "totalQuoteAmount": "0.0",
+              "totalQuoteDiscount": "0.0",
+              "finalTotalQuoteAmount": "0.0",
+              "shippingAmount": "0.0",
+              "currency": "USD",
+              "displayCurrency": "HKD",
+              "fxRate": "7.73513",
+              "rounds": 0,
+              "status": "pending"
+            }
+          ],
+          "total": 99
+        }
+      }
+    },
+    "ms": 772,
+    "status": "pass"
+  },
+  {
+    "sid": "INT-007 create",
+    "doc": "mutation CI($qid:String!,$rid:String!,$p:Int,$a:SafeFloat,$d:DateTime,$m:String,$by:String!){insertUpdateInstallment(quoteUuid:$qid,requestUuid:$rid,priority:$p,installmentAmount:$a,scheduledDate:$d,paymentMethod:$m,updatedBy:$by){installment{installmentUuid installmentRatio installmentAmount priority}}}",
+    "vars": {
+      "qid": "84988149065228238976",
+      "rid": "46755069105998413952",
+      "p": 1,
+      "a": 360.0,
+      "d": "2026-07-22T03:45:23.259485Z",
+      "m": "bank_transfer",
+      "by": "cert"
+    },
+    "resp": {
+      "data": {
+        "insertUpdateInstallment": {
+          "installment": {
+            "installmentUuid": "18140496342786523264",
+            "installmentRatio": "30.0",
+            "installmentAmount": "360.0",
+            "priority": 1
+          }
+        }
+      }
+    },
+    "ms": 1159,
+    "status": "pass"
+  },
+  {
+    "sid": "INT-007 list",
+    "doc": "query IL($qid:String){installmentList(quoteUuid:$qid,limit:10){installmentList{installmentUuid installmentRatio installmentAmount priority}total}}",
+    "vars": {
+      "qid": "84988149065228238976"
+    },
+    "resp": {
+      "data": {
+        "installmentList": {
+          "installmentList": [
+            {
+              "installmentUuid": "18140496342786523264",
+              "installmentRatio": "30.0",
+              "installmentAmount": "360.0",
+              "priority": 1
+            }
+          ],
+          "total": 1
+        }
+      }
+    },
+    "ms": 98,
+    "status": "pass"
+  },
+  {
+    "sid": "INT-008 fx",
+    "doc": "query QL($limit:Int){quoteList(limit:$limit){quoteList{quoteUuid currency displayCurrency fxRate totalQuoteAmount}total}}",
+    "vars": {
+      "limit": 100
+    },
+    "resp": {
+      "data": {
+        "quoteList": {
+          "quoteList": [
+            {
+              "quoteUuid": "84988149065228238976",
+              "currency": null,
+              "displayCurrency": null,
+              "fxRate": null,
+              "totalQuoteAmount": "1200.0"
+            },
+            {
+              "quoteUuid": "65959305287509753984",
+              "currency": null,
+              "displayCurrency": null,
+              "fxRate": null,
+              "totalQuoteAmount": "450.0"
+            },
+            {
+              "quoteUuid": "27495815163899035776",
+              "currency": null,
+              "displayCurrency": null,
+              "fxRate": null,
+              "totalQuoteAmount": "0.0"
+            },
+            {
+              "quoteUuid": "30256741032799518848",
+              "currency": null,
+              "displayCurrency": null,
+              "fxRate": null,
+              "totalQuoteAmount": "3600.0"
+            },
+            {
+              "quoteUuid": "87443550831956213888",
+              "currency": null,
+              "displayCurrency": null,
+              "fxRate": null,
+              "totalQuoteAmount": "0.0"
+            },
+            {
+              "quoteUuid": "79594151911335411840",
+              "currency": "USD",
+              "displayCurrency": "HKD",
+              "fxRate": "7.73513",
+              "totalQuoteAmount": "3480.8085"
+            },
+            {
+              "quoteUuid": "39549219814635487360",
+              "currency": null,
+              "displayCurrency": null,
+              "fxRate": null,
+              "totalQuoteAmount": "900.0"
+            },
+            {
+              "quoteUuid": "62682588455586775168",
+              "currency": null,
+              "displayCurrency": null,
+              "fxRate": null,
+              "totalQuoteAmount": "0.0"
+            },
+            {
+              "quoteUuid": "73102885886453891200",
+              "currency": null,
+              "displayCurrency": null,
+              "fxRate": null,
+              "totalQuoteAmount": "900.0"
+            },
+            {
+              "quoteUuid": "56414101690191462528",
+              "currency": null,
+              "displayCurrency": null,
+              "fxRate": null,
+              "totalQuoteAmount": "450.0"
+            },
+            {
+              "quoteUuid": "86833326763387404416",
+              "currency": null,
+              "displayCurrency": null,
+              "fxRate": null,
+              "totalQuoteAmount": "825.0"
+            },
+            {
+              "quoteUuid": "39412068575306858624",
+              "currency": null,
+              "displayCurrency": null,
+              "fxRate": null,
+              "totalQuoteAmount": "900.0"
+            },
+            {
+              "quoteUuid": "23192587828709048448",
+              "currency": null,
+              "displayCurrency": null,
+              "fxRate": null,
+              "totalQuoteAmount": "1000.0"
+            },
+            {
+              "quoteUuid": "06265305898006102144",
+              "currency": null,
+              "displayCurrency": null,
+              "fxRate": null,
+              "totalQuoteAmount": "900.0"
+            },
+            {
+              "quoteUuid": "24933966679596089472",
+              "currency": "USD",
+              "displayCurrency": "EUR",
+              "fxRate": "0.911876",
+              "totalQuoteAmount": "3282.7536"
+            },
+            {
+              "quoteUuid": "22326271210615226496",
+              "currency": null,
+              "displayCurrency": null,
+              "fxRate": null,
+              "totalQuoteAmount": "900.0"
+            },
+            {
+              "quoteUuid": "38519946161268211840",
+              "currency": null,
+              "displayCurrency": null,
+              "fxRate": null,
+              "totalQuoteAmount": "900.0"
+            },
+            {
+              "quoteUuid": "79659630911987662976",
+              "currency": null,
+              "displayCurrency": null,
+              "fxRate": null,
+              "totalQuoteAmount": "900.0"
+            },
+            {
+              "quoteUuid": "92058928492620824704",
+              "currency": null,
+              "displayCurrency": null,
+              "fxRate": null,
+              "totalQuoteAmount": "900.0"
+            },
+            {
+              "quoteUuid": "82681485742934343808",
+              "currency": null,
+              "displayCurrency": null,
+              "fxRate": null,
+              "totalQuoteAmount": "900.0"
+            },
+            {
+              "quoteUuid": "31958872949267644544",
+              "currency": null,
+              "displayCurrency": null,
+              "fxRate": null,
+              "totalQuoteAmount": "500.0"
+            },
+            {
+              "quoteUuid": "90196658928596566144",
+              "currency": null,
+              "displayCurrency": null,
+              "fxRate": null,
+              "totalQuoteAmount": "900.0"
+            },
+            {
+              "quoteUuid": "70501841090293809280",
+              "currency": null,
+              "displayCurrency": null,
+              "fxRate": null,
+              "totalQuoteAmount": "450.0"
+            },
+            {
+              "quoteUuid": "00590008742461849728",
+              "currency": "USD",
+              "displayCurrency": null,
+              "fxRate": null,
+              "totalQuoteAmount": "18000.0"
+            },
+            {
+              "quoteUuid": "64158521298974163072",
+              "currency": "USD",
+              "displayCurrency": null,
+              "fxRate": null,
+              "totalQuoteAmount": "0.0"
+            },
+            {
+              "quoteUuid": "64906169450838900864",
+              "currency": "USD",
+              "displayCurrency": null,
+              "fxRate": null,
+              "totalQuoteAmount": "0.0"
+            },
+            {
+              "quoteUuid": "25579080753713528960",
+              "currency": null,
+              "displayCurrency": null,
+              "fxRate": null,
+              "totalQuoteAmount": "500.0"
+            },
+            {
+              "quoteUuid": "46408735338345283712",
+              "currency": null,
+              "displayCurrency": null,
+              "fxRate": null,
+              "totalQuoteAmount": "450.0"
+            },
+            {
+              "quoteUuid": "58349990864728637568",
+              "currency": "USD",
+              "displayCurrency": "JPY",
+              "fxRate": "153.416905",
+              "totalQuoteAmount": "3313805.1480000005"
+            },
+            {
+              "quoteUuid": "29143488708686659712",
+              "currency": "USD",
+              "displayCurrency": null,
+              "fxRate": null,
+              "totalQuoteAmount": "2250.0"
+            },
+            {
+              "quoteUuid": "54002658672698736768",
+              "currency": "USD",
+              "displayCurrency": "AUD",
+              "fxRate": "1.549142",
+              "totalQuoteAmount": "0.0"
+            },
+            {
+              "quoteUuid": "32379322671902507136",
+              "currency": "USD",
+              "displayCurrency": null,
+              "fxRate": null,
+              "totalQuoteAmount": "0.0"
+            },
+            {
+              "quoteUuid": "44616066019679551616",
+              "currency": "USD",
+              "displayCurrency": null,
+              "fxRate": null,
+              "totalQuoteAmount": "31500.0"
+            },
+            {
+              "quoteUuid": "62163650606429913216",
+              "currency": "USD",
+              "displayCurrency": null,
+              "fxRate": null,
+              "totalQuoteAmount": "0.0"
+            },
+            {
+              "quoteUuid": "28968787357267411072",
+              "currency": null,
+              "displayCurrency": null,
+              "fxRate": null,
+              "totalQuoteAmount": "450.0"
+            },
+            {
+              "quoteUuid": "56928011205851758720",
+              "currency": "USD",
+              "displayCurrency": "GBP",
+              "fxRate": "0.802151",
+              "totalQuoteAmount": "0.0"
+            },
+            {
+              "quoteUuid": "90861560704607993984",
+              "currency": "USD",
+              "displayCurrency": "AUD",
+              "fxRate": "1.549142",
+              "totalQuoteAmount": "5576.9112000000005"
+            },
+            {
+              "quoteUuid": "53829765503716966528",
+              "currency": null,
+              "displayCurrency": null,
+              "fxRate": null,
+              "totalQuoteAmount": "500.0"
+            },
+            {
+              "quoteUuid": "01722231087768289408",
+              "currency": null,
+              "displayCurrency": null,
+              "fxRate": null,
+              "totalQuoteAmount": "3600.0"
+            },
+            {
+              "quoteUuid": "41608659486675845248",
+              "currency": null,
+              "displayCurrency": null,
+              "fxRate": null,
+              "totalQuoteAmount": "0.0"
+            },
+            {
+              "quoteUuid": "75628288392953872512",
+              "currency": null,
+              "displayCurrency": null,
+              "fxRate": null,
+              "totalQuoteAmount": "0.0"
+            },
+            {
+              "quoteUuid": "83362299391391056000",
+              "currency": null,
+              "displayCurrency": null,
+              "fxRate": null,
+              "totalQuoteAmount": "0.0"
+            },
+            {
+              "quoteUuid": "06086118673104257152",
+              "currency": null,
+              "displayCurrency": null,
+              "fxRate": null,
+              "totalQuoteAmount": "450.0"
+            },
+            {
+              "quoteUuid": "20894467729251123328",
+              "currency": "USD",
+              "displayCurrency": "CNY",
+              "fxRate": "7.081345",
+              "totalQuoteAmount": "0.0"
+            },
+            {
+              "quoteUuid": "65282445974679076992",
+              "currency": "USD",
+              "displayCurrency": null,
+              "fxRate": null,
+              "totalQuoteAmount": "0.0"
+            },
+            {
+              "quoteUuid": "88836315202799550592",
+              "currency": "USD",
+              "displayCurrency": null,
+              "fxRate": null,
+              "totalQuoteAmount": "36000.0"
+            },
+            {
+              "quoteUuid": "10014866253261324416",
+              "currency": null,
+              "displayCurrency": null,
+              "fxRate": null,
+              "totalQuoteAmount": "500.0"
+            },
+            {
+              "quoteUuid": "18318134560484769920",
+              "currency": "USD",
+              "displayCurrency": "CNY",
+              "fxRate": "7.081345",
+              "totalQuoteAmount": "3540.6724999999997"
+            },
+            {
+              "quoteUuid": "05985713052092219520",
+              "currency": null,
+              "displayCurrency": null,
+              "fxRate": null,
+              "totalQuoteAmount": "0.0"
+            },
+            {
+              "quoteUuid": "23027013911964565632",
+              "currency": null,
+              "displayCurrency": null,
+              "fxRate": null,
+              "totalQuoteAmount": "0.0"
+            },
+            {
+              "quoteUuid": "97934283632753524864",
+              "currency": null,
+              "displayCurrency": null,
+              "fxRate": null,
+              "totalQuoteAmount": "3600.0"
+            },
+            {
+              "quoteUuid": "01689638593037877376",
+              "currency": null,
+              "displayCurrency": null,
+              "fxRate": null,
+              "totalQuoteAmount": "0.0"
+            },
+            {
+              "quoteUuid": "43726892810135158912",
+              "currency": null,
+              "displayCurrency": null,
+              "fxRate": null,
+              "totalQuoteAmount": "3600.0"
+            },
+            {
+              "quoteUuid": "72617805830433030272",
+              "currency": null,
+              "displayCurrency": null,
+              "fxRate": null,
+              "totalQuoteAmount": "0.0"
+            },
+            {
+              "quoteUuid": "60187438571235328128",
+              "currency": null,
+              "displayCurrency": null,
+              "fxRate": null,
+              "totalQuoteAmount": "900.0"
+            },
+            {
+              "quoteUuid": "65236276464333111424",
+              "currency": null,
+              "displayCurrency": null,
+              "fxRate": null,
+              "totalQuoteAmount": "1200.0"
+            },
+            {
+              "quoteUuid": "09264210633191080064",
+              "currency": null,
+              "displayCurrency": null,
+              "fxRate": null,
+              "totalQuoteAmount": "450.0"
+            },
+            {
+              "quoteUuid": "53638073952415793280",
+              "currency": null,
+              "displayCurrency": null,
+              "fxRate": null,
+              "totalQuoteAmount": "770.0"
+            },
+            {
+              "quoteUuid": "51485446173562519680",
+              "currency": "USD",
+              "displayCurrency": null,
+              "fxRate": null,
+              "totalQuoteAmount": "1000.0"
+            },
+            {
+              "quoteUuid": "30367734106097205376",
+              "currency": "USD",
+              "displayCurrency": null,
+              "fxRate": null,
+              "totalQuoteAmount": "4050.0"
+            },
+            {
+              "quoteUuid": "94434537109412921472",
+              "currency": null,
+              "displayCurrency": null,
+              "fxRate": null,
+              "totalQuoteAmount": "450.0"
+            },
+            {
+              "quoteUuid": "79693618463698337920",
+              "currency": null,
+              "displayCurrency": null,
+              "fxRate": null,
+              "totalQuoteAmount": "770.0"
+            },
+            {
+              "quoteUuid": "80201242951216545920",
+              "currency": null,
+              "displayCurrency": null,
+              "fxRate": null,
+              "totalQuoteAmount": "900.0"
+            },
+            {
+              "quoteUuid": "54736353505707049088",
+              "currency": null,
+              "displayCurrency": null,
+              "fxRate": null,
+              "totalQuoteAmount": "1000.0"
+            },
+            {
+              "quoteUuid": "10376715591950024832",
+              "currency": null,
+              "displayCurrency": null,
+              "fxRate": null,
+              "totalQuoteAmount": "900.0"
+            },
+            {
+              "quoteUuid": "59107483713757266048",
+              "currency": null,
+              "displayCurrency": null,
+              "fxRate": null,
+              "totalQuoteAmount": "900.0"
+            },
+            {
+              "quoteUuid": "72878111383758061696",
+              "currency": null,
+              "displayCurrency": null,
+              "fxRate": null,
+              "totalQuoteAmount": "900.0"
+            },
+            {
+              "quoteUuid": "31038949121456095360",
+              "currency": "USD",
+              "displayCurrency": "JPY",
+              "fxRate": "153.416905",
+              "totalQuoteAmount": "0.0"
+            },
+            {
+              "quoteUuid": "98513172062733877376",
+              "currency": "USD",
+              "displayCurrency": null,
+              "fxRate": null,
+              "totalQuoteAmount": "1800.0"
+            },
+            {
+              "quoteUuid": "77141716998417301632",
+              "currency": null,
+              "displayCurrency": null,
+              "fxRate": null,
+              "totalQuoteAmount": "450.0"
+            },
+            {
+              "quoteUuid": "92330358954951458944",
+              "currency": null,
+              "displayCurrency": null,
+              "fxRate": null,
+              "totalQuoteAmount": "1200.0"
+            },
+            {
+              "quoteUuid": "10423396324955144320",
+              "currency": null,
+              "displayCurrency": null,
+              "fxRate": null,
+              "totalQuoteAmount": "0.0"
+            },
+            {
+              "quoteUuid": "11647469202401411200",
+              "currency": null,
+              "displayCurrency": null,
+              "fxRate": null,
+              "totalQuoteAmount": "0.0"
+            },
+            {
+              "quoteUuid": "79111495521977516160",
+              "currency": null,
+              "displayCurrency": null,
+              "fxRate": null,
+              "totalQuoteAmount": "0.0"
+            },
+            {
+              "quoteUuid": "19450419734386851968",
+              "currency": null,
+              "displayCurrency": null,
+              "fxRate": null,
+              "totalQuoteAmount": "900.0"
+            },
+            {
+              "quoteUuid": "59882695090073780352",
+              "currency": null,
+              "displayCurrency": null,
+              "fxRate": null,
+              "totalQuoteAmount": "900.0"
+            },
+            {
+              "quoteUuid": "87693521885660725376",
+              "currency": null,
+              "displayCurrency": null,
+              "fxRate": null,
+              "totalQuoteAmount": "900.0"
+            },
+            {
+              "quoteUuid": "17085938257088233600",
+              "currency": null,
+              "displayCurrency": null,
+              "fxRate": null,
+              "totalQuoteAmount": "450.0"
+            },
+            {
+              "quoteUuid": "33381958003215843456",
+              "currency": null,
+              "displayCurrency": null,
+              "fxRate": null,
+              "totalQuoteAmount": "900.0"
+            },
+            {
+              "quoteUuid": "46818404653468762240",
+              "currency": null,
+              "displayCurrency": null,
+              "fxRate": null,
+              "totalQuoteAmount": "900.0"
+            },
+            {
+              "quoteUuid": "90871222124412944512",
+              "currency": null,
+              "displayCurrency": null,
+              "fxRate": null,
+              "totalQuoteAmount": "900.0"
+            },
+            {
+              "quoteUuid": "18989738284247171200",
+              "currency": null,
+              "displayCurrency": null,
+              "fxRate": null,
+              "totalQuoteAmount": "0.0"
+            },
+            {
+              "quoteUuid": "52305551686775095424",
+              "currency": null,
+              "displayCurrency": null,
+              "fxRate": null,
+              "totalQuoteAmount": "0.0"
+            },
+            {
+              "quoteUuid": "75080726366953422976",
+              "currency": "USD",
+              "displayCurrency": "GBP",
+              "fxRate": "0.802151",
+              "totalQuoteAmount": "721.9359"
+            },
+            {
+              "quoteUuid": "10699501884046065792",
+              "currency": null,
+              "displayCurrency": null,
+              "fxRate": null,
+              "totalQuoteAmount": "14360.4"
+            },
+            {
+              "quoteUuid": "73511615923161677952",
+              "currency": null,
+              "displayCurrency": null,
+              "fxRate": null,
+              "totalQuoteAmount": "1200.0"
+            },
+            {
+              "quoteUuid": "98907580494131511424",
+              "currency": null,
+              "displayCurrency": null,
+              "fxRate": null,
+              "totalQuoteAmount": "0.0"
+            },
+            {
+              "quoteUuid": "57219996349268770944",
+              "currency": null,
+              "displayCurrency": null,
+              "fxRate": null,
+              "totalQuoteAmount": "450.0"
+            },
+            {
+              "quoteUuid": "68668121193940795520",
+              "currency": null,
+              "displayCurrency": null,
+              "fxRate": null,
+              "totalQuoteAmount": "14360.4"
+            },
+            {
+              "quoteUuid": "12616028676071374976",
+              "currency": null,
+              "displayCurrency": null,
+              "fxRate": null,
+              "totalQuoteAmount": "0.0"
+            },
+            {
+              "quoteUuid": "42458963099238023296",
+              "currency": "USD",
+              "displayCurrency": "CAD",
+              "fxRate": "1.335005",
+              "totalQuoteAmount": "0.0"
+            },
+            {
+              "quoteUuid": "83893620897501692032",
+              "currency": "USD",
+              "displayCurrency": "CNY",
+              "fxRate": "7.081345",
+              "totalQuoteAmount": "0.0"
+            },
+            {
+              "quoteUuid": "90576430806318727296",
+              "currency": null,
+              "displayCurrency": null,
+              "fxRate": null,
+              "totalQuoteAmount": "0.0"
+            },
+            {
+              "quoteUuid": "91108378636367970432",
+              "currency": null,
+              "displayCurrency": null,
+              "fxRate": null,
+              "totalQuoteAmount": "0.0"
+            },
+            {
+              "quoteUuid": "93785705723675558016",
+              "currency": null,
+              "displayCurrency": null,
+              "fxRate": null,
+              "totalQuoteAmount": "0.0"
+            },
+            {
+              "quoteUuid": "33500471212226134144",
+              "currency": null,
+              "displayCurrency": null,
+              "fxRate": null,
+              "totalQuoteAmount": "0.0"
+            },
+            {
+              "quoteUuid": "08270767097670287488",
+              "currency": "USD",
+              "displayCurrency": "GBP",
+              "fxRate": "0.802151",
+              "totalQuoteAmount": "721.9359"
+            },
+            {
+              "quoteUuid": "37635925163423842432",
+              "currency": "USD",
+              "displayCurrency": "AUD",
+              "fxRate": "1.549142",
+              "totalQuoteAmount": "19519.1892"
+            },
+            {
+              "quoteUuid": "98655539497196863616",
+              "currency": "USD",
+              "displayCurrency": "HKD",
+              "fxRate": "7.73513",
+              "totalQuoteAmount": "0.0"
+            }
+          ],
+          "total": 99
+        }
+      }
+    },
+    "ms": 280,
+    "status": "pass"
+  },
+  {
+    "sid": "INT-009 snapshots",
+    "doc": "query QIL($limit:Int){quoteItemList(limit:$limit){quoteItemList{quoteItemUuid quoteUuid requestData}total}}",
+    "vars": {
+      "limit": 100
+    },
+    "resp": {
+      "data": {
+        "quoteItemList": {
+          "quoteItemList": [
+            {
+              "quoteItemUuid": "15272790322700107904",
+              "quoteUuid": "01722231087768289408",
+              "requestData": {
+                "cancellationPolicySnapshot": {
+                  "tiers": {
+                    "tiers": [
+                      {
+                        "hoursBeforeDepartureGte": "24",
+                        "refundPct": "1"
+                      },
+                      {
+                        "hoursBeforeDepartureGte": "2",
+                        "refundPct": "0.5"
+                      },
+                      {
+                        "hoursBeforeDepartureGte": "0",
+                        "refundPct": "0"
+                      }
+                    ]
+                  },
+                  "notesTemplateUuid": null,
+                  "description": "War say hit test despite case cause law.",
+                  "label": "Business Fare Cancellation",
+                  "contentHash": "635b056adb04e9e9",
+                  "policyUuid": "70591963290008567936",
+                  "snapshottedAt": "2026-06-17 20:43:40.683560"
+                }
+              }
+            },
+            {
+              "quoteItemUuid": "34627936288289865856",
+              "quoteUuid": "92330358954951458944",
+              "requestData": null
+            },
+            {
+              "quoteItemUuid": "57416676941644185728",
+              "quoteUuid": "08270767097670287488",
+              "requestData": {
+                "cancellationPolicySnapshot": {
+                  "tiers": {
+                    "tiers": [
+                      {
+                        "hoursBeforeDepartureGte": "168",
+                        "refundPct": "1"
+                      },
+                      {
+                        "hoursBeforeDepartureGte": "24",
+                        "refundPct": "0.5"
+                      },
+                      {
+                        "hoursBeforeDepartureGte": "0",
+                        "refundPct": "0"
+                      }
+                    ]
+                  },
+                  "notesTemplateUuid": null,
+                  "description": "Commercial treatment wonder ago government while spend soon else.",
+                  "label": "Premium Economy Fare Cancellation",
+                  "contentHash": "91c5824ec27640e1",
+                  "policyUuid": "73636103301303910528",
+                  "snapshottedAt": "2026-06-22 03:43:51.547861"
+                }
+              }
+            },
+            {
+              "quoteItemUuid": "41836499158207316096",
+              "quoteUuid": "68668121193940795520",
+              "requestData": null
+            },
+            {
+              "quoteItemUuid": "16463420954969653376",
+              "quoteUuid": "80201242951216545920",
+              "requestData": {
+                "cancellationPolicySnapshot": {
+                  "tiers": {
+                    "tiers": [
+                      {
+                        "hoursBeforeDepartureGte": "168",
+                        "refundPct": "1"
+                      },
+                      {
+                        "hoursBeforeDepartureGte": "24",
+                        "refundPct": "0.5"
+                      },
+                      {
+                        "hoursBeforeDepartureGte": "0",
+                        "refundPct": "0"
+                      }
+                    ]
+                  },
+                  "notesTemplateUuid": null,
+                  "description": "Drive smile others listen quality international stand citizen media body meeting expect material tend main.",
+                  "label": "Premium Economy Fare Cancellation",
+                  "contentHash": "b161d765b3089e5e",
+                  "policyUuid": "14167382355785826432",
+                  "snapshottedAt": "2026-06-18 21:02:00.852724"
+                }
+              }
+            },
+            {
+              "quoteItemUuid": "23136737644857278592",
+              "quoteUuid": "92058928492620824704",
+              "requestData": {
+                "cancellationPolicySnapshot": {
+                  "tiers": {
+                    "tiers": [
+                      {
+                        "hoursBeforeDepartureGte": "168",
+                        "refundPct": "1"
+                      },
+                      {
+                        "hoursBeforeDepartureGte": "24",
+                        "refundPct": "0.5"
+                      },
+                      {
+                        "hoursBeforeDepartureGte": "0",
+                        "refundPct": "0"
+                      }
+                    ]
+                  },
+                  "notesTemplateUuid": null,
+                  "description": "Drive smile others listen quality international stand citizen media body meeting expect material tend main.",
+                  "label": "Premium Economy Fare Cancellation",
+                  "contentHash": "b161d765b3089e5e",
+                  "policyUuid": "14167382355785826432",
+                  "snapshottedAt": "2026-06-18 20:36:19.519114"
+                }
+              }
+            },
+            {
+              "quoteItemUuid": "86567000918252863616",
+              "quoteUuid": "29143488708686659712",
+              "requestData": {
+                "cancellationPolicySnapshot": {
+                  "tiers": {
+                    "tiers": [
+                      {
+                        "hoursBeforeDepartureGte": "168",
+                        "refundPct": "1"
+                      },
+                      {
+                        "hoursBeforeDepartureGte": "24",
+                        "refundPct": "0.5"
+                      },
+                      {
+                        "hoursBeforeDepartureGte": "0",
+                        "refundPct": "0"
+                      }
+                    ]
+                  },
+                  "notesTemplateUuid": null,
+                  "description": "Per example require performance not free although difference stage civil center impact increase.",
+                  "label": "Economy Fare Cancellation",
+                  "contentHash": "63811f72018bbc1a",
+                  "policyUuid": "18953038264617943168",
+                  "snapshottedAt": "2026-06-22 03:43:53.457252"
+                }
+              }
+            },
+            {
+              "quoteItemUuid": "79136946166253502592",
+              "quoteUuid": "39412068575306858624",
+              "requestData": {
+                "cancellationPolicySnapshot": {
+                  "tiers": {
+                    "tiers": [
+                      {
+                        "hoursBeforeDepartureGte": "168",
+                        "refundPct": "1"
+                      },
+                      {
+                        "hoursBeforeDepartureGte": "24",
+                        "refundPct": "0.5"
+                      },
+                      {
+                        "hoursBeforeDepartureGte": "0",
+                        "refundPct": "0"
+                      }
+                    ]
+                  },
+                  "notesTemplateUuid": null,
+                  "description": "Drive smile others listen quality international stand citizen media body meeting expect material tend main.",
+                  "label": "Premium Economy Fare Cancellation",
+                  "contentHash": "b161d765b3089e5e",
+                  "policyUuid": "14167382355785826432",
+                  "snapshottedAt": "2026-06-18 16:14:48.324781"
+                }
+              }
+            },
+            {
+              "quoteItemUuid": "86793541870015234176",
+              "quoteUuid": "10699501884046065792",
+              "requestData": null
+            },
+            {
+              "quoteItemUuid": "46516376591567700096",
+              "quoteUuid": "59107483713757266048",
+              "requestData": {
+                "cancellationPolicySnapshot": {
+                  "tiers": {
+                    "tiers": [
+                      {
+                        "hoursBeforeDepartureGte": "168",
+                        "refundPct": "1"
+                      },
+                      {
+                        "hoursBeforeDepartureGte": "24",
+                        "refundPct": "0.5"
+                      },
+                      {
+                        "hoursBeforeDepartureGte": "0",
+                        "refundPct": "0"
+                      }
+                    ]
+                  },
+                  "notesTemplateUuid": null,
+                  "description": "Drive smile others listen quality international stand citizen media body meeting expect material tend main.",
+                  "label": "Premium Economy Fare Cancellation",
+                  "contentHash": "b161d765b3089e5e",
+                  "policyUuid": "14167382355785826432",
+                  "snapshottedAt": "2026-06-17 22:50:17.870316"
+                }
+              }
+            },
+            {
+              "quoteItemUuid": "91753656579102097536",
+              "quoteUuid": "65959305287509753984",
+              "requestData": {
+                "cancellationPolicySnapshot": {
+                  "tiers": {
+                    "tiers": [
+                      {
+                        "hoursBeforeDepartureGte": "168",
+                        "refundPct": "1"
+                      },
+                      {
+                        "hoursBeforeDepartureGte": "24",
+                        "refundPct": "0.5"
+                      },
+                      {
+                        "hoursBeforeDepartureGte": "0",
+                        "refundPct": "0"
+                      }
+                    ]
+                  },
+                  "notesTemplateUuid": null,
+                  "description": "Drive smile others listen quality international stand citizen media body meeting expect material tend main.",
+                  "label": "Premium Economy Fare Cancellation",
+                  "contentHash": "b161d765b3089e5e",
+                  "policyUuid": "14167382355785826432",
+                  "snapshottedAt": "2026-06-18 21:06:29.214289"
+                }
+              }
+            },
+            {
+              "quoteItemUuid": "45256782515884015744",
+              "quoteUuid": "73102885886453891200",
+              "requestData": {
+                "cancellationPolicySnapshot": {
+                  "tiers": {
+                    "tiers": [
+                      {
+                        "hoursBeforeDepartureGte": "168",
+                        "refundPct": "1"
+                      },
+                      {
+                        "hoursBeforeDepartureGte": "24",
+                        "refundPct": "0.5"
+                      },
+                      {
+                        "hoursBeforeDepartureGte": "0",
+                        "refundPct": "0"
+                      }
+                    ]
+                  },
+                  "notesTemplateUuid": null,
+                  "description": "Drive smile others listen quality international stand citizen media body meeting expect material tend main.",
+                  "label": "Premium Economy Fare Cancellation",
+                  "contentHash": "b161d765b3089e5e",
+                  "policyUuid": "14167382355785826432",
+                  "snapshottedAt": "2026-06-17 22:39:09.241035"
+                }
+              }
+            },
+            {
+              "quoteItemUuid": "28108509479199326336",
+              "quoteUuid": "37635925163423842432",
+              "requestData": {
+                "cancellationPolicySnapshot": {
+                  "tiers": {
+                    "tiers": [
+                      {
+                        "hoursBeforeDepartureGte": "24",
+                        "refundPct": "1"
+                      },
+                      {
+                        "hoursBeforeDepartureGte": "2",
+                        "refundPct": "0.5"
+                      },
+                      {
+                        "hoursBeforeDepartureGte": "0",
+                        "refundPct": "0"
+                      }
+                    ]
+                  },
+                  "notesTemplateUuid": null,
+                  "description": "Method ago point husband writer safe room.",
+                  "label": "First Fare Cancellation",
+                  "contentHash": "a8c9cd217038c785",
+                  "policyUuid": "84448716643260973184",
+                  "snapshottedAt": "2026-06-22 03:43:49.431700"
+                }
+              }
+            },
+            {
+              "quoteItemUuid": "37873752989501505664",
+              "quoteUuid": "37635925163423842432",
+              "requestData": {
+                "cancellationPolicySnapshot": {
+                  "tiers": {
+                    "tiers": [
+                      {
+                        "hoursBeforeDepartureGte": "24",
+                        "refundPct": "1"
+                      },
+                      {
+                        "hoursBeforeDepartureGte": "2",
+                        "refundPct": "0.5"
+                      },
+                      {
+                        "hoursBeforeDepartureGte": "0",
+                        "refundPct": "0"
+                      }
+                    ]
+                  },
+                  "notesTemplateUuid": null,
+                  "description": "Mention wife street mean south rock white represent try reveal even benefit.",
+                  "label": "Business Fare Cancellation",
+                  "contentHash": "2b9fdaafbe860c91",
+                  "policyUuid": "32511537536158417024",
+                  "snapshottedAt": "2026-06-22 03:43:50.492955"
+                }
+              }
+            },
+            {
+              "quoteItemUuid": "00714463771971567744",
+              "quoteUuid": "79594151911335411840",
+              "requestData": {
+                "cancellationPolicySnapshot": {
+                  "tiers": {
+                    "tiers": [
+                      {
+                        "hoursBeforeDepartureGte": "168",
+                        "refundPct": "1"
+                      },
+                      {
+                        "hoursBeforeDepartureGte": "24",
+                        "refundPct": "0.5"
+                      },
+                      {
+                        "hoursBeforeDepartureGte": "0",
+                        "refundPct": "0"
+                      }
+                    ]
+                  },
+                  "notesTemplateUuid": null,
+                  "description": "Commercial treatment wonder ago government while spend soon else.",
+                  "label": "Premium Economy Fare Cancellation",
+                  "contentHash": "91c5824ec27640e1",
+                  "policyUuid": "73636103301303910528",
+                  "snapshottedAt": "2026-06-22 03:43:47.156780"
+                }
+              }
+            },
+            {
+              "quoteItemUuid": "10029519510784983168",
+              "quoteUuid": "09264210633191080064",
+              "requestData": {
+                "cancellationPolicySnapshot": {
+                  "tiers": {
+                    "tiers": [
+                      {
+                        "hoursBeforeDepartureGte": "168",
+                        "refundPct": "1"
+                      },
+                      {
+                        "hoursBeforeDepartureGte": "24",
+                        "refundPct": "0.5"
+                      },
+                      {
+                        "hoursBeforeDepartureGte": "0",
+                        "refundPct": "0"
+                      }
+                    ]
+                  },
+                  "notesTemplateUuid": null,
+                  "description": "Drive smile others listen quality international stand citizen media body meeting expect material tend main.",
+                  "label": "Premium Economy Fare Cancellation",
+                  "contentHash": "b161d765b3089e5e",
+                  "policyUuid": "14167382355785826432",
+                  "snapshottedAt": "2026-06-18 16:18:56.525800"
+                }
+              }
+            },
+            {
+              "quoteItemUuid": "99624906928751132800",
+              "quoteUuid": "33381958003215843456",
+              "requestData": {
+                "cancellationPolicySnapshot": {
+                  "tiers": {
+                    "tiers": [
+                      {
+                        "hoursBeforeDepartureGte": "168",
+                        "refundPct": "1"
+                      },
+                      {
+                        "hoursBeforeDepartureGte": "24",
+                        "refundPct": "0.5"
+                      },
+                      {
+                        "hoursBeforeDepartureGte": "0",
+                        "refundPct": "0"
+                      }
+                    ]
+                  },
+                  "notesTemplateUuid": null,
+                  "description": "Drive smile others listen quality international stand citizen media body meeting expect material tend main.",
+                  "label": "Premium Economy Fare Cancellation",
+                  "contentHash": "b161d765b3089e5e",
+                  "policyUuid": "14167382355785826432",
+                  "snapshottedAt": "2026-06-18 04:36:27.479155"
+                }
+              }
+            },
+            {
+              "quoteItemUuid": "46075184622484865152",
+              "quoteUuid": "19450419734386851968",
+              "requestData": {
+                "cancellationPolicySnapshot": {
+                  "tiers": {
+                    "tiers": [
+                      {
+                        "hoursBeforeDepartureGte": "168",
+                        "refundPct": "1"
+                      },
+                      {
+                        "hoursBeforeDepartureGte": "24",
+                        "refundPct": "0.5"
+                      },
+                      {
+                        "hoursBeforeDepartureGte": "0",
+                        "refundPct": "0"
+                      }
+                    ]
+                  },
+                  "notesTemplateUuid": null,
+                  "description": "Drive smile others listen quality international stand citizen media body meeting expect material tend main.",
+                  "label": "Premium Economy Fare Cancellation",
+                  "contentHash": "b161d765b3089e5e",
+                  "policyUuid": "14167382355785826432",
+                  "snapshottedAt": "2026-06-17 22:47:01.822245"
+                }
+              }
+            },
+            {
+              "quoteItemUuid": "82938277840295051392",
+              "quoteUuid": "25579080753713528960",
+              "requestData": null
+            },
+            {
+              "quoteItemUuid": "93061245321898639488",
+              "quoteUuid": "06265305898006102144",
+              "requestData": {
+                "cancellationPolicySnapshot": {
+                  "tiers": {
+                    "tiers": [
+                      {
+                        "hoursBeforeDepartureGte": "168",
+                        "refundPct": "1"
+                      },
+                      {
+                        "hoursBeforeDepartureGte": "24",
+                        "refundPct": "0.5"
+                      },
+                      {
+                        "hoursBeforeDepartureGte": "0",
+                        "refundPct": "0"
+                      }
+                    ]
+                  },
+                  "notesTemplateUuid": null,
+                  "description": "Drive smile others listen quality international stand citizen media body meeting expect material tend main.",
+                  "label": "Premium Economy Fare Cancellation",
+                  "contentHash": "b161d765b3089e5e",
+                  "policyUuid": "14167382355785826432",
+                  "snapshottedAt": "2026-06-18 16:40:57.746305"
+                }
+              }
+            },
+            {
+              "quoteItemUuid": "60827135355000995968",
+              "quoteUuid": "84988149065228238976",
+              "requestData": null
+            },
+            {
+              "quoteItemUuid": "27770886117546541184",
+              "quoteUuid": "79693618463698337920",
+              "requestData": null
+            },
+            {
+              "quoteItemUuid": "32133895692264423552",
+              "quoteUuid": "79693618463698337920",
+              "requestData": null
+            },
+            {
+              "quoteItemUuid": "48324336902678265984",
+              "quoteUuid": "79693618463698337920",
+              "requestData": null
+            },
+            {
+              "quoteItemUuid": "59084417802051797120",
+              "quoteUuid": "77141716998417301632",
+              "requestData": {
+                "cancellationPolicySnapshot": {
+                  "tiers": {
+                    "tiers": [
+                      {
+                        "hoursBeforeDepartureGte": "168",
+                        "refundPct": "1"
+                      },
+                      {
+                        "hoursBeforeDepartureGte": "24",
+                        "refundPct": "0.5"
+                      },
+                      {
+                        "hoursBeforeDepartureGte": "0",
+                        "refundPct": "0"
+                      }
+                    ]
+                  },
+                  "notesTemplateUuid": null,
+                  "description": "Drive smile others listen quality international stand citizen media body meeting expect material tend main.",
+                  "label": "Premium Economy Fare Cancellation",
+                  "contentHash": "b161d765b3089e5e",
+                  "policyUuid": "14167382355785826432",
+                  "snapshottedAt": "2026-06-18 16:17:23.869985"
+                }
+              }
+            },
+            {
+              "quoteItemUuid": "86175401676691751040",
+              "quoteUuid": "60187438571235328128",
+              "requestData": {
+                "cancellationPolicySnapshot": {
+                  "tiers": {
+                    "tiers": [
+                      {
+                        "hoursBeforeDepartureGte": "168",
+                        "refundPct": "1"
+                      },
+                      {
+                        "hoursBeforeDepartureGte": "24",
+                        "refundPct": "0.5"
+                      },
+                      {
+                        "hoursBeforeDepartureGte": "0",
+                        "refundPct": "0"
+                      }
+                    ]
+                  },
+                  "notesTemplateUuid": null,
+                  "description": "Drive smile others listen quality international stand citizen media body meeting expect material tend main.",
+                  "label": "Premium Economy Fare Cancellation",
+                  "contentHash": "b161d765b3089e5e",
+                  "policyUuid": "14167382355785826432",
+                  "snapshottedAt": "2026-06-18 20:54:11.033118"
+                }
+              }
+            },
+            {
+              "quoteItemUuid": "17016283091299221632",
+              "quoteUuid": "30256741032799518848",
+              "requestData": {
+                "cancellationPolicySnapshot": {
+                  "tiers": {
+                    "tiers": [
+                      {
+                        "hoursBeforeDepartureGte": "24",
+                        "refundPct": "1"
+                      },
+                      {
+                        "hoursBeforeDepartureGte": "2",
+                        "refundPct": "0.5"
+                      },
+                      {
+                        "hoursBeforeDepartureGte": "0",
+                        "refundPct": "0"
+                      }
+                    ]
+                  },
+                  "notesTemplateUuid": null,
+                  "description": "War say hit test despite case cause law.",
+                  "label": "Business Fare Cancellation",
+                  "contentHash": "635b056adb04e9e9",
+                  "policyUuid": "70591963290008567936",
+                  "snapshottedAt": "2026-06-17 20:46:11.457426"
+                }
+              }
+            },
+            {
+              "quoteItemUuid": "76246703758155726976",
+              "quoteUuid": "17085938257088233600",
+              "requestData": {
+                "cancellationPolicySnapshot": {
+                  "tiers": {
+                    "tiers": [
+                      {
+                        "hoursBeforeDepartureGte": "168",
+                        "refundPct": "1"
+                      },
+                      {
+                        "hoursBeforeDepartureGte": "24",
+                        "refundPct": "0.5"
+                      },
+                      {
+                        "hoursBeforeDepartureGte": "0",
+                        "refundPct": "0"
+                      }
+                    ]
+                  },
+                  "notesTemplateUuid": null,
+                  "description": "Drive smile others listen quality international stand citizen media body meeting expect material tend main.",
+                  "label": "Premium Economy Fare Cancellation",
+                  "contentHash": "b161d765b3089e5e",
+                  "policyUuid": "14167382355785826432",
+                  "snapshottedAt": "2026-06-18 16:54:32.021679"
+                }
+              }
+            },
+            {
+              "quoteItemUuid": "01595900708246274176",
+              "quoteUuid": "87693521885660725376",
+              "requestData": {
+                "cancellationPolicySnapshot": {
+                  "tiers": {
+                    "tiers": [
+                      {
+                        "hoursBeforeDepartureGte": "168",
+                        "refundPct": "1"
+                      },
+                      {
+                        "hoursBeforeDepartureGte": "24",
+                        "refundPct": "0.5"
+                      },
+                      {
+                        "hoursBeforeDepartureGte": "0",
+                        "refundPct": "0"
+                      }
+                    ]
+                  },
+                  "notesTemplateUuid": null,
+                  "description": "Drive smile others listen quality international stand citizen media body meeting expect material tend main.",
+                  "label": "Premium Economy Fare Cancellation",
+                  "contentHash": "b161d765b3089e5e",
+                  "policyUuid": "14167382355785826432",
+                  "snapshottedAt": "2026-06-17 22:46:23.301903"
+                }
+              }
+            },
+            {
+              "quoteItemUuid": "07969309718906683520",
+              "quoteUuid": "98513172062733877376",
+              "requestData": {
+                "cancellationPolicySnapshot": {
+                  "tiers": {
+                    "tiers": [
+                      {
+                        "hoursBeforeDepartureGte": "168",
+                        "refundPct": "1"
+                      },
+                      {
+                        "hoursBeforeDepartureGte": "24",
+                        "refundPct": "0.5"
+                      },
+                      {
+                        "hoursBeforeDepartureGte": "0",
+                        "refundPct": "0"
+                      }
+                    ]
+                  },
+                  "notesTemplateUuid": null,
+                  "description": "Drive smile others listen quality international stand citizen media body meeting expect material tend main.",
+                  "label": "Premium Economy Fare Cancellation",
+                  "contentHash": "b161d765b3089e5e",
+                  "policyUuid": "14167382355785826432",
+                  "snapshottedAt": "2026-06-01 22:46:23.109888"
+                }
+              }
+            },
+            {
+              "quoteItemUuid": "91177837278457249920",
+              "quoteUuid": "98513172062733877376",
+              "requestData": {
+                "cancellationPolicySnapshot": {
+                  "tiers": {
+                    "tiers": [
+                      {
+                        "hoursBeforeDepartureGte": "168",
+                        "refundPct": "1"
+                      },
+                      {
+                        "hoursBeforeDepartureGte": "24",
+                        "refundPct": "0.5"
+                      },
+                      {
+                        "hoursBeforeDepartureGte": "0",
+                        "refundPct": "0"
+                      }
+                    ]
+                  },
+                  "notesTemplateUuid": null,
+                  "description": "Drive smile others listen quality international stand citizen media body meeting expect material tend main.",
+                  "label": "Premium Economy Fare Cancellation",
+                  "contentHash": "b161d765b3089e5e",
+                  "policyUuid": "14167382355785826432",
+                  "snapshottedAt": "2026-06-01 22:43:50.906410"
+                }
+              }
+            },
+            {
+              "quoteItemUuid": "22634389049036521600",
+              "quoteUuid": "28968787357267411072",
+              "requestData": {
+                "cancellationPolicySnapshot": {
+                  "tiers": {
+                    "tiers": [
+                      {
+                        "hoursBeforeDepartureGte": "168",
+                        "refundPct": "1"
+                      },
+                      {
+                        "hoursBeforeDepartureGte": "24",
+                        "refundPct": "0.5"
+                      },
+                      {
+                        "hoursBeforeDepartureGte": "0",
+                        "refundPct": "0"
+                      }
+                    ]
+                  },
+                  "notesTemplateUuid": null,
+                  "description": "Drive smile others listen quality international stand citizen media body meeting expect material tend main.",
+                  "label": "Premium Economy Fare Cancellation",
+                  "contentHash": "b161d765b3089e5e",
+                  "policyUuid": "14167382355785826432",
+                  "snapshottedAt": "2026-06-18 21:18:54.115983"
+                }
+              }
+            },
+            {
+              "quoteItemUuid": "13595662195546407040",
+              "quoteUuid": "82681485742934343808",
+              "requestData": {
+                "cancellationPolicySnapshot": {
+                  "tiers": {
+                    "tiers": [
+                      {
+                        "hoursBeforeDepartureGte": "168",
+                        "refundPct": "1"
+                      },
+                      {
+                        "hoursBeforeDepartureGte": "24",
+                        "refundPct": "0.5"
+                      },
+                      {
+                        "hoursBeforeDepartureGte": "0",
+                        "refundPct": "0"
+                      }
+                    ]
+                  },
+                  "notesTemplateUuid": null,
+                  "description": "Drive smile others listen quality international stand citizen media body meeting expect material tend main.",
+                  "label": "Premium Economy Fare Cancellation",
+                  "contentHash": "b161d765b3089e5e",
+                  "policyUuid": "14167382355785826432",
+                  "snapshottedAt": "2026-06-18 21:14:30.566505"
+                }
+              }
+            },
+            {
+              "quoteItemUuid": "37674073910669230208",
+              "quoteUuid": "24933966679596089472",
+              "requestData": {
+                "cancellationPolicySnapshot": {
+                  "tiers": {
+                    "tiers": [
+                      {
+                        "hoursBeforeDepartureGte": "168",
+                        "refundPct": "1"
+                      },
+                      {
+                        "hoursBeforeDepartureGte": "24",
+                        "refundPct": "0.5"
+                      },
+                      {
+                        "hoursBeforeDepartureGte": "0",
+                        "refundPct": "0"
+                      }
+                    ]
+                  },
+                  "notesTemplateUuid": null,
+                  "description": "Drive smile others listen quality international stand citizen media body meeting expect material tend main.",
+                  "label": "Premium Economy Fare Cancellation",
+                  "contentHash": "b161d765b3089e5e",
+                  "policyUuid": "14167382355785826432",
+                  "snapshottedAt": "2026-06-01 22:43:52.867254"
+                }
+              }
+            },
+            {
+              "quoteItemUuid": "98236508184899502208",
+              "quoteUuid": "24933966679596089472",
+              "requestData": {
+                "cancellationPolicySnapshot": {
+                  "tiers": {
+                    "tiers": [
+                      {
+                        "hoursBeforeDepartureGte": "168",
+                        "refundPct": "1"
+                      },
+                      {
+                        "hoursBeforeDepartureGte": "24",
+                        "refundPct": "0.5"
+                      },
+                      {
+                        "hoursBeforeDepartureGte": "0",
+                        "refundPct": "0"
+                      }
+                    ]
+                  },
+                  "notesTemplateUuid": null,
+                  "description": "Drive smile others listen quality international stand citizen media body meeting expect material tend main.",
+                  "label": "Premium Economy Fare Cancellation",
+                  "contentHash": "b161d765b3089e5e",
+                  "policyUuid": "14167382355785826432",
+                  "snapshottedAt": "2026-06-01 22:46:25.131329"
+                }
+              }
+            },
+            {
+              "quoteItemUuid": "07397037140436074624",
+              "quoteUuid": "00590008742461849728",
+              "requestData": {
+                "cancellationPolicySnapshot": {
+                  "tiers": {
+                    "tiers": [
+                      {
+                        "hoursBeforeDepartureGte": "24",
+                        "refundPct": "1"
+                      },
+                      {
+                        "hoursBeforeDepartureGte": "2",
+                        "refundPct": "0.5"
+                      },
+                      {
+                        "hoursBeforeDepartureGte": "0",
+                        "refundPct": "0"
+                      }
+                    ]
+                  },
+                  "notesTemplateUuid": null,
+                  "description": "Method ago point husband writer safe room.",
+                  "label": "First Fare Cancellation",
+                  "contentHash": "a8c9cd217038c785",
+                  "policyUuid": "84448716643260973184",
+                  "snapshottedAt": "2026-06-22 03:43:48.345402"
+                }
+              }
+            },
+            {
+              "quoteItemUuid": "17016569810043027584",
+              "quoteUuid": "58349990864728637568",
+              "requestData": {
+                "cancellationPolicySnapshot": {
+                  "tiers": {
+                    "tiers": [
+                      {
+                        "hoursBeforeDepartureGte": "24",
+                        "refundPct": "1"
+                      },
+                      {
+                        "hoursBeforeDepartureGte": "2",
+                        "refundPct": "0.5"
+                      },
+                      {
+                        "hoursBeforeDepartureGte": "0",
+                        "refundPct": "0"
+                      }
+                    ]
+                  },
+                  "notesTemplateUuid": null,
+                  "description": "Among particularly environmental floor phone believe right movement call surface seat.",
+                  "label": "Business Fare Cancellation",
+                  "contentHash": "93358a903433539e",
+                  "policyUuid": "76774285928943337600",
+                  "snapshottedAt": "2026-06-21 23:51:17.420965"
+                }
+              }
+            },
+            {
+              "quoteItemUuid": "10296542844304769152",
+              "quoteUuid": "57219996349268770944",
+              "requestData": {
+                "cancellationPolicySnapshot": {
+                  "tiers": {
+                    "tiers": [
+                      {
+                        "hoursBeforeDepartureGte": "168",
+                        "refundPct": "1"
+                      },
+                      {
+                        "hoursBeforeDepartureGte": "24",
+                        "refundPct": "0.5"
+                      },
+                      {
+                        "hoursBeforeDepartureGte": "0",
+                        "refundPct": "0"
+                      }
+                    ]
+                  },
+                  "notesTemplateUuid": null,
+                  "description": "Drive smile others listen quality international stand citizen media body meeting expect material tend main.",
+                  "label": "Premium Economy Fare Cancellation",
+                  "contentHash": "b161d765b3089e5e",
+                  "policyUuid": "14167382355785826432",
+                  "snapshottedAt": "2026-06-18 21:04:54.852965"
+                }
+              }
+            },
+            {
+              "quoteItemUuid": "15461064978780405888",
+              "quoteUuid": "94434537109412921472",
+              "requestData": {
+                "cancellationPolicySnapshot": {
+                  "tiers": {
+                    "tiers": [
+                      {
+                        "hoursBeforeDepartureGte": "168",
+                        "refundPct": "1"
+                      },
+                      {
+                        "hoursBeforeDepartureGte": "24",
+                        "refundPct": "0.5"
+                      },
+                      {
+                        "hoursBeforeDepartureGte": "0",
+                        "refundPct": "0"
+                      }
+                    ]
+                  },
+                  "notesTemplateUuid": null,
+                  "description": "Drive smile others listen quality international stand citizen media body meeting expect material tend main.",
+                  "label": "Premium Economy Fare Cancellation",
+                  "contentHash": "b161d765b3089e5e",
+                  "policyUuid": "14167382355785826432",
+                  "snapshottedAt": "2026-06-18 16:30:24.412526"
+                }
+              }
+            },
+            {
+              "quoteItemUuid": "71842741285999886464",
+              "quoteUuid": "43726892810135158912",
+              "requestData": {
+                "cancellationPolicySnapshot": {
+                  "tiers": {
+                    "tiers": [
+                      {
+                        "hoursBeforeDepartureGte": "24",
+                        "refundPct": "1"
+                      },
+                      {
+                        "hoursBeforeDepartureGte": "2",
+                        "refundPct": "0.5"
+                      },
+                      {
+                        "hoursBeforeDepartureGte": "0",
+                        "refundPct": "0"
+                      }
+                    ]
+                  },
+                  "notesTemplateUuid": null,
+                  "description": "War say hit test despite case cause law.",
+                  "label": "Business Fare Cancellation",
+                  "contentHash": "635b056adb04e9e9",
+                  "policyUuid": "70591963290008567936",
+                  "snapshottedAt": "2026-06-17 22:29:12.393043"
+                }
+              }
+            },
+            {
+              "quoteItemUuid": "20287444850677137536",
+              "quoteUuid": "65236276464333111424",
+              "requestData": null
+            },
+            {
+              "quoteItemUuid": "51028230258845302912",
+              "quoteUuid": "31958872949267644544",
+              "requestData": null
+            },
+            {
+              "quoteItemUuid": "22401735113777889408",
+              "quoteUuid": "06086118673104257152",
+              "requestData": {
+                "cancellationPolicySnapshot": {
+                  "tiers": {
+                    "tiers": [
+                      {
+                        "hoursBeforeDepartureGte": "168",
+                        "refundPct": "1"
+                      },
+                      {
+                        "hoursBeforeDepartureGte": "24",
+                        "refundPct": "0.5"
+                      },
+                      {
+                        "hoursBeforeDepartureGte": "0",
+                        "refundPct": "0"
+                      }
+                    ]
+                  },
+                  "notesTemplateUuid": null,
+                  "description": "Drive smile others listen quality international stand citizen media body meeting expect material tend main.",
+                  "label": "Premium Economy Fare Cancellation",
+                  "contentHash": "b161d765b3089e5e",
+                  "policyUuid": "14167382355785826432",
+                  "snapshottedAt": "2026-06-18 16:56:04.365526"
+                }
+              }
+            },
+            {
+              "quoteItemUuid": "21821056590041596032",
+              "quoteUuid": "22326271210615226496",
+              "requestData": {
+                "cancellationPolicySnapshot": {
+                  "tiers": {
+                    "tiers": [
+                      {
+                        "hoursBeforeDepartureGte": "168",
+                        "refundPct": "1"
+                      },
+                      {
+                        "hoursBeforeDepartureGte": "24",
+                        "refundPct": "0.5"
+                      },
+                      {
+                        "hoursBeforeDepartureGte": "0",
+                        "refundPct": "0"
+                      }
+                    ]
+                  },
+                  "notesTemplateUuid": null,
+                  "description": "Drive smile others listen quality international stand citizen media body meeting expect material tend main.",
+                  "label": "Premium Economy Fare Cancellation",
+                  "contentHash": "b161d765b3089e5e",
+                  "policyUuid": "14167382355785826432",
+                  "snapshottedAt": "2026-06-18 16:26:14.131882"
+                }
+              }
+            },
+            {
+              "quoteItemUuid": "74546247869428416640",
+              "quoteUuid": "10376715591950024832",
+              "requestData": {
+                "cancellationPolicySnapshot": {
+                  "tiers": {
+                    "tiers": [
+                      {
+                        "hoursBeforeDepartureGte": "168",
+                        "refundPct": "1"
+                      },
+                      {
+                        "hoursBeforeDepartureGte": "24",
+                        "refundPct": "0.5"
+                      },
+                      {
+                        "hoursBeforeDepartureGte": "0",
+                        "refundPct": "0"
+                      }
+                    ]
+                  },
+                  "notesTemplateUuid": null,
+                  "description": "Drive smile others listen quality international stand citizen media body meeting expect material tend main.",
+                  "label": "Premium Economy Fare Cancellation",
+                  "contentHash": "b161d765b3089e5e",
+                  "policyUuid": "14167382355785826432",
+                  "snapshottedAt": "2026-06-17 22:52:32.527729"
+                }
+              }
+            },
+            {
+              "quoteItemUuid": "21607539265538900096",
+              "quoteUuid": "53829765503716966528",
+              "requestData": null
+            },
+            {
+              "quoteItemUuid": "30547526170021216384",
+              "quoteUuid": "75080726366953422976",
+              "requestData": {
+                "cancellationPolicySnapshot": {
+                  "tiers": {
+                    "tiers": [
+                      {
+                        "hoursBeforeDepartureGte": "168",
+                        "refundPct": "1"
+                      },
+                      {
+                        "hoursBeforeDepartureGte": "24",
+                        "refundPct": "0.5"
+                      },
+                      {
+                        "hoursBeforeDepartureGte": "0",
+                        "refundPct": "0"
+                      }
+                    ]
+                  },
+                  "notesTemplateUuid": null,
+                  "description": "Drive smile others listen quality international stand citizen media body meeting expect material tend main.",
+                  "label": "Premium Economy Fare Cancellation",
+                  "contentHash": "b161d765b3089e5e",
+                  "policyUuid": "14167382355785826432",
+                  "snapshottedAt": "2026-06-01 22:43:51.881865"
+                }
+              }
+            },
+            {
+              "quoteItemUuid": "65846549217009483904",
+              "quoteUuid": "75080726366953422976",
+              "requestData": {
+                "cancellationPolicySnapshot": {
+                  "tiers": {
+                    "tiers": [
+                      {
+                        "hoursBeforeDepartureGte": "168",
+                        "refundPct": "1"
+                      },
+                      {
+                        "hoursBeforeDepartureGte": "24",
+                        "refundPct": "0.5"
+                      },
+                      {
+                        "hoursBeforeDepartureGte": "0",
+                        "refundPct": "0"
+                      }
+                    ]
+                  },
+                  "notesTemplateUuid": null,
+                  "description": "Drive smile others listen quality international stand citizen media body meeting expect material tend main.",
+                  "label": "Premium Economy Fare Cancellation",
+                  "contentHash": "b161d765b3089e5e",
+                  "policyUuid": "14167382355785826432",
+                  "snapshottedAt": "2026-06-01 22:46:24.102273"
+                }
+              }
+            },
+            {
+              "quoteItemUuid": "60947779701000126592",
+              "quoteUuid": "54736353505707049088",
+              "requestData": null
+            },
+            {
+              "quoteItemUuid": "34326799681299955840",
+              "quoteUuid": "86833326763387404416",
+              "requestData": {
+                "cancellationPolicySnapshot": {
+                  "tiers": {
+                    "tiers": [
+                      {
+                        "refundPct": "1",
+                        "daysBeforeServiceGte": "14"
+                      },
+                      {
+                        "refundPct": "0",
+                        "daysBeforeServiceGte": "0"
+                      }
+                    ]
+                  },
+                  "notesTemplateUuid": null,
+                  "description": null,
+                  "label": null,
+                  "contentHash": "4abc2ed78b5c7001",
+                  "policyUuid": "11673445109914943616",
+                  "snapshottedAt": "2026-06-21 21:46:07.763467"
+                }
+              }
+            },
+            {
+              "quoteItemUuid": "32264946806783230080",
+              "quoteUuid": "72878111383758061696",
+              "requestData": {
+                "cancellationPolicySnapshot": {
+                  "tiers": {
+                    "tiers": [
+                      {
+                        "hoursBeforeDepartureGte": "168",
+                        "refundPct": "1"
+                      },
+                      {
+                        "hoursBeforeDepartureGte": "24",
+                        "refundPct": "0.5"
+                      },
+                      {
+                        "hoursBeforeDepartureGte": "0",
+                        "refundPct": "0"
+                      }
+                    ]
+                  },
+                  "notesTemplateUuid": null,
+                  "description": "Drive smile others listen quality international stand citizen media body meeting expect material tend main.",
+                  "label": "Premium Economy Fare Cancellation",
+                  "contentHash": "b161d765b3089e5e",
+                  "policyUuid": "14167382355785826432",
+                  "snapshottedAt": "2026-06-17 22:51:53.244344"
+                }
+              }
+            },
+            {
+              "quoteItemUuid": "13439193192743321728",
+              "quoteUuid": "56414101690191462528",
+              "requestData": {
+                "cancellationPolicySnapshot": {
+                  "tiers": {
+                    "tiers": [
+                      {
+                        "hoursBeforeDepartureGte": "168",
+                        "refundPct": "1"
+                      },
+                      {
+                        "hoursBeforeDepartureGte": "24",
+                        "refundPct": "0.5"
+                      },
+                      {
+                        "hoursBeforeDepartureGte": "0",
+                        "refundPct": "0"
+                      }
+                    ]
+                  },
+                  "notesTemplateUuid": null,
+                  "description": "Drive smile others listen quality international stand citizen media body meeting expect material tend main.",
+                  "label": "Premium Economy Fare Cancellation",
+                  "contentHash": "b161d765b3089e5e",
+                  "policyUuid": "14167382355785826432",
+                  "snapshottedAt": "2026-06-18 20:57:08.963322"
+                }
+              }
+            },
+            {
+              "quoteItemUuid": "36390210333112811648",
+              "quoteUuid": "53638073952415793280",
+              "requestData": null
+            },
+            {
+              "quoteItemUuid": "53328234700545736832",
+              "quoteUuid": "53638073952415793280",
+              "requestData": null
+            },
+            {
+              "quoteItemUuid": "53444613485607534720",
+              "quoteUuid": "53638073952415793280",
+              "requestData": null
+            },
+            {
+              "quoteItemUuid": "98128522275909025920",
+              "quoteUuid": "30367734106097205376",
+              "requestData": {
+                "cancellationPolicySnapshot": {
+                  "tiers": {
+                    "tiers": [
+                      {
+                        "hoursBeforeDepartureGte": "168",
+                        "refundPct": "1"
+                      },
+                      {
+                        "hoursBeforeDepartureGte": "24",
+                        "refundPct": "0.5"
+                      },
+                      {
+                        "hoursBeforeDepartureGte": "0",
+                        "refundPct": "0"
+                      }
+                    ]
+                  },
+                  "notesTemplateUuid": null,
+                  "description": "Commercial treatment wonder ago government while spend soon else.",
+                  "label": "Premium Economy Fare Cancellation",
+                  "contentHash": "91c5824ec27640e1",
+                  "policyUuid": "73636103301303910528",
+                  "snapshottedAt": "2026-06-22 03:43:52.489519"
+                }
+              }
+            },
+            {
+              "quoteItemUuid": "64578868451963060352",
+              "quoteUuid": "38519946161268211840",
+              "requestData": {
+                "cancellationPolicySnapshot": {
+                  "tiers": {
+                    "tiers": [
+                      {
+                        "hoursBeforeDepartureGte": "168",
+                        "refundPct": "1"
+                      },
+                      {
+                        "hoursBeforeDepartureGte": "24",
+                        "refundPct": "0.5"
+                      },
+                      {
+                        "hoursBeforeDepartureGte": "0",
+                        "refundPct": "0"
+                      }
+                    ]
+                  },
+                  "notesTemplateUuid": null,
+                  "description": "Drive smile others listen quality international stand citizen media body meeting expect material tend main.",
+                  "label": "Premium Economy Fare Cancellation",
+                  "contentHash": "b161d765b3089e5e",
+                  "policyUuid": "14167382355785826432",
+                  "snapshottedAt": "2026-06-18 20:35:40.200028"
+                }
+              }
+            },
+            {
+              "quoteItemUuid": "19822374605358645376",
+              "quoteUuid": "51485446173562519680",
+              "requestData": {
+                "cancellationPolicySnapshot": {
+                  "tiers": {
+                    "tiers": [
+                      {
+                        "hoursBeforeDepartureGte": "168",
+                        "refundPct": "1"
+                      },
+                      {
+                        "hoursBeforeDepartureGte": "24",
+                        "refundPct": "0.5"
+                      },
+                      {
+                        "hoursBeforeDepartureGte": "0",
+                        "refundPct": "0"
+                      }
+                    ]
+                  },
+                  "notesTemplateUuid": null,
+                  "description": "Arrive get financial subject person better political ground along continue natural chair religious like money cell.",
+                  "label": "Economy Fare Cancellation",
+                  "contentHash": "5a29e5fb9ddcfc65",
+                  "policyUuid": "45519135682445983872",
+                  "snapshottedAt": "2026-06-01 22:43:49.910079"
+                }
+              }
+            },
+            {
+              "quoteItemUuid": "73631515167125684352",
+              "quoteUuid": "51485446173562519680",
+              "requestData": {
+                "cancellationPolicySnapshot": {
+                  "tiers": {
+                    "tiers": [
+                      {
+                        "hoursBeforeDepartureGte": "168",
+                        "refundPct": "1"
+                      },
+                      {
+                        "hoursBeforeDepartureGte": "24",
+                        "refundPct": "0.5"
+                      },
+                      {
+                        "hoursBeforeDepartureGte": "0",
+                        "refundPct": "0"
+                      }
+                    ]
+                  },
+                  "notesTemplateUuid": null,
+                  "description": "Arrive get financial subject person better political ground along continue natural chair religious like money cell.",
+                  "label": "Economy Fare Cancellation",
+                  "contentHash": "5a29e5fb9ddcfc65",
+                  "policyUuid": "45519135682445983872",
+                  "snapshottedAt": "2026-06-01 22:46:22.028069"
+                }
+              }
+            },
+            {
+              "quoteItemUuid": "93812712643569401984",
+              "quoteUuid": "59882695090073780352",
+              "requestData": {
+                "cancellationPolicySnapshot": {
+                  "tiers": {
+                    "tiers": [
+                      {
+                        "hoursBeforeDepartureGte": "168",
+                        "refundPct": "1"
+                      },
+                      {
+                        "hoursBeforeDepartureGte": "24",
+                        "refundPct": "0.5"
+                      },
+                      {
+                        "hoursBeforeDepartureGte": "0",
+                        "refundPct": "0"
+                      }
+                    ]
+                  },
+                  "notesTemplateUuid": null,
+                  "description": "Drive smile others listen quality international stand citizen media body meeting expect material tend main.",
+                  "label": "Premium Economy Fare Cancellation",
+                  "contentHash": "b161d765b3089e5e",
+                  "policyUuid": "14167382355785826432",
+                  "snapshottedAt": "2026-06-17 22:44:48.564014"
+                }
+              }
+            },
+            {
+              "quoteItemUuid": "38259975739772256384",
+              "quoteUuid": "79659630911987662976",
+              "requestData": {
+                "cancellationPolicySnapshot": {
+                  "tiers": {
+                    "tiers": [
+                      {
+                        "hoursBeforeDepartureGte": "168",
+                        "refundPct": "1"
+                      },
+                      {
+                        "hoursBeforeDepartureGte": "24",
+                        "refundPct": "0.5"
+                      },
+                      {
+                        "hoursBeforeDepartureGte": "0",
+                        "refundPct": "0"
+                      }
+                    ]
+                  },
+                  "notesTemplateUuid": null,
+                  "description": "Drive smile others listen quality international stand citizen media body meeting expect material tend main.",
+                  "label": "Premium Economy Fare Cancellation",
+                  "contentHash": "b161d765b3089e5e",
+                  "policyUuid": "14167382355785826432",
+                  "snapshottedAt": "2026-06-18 20:34:04.224913"
+                }
+              }
+            },
+            {
+              "quoteItemUuid": "09695339577646006400",
+              "quoteUuid": "73511615923161677952",
+              "requestData": null
+            },
+            {
+              "quoteItemUuid": "99454590485884059776",
+              "quoteUuid": "39549219814635487360",
+              "requestData": {
+                "cancellationPolicySnapshot": {
+                  "tiers": {
+                    "tiers": [
+                      {
+                        "hoursBeforeDepartureGte": "168",
+                        "refundPct": "1"
+                      },
+                      {
+                        "hoursBeforeDepartureGte": "24",
+                        "refundPct": "0.5"
+                      },
+                      {
+                        "hoursBeforeDepartureGte": "0",
+                        "refundPct": "0"
+                      }
+                    ]
+                  },
+                  "notesTemplateUuid": null,
+                  "description": "Drive smile others listen quality international stand citizen media body meeting expect material tend main.",
+                  "label": "Premium Economy Fare Cancellation",
+                  "contentHash": "b161d765b3089e5e",
+                  "policyUuid": "14167382355785826432",
+                  "snapshottedAt": "2026-06-17 22:38:30.267906"
+                }
+              }
+            },
+            {
+              "quoteItemUuid": "11691158645926543488",
+              "quoteUuid": "46408735338345283712",
+              "requestData": {
+                "cancellationPolicySnapshot": {
+                  "tiers": {
+                    "tiers": [
+                      {
+                        "hoursBeforeDepartureGte": "168",
+                        "refundPct": "1"
+                      },
+                      {
+                        "hoursBeforeDepartureGte": "24",
+                        "refundPct": "0.5"
+                      },
+                      {
+                        "hoursBeforeDepartureGte": "0",
+                        "refundPct": "0"
+                      }
+                    ]
+                  },
+                  "notesTemplateUuid": null,
+                  "description": "Drive smile others listen quality international stand citizen media body meeting expect material tend main.",
+                  "label": "Premium Economy Fare Cancellation",
+                  "contentHash": "b161d765b3089e5e",
+                  "policyUuid": "14167382355785826432",
+                  "snapshottedAt": "2026-06-18 21:17:22.008538"
+                }
+              }
+            },
+            {
+              "quoteItemUuid": "38031674089967468672",
+              "quoteUuid": "90871222124412944512",
+              "requestData": {
+                "cancellationPolicySnapshot": {
+                  "tiers": {
+                    "tiers": [
+                      {
+                        "hoursBeforeDepartureGte": "168",
+                        "refundPct": "1"
+                      },
+                      {
+                        "hoursBeforeDepartureGte": "24",
+                        "refundPct": "0.5"
+                      },
+                      {
+                        "hoursBeforeDepartureGte": "0",
+                        "refundPct": "0"
+                      }
+                    ]
+                  },
+                  "notesTemplateUuid": null,
+                  "description": "Drive smile others listen quality international stand citizen media body meeting expect material tend main.",
+                  "label": "Premium Economy Fare Cancellation",
+                  "contentHash": "b161d765b3089e5e",
+                  "policyUuid": "14167382355785826432",
+                  "snapshottedAt": "2026-06-18 04:38:51.247958"
+                }
+              }
+            },
+            {
+              "quoteItemUuid": "09633025582690222208",
+              "quoteUuid": "44616066019679551616",
+              "requestData": {
+                "cancellationPolicySnapshot": {
+                  "tiers": {
+                    "tiers": [
+                      {
+                        "hoursBeforeDepartureGte": "24",
+                        "refundPct": "1"
+                      },
+                      {
+                        "hoursBeforeDepartureGte": "2",
+                        "refundPct": "0.5"
+                      },
+                      {
+                        "hoursBeforeDepartureGte": "0",
+                        "refundPct": "0"
+                      }
+                    ]
+                  },
+                  "notesTemplateUuid": null,
+                  "description": "Control few term gas scientist order forward significant section.",
+                  "label": "First Fare Cancellation",
+                  "contentHash": "dc4e0e9c1c22f352",
+                  "policyUuid": "80110819995149156480",
+                  "snapshottedAt": "2026-06-21 23:51:15.430061"
+                }
+              }
+            },
+            {
+              "quoteItemUuid": "55051226062314815616",
+              "quoteUuid": "90196658928596566144",
+              "requestData": {
+                "cancellationPolicySnapshot": {
+                  "tiers": {
+                    "tiers": [
+                      {
+                        "hoursBeforeDepartureGte": "168",
+                        "refundPct": "1"
+                      },
+                      {
+                        "hoursBeforeDepartureGte": "24",
+                        "refundPct": "0.5"
+                      },
+                      {
+                        "hoursBeforeDepartureGte": "0",
+                        "refundPct": "0"
+                      }
+                    ]
+                  },
+                  "notesTemplateUuid": null,
+                  "description": "Drive smile others listen quality international stand citizen media body meeting expect material tend main.",
+                  "label": "Premium Economy Fare Cancellation",
+                  "contentHash": "b161d765b3089e5e",
+                  "policyUuid": "14167382355785826432",
+                  "snapshottedAt": "2026-06-18 16:51:40.631461"
+                }
+              }
+            },
+            {
+              "quoteItemUuid": "18966439620173119616",
+              "quoteUuid": "88836315202799550592",
+              "requestData": {
+                "cancellationPolicySnapshot": {
+                  "tiers": {
+                    "tiers": [
+                      {
+                        "hoursBeforeDepartureGte": "24",
+                        "refundPct": "1"
+                      },
+                      {
+                        "hoursBeforeDepartureGte": "2",
+                        "refundPct": "0.5"
+                      },
+                      {
+                        "hoursBeforeDepartureGte": "0",
+                        "refundPct": "0"
+                      }
+                    ]
+                  },
+                  "notesTemplateUuid": null,
+                  "description": "Control few term gas scientist order forward significant section.",
+                  "label": "First Fare Cancellation",
+                  "contentHash": "dc4e0e9c1c22f352",
+                  "policyUuid": "80110819995149156480",
+                  "snapshottedAt": "2026-06-21 23:51:13.389260"
+                }
+              }
+            },
+            {
+              "quoteItemUuid": "36501421813084995712",
+              "quoteUuid": "88836315202799550592",
+              "requestData": {
+                "cancellationPolicySnapshot": {
+                  "tiers": {
+                    "tiers": [
+                      {
+                        "hoursBeforeDepartureGte": "24",
+                        "refundPct": "1"
+                      },
+                      {
+                        "hoursBeforeDepartureGte": "2",
+                        "refundPct": "0.5"
+                      },
+                      {
+                        "hoursBeforeDepartureGte": "0",
+                        "refundPct": "0"
+                      }
+                    ]
+                  },
+                  "notesTemplateUuid": null,
+                  "description": "Control few term gas scientist order forward significant section.",
+                  "label": "First Fare Cancellation",
+                  "contentHash": "dc4e0e9c1c22f352",
+                  "policyUuid": "80110819995149156480",
+                  "snapshottedAt": "2026-06-21 23:51:14.414371"
+                }
+              }
+            },
+            {
+              "quoteItemUuid": "40639655107457204352",
+              "quoteUuid": "90861560704607993984",
+              "requestData": {
+                "cancellationPolicySnapshot": {
+                  "tiers": {
+                    "tiers": [
+                      {
+                        "hoursBeforeDepartureGte": "24",
+                        "refundPct": "1"
+                      },
+                      {
+                        "hoursBeforeDepartureGte": "2",
+                        "refundPct": "0.5"
+                      },
+                      {
+                        "hoursBeforeDepartureGte": "0",
+                        "refundPct": "0"
+                      }
+                    ]
+                  },
+                  "notesTemplateUuid": null,
+                  "description": "Among particularly environmental floor phone believe right movement call surface seat.",
+                  "label": "Business Fare Cancellation",
+                  "contentHash": "93358a903433539e",
+                  "policyUuid": "76774285928943337600",
+                  "snapshottedAt": "2026-06-21 23:51:12.100195"
+                }
+              }
+            },
+            {
+              "quoteItemUuid": "98940758618528563328",
+              "quoteUuid": "70501841090293809280",
+              "requestData": {
+                "cancellationPolicySnapshot": {
+                  "tiers": {
+                    "tiers": [
+                      {
+                        "hoursBeforeDepartureGte": "168",
+                        "refundPct": "1"
+                      },
+                      {
+                        "hoursBeforeDepartureGte": "24",
+                        "refundPct": "0.5"
+                      },
+                      {
+                        "hoursBeforeDepartureGte": "0",
+                        "refundPct": "0"
+                      }
+                    ]
+                  },
+                  "notesTemplateUuid": null,
+                  "description": "Drive smile others listen quality international stand citizen media body meeting expect material tend main.",
+                  "label": "Premium Economy Fare Cancellation",
+                  "contentHash": "b161d765b3089e5e",
+                  "policyUuid": "14167382355785826432",
+                  "snapshottedAt": "2026-06-18 16:28:49.220664"
+                }
+              }
+            },
+            {
+              "quoteItemUuid": "67738978594449277056",
+              "quoteUuid": "97934283632753524864",
+              "requestData": {
+                "cancellationPolicySnapshot": {
+                  "tiers": {
+                    "tiers": [
+                      {
+                        "hoursBeforeDepartureGte": "24",
+                        "refundPct": "1"
+                      },
+                      {
+                        "hoursBeforeDepartureGte": "2",
+                        "refundPct": "0.5"
+                      },
+                      {
+                        "hoursBeforeDepartureGte": "0",
+                        "refundPct": "0"
+                      }
+                    ]
+                  },
+                  "notesTemplateUuid": null,
+                  "description": "War say hit test despite case cause law.",
+                  "label": "Business Fare Cancellation",
+                  "contentHash": "635b056adb04e9e9",
+                  "policyUuid": "70591963290008567936",
+                  "snapshottedAt": "2026-06-17 22:24:33.517747"
+                }
+              }
+            },
+            {
+              "quoteItemUuid": "26075200625179639936",
+              "quoteUuid": "10014866253261324416",
+              "requestData": null
+            },
+            {
+              "quoteItemUuid": "67280637522575638656",
+              "quoteUuid": "46818404653468762240",
+              "requestData": {
+                "cancellationPolicySnapshot": {
+                  "tiers": {
+                    "tiers": [
+                      {
+                        "hoursBeforeDepartureGte": "168",
+                        "refundPct": "1"
+                      },
+                      {
+                        "hoursBeforeDepartureGte": "24",
+                        "refundPct": "0.5"
+                      },
+                      {
+                        "hoursBeforeDepartureGte": "0",
+                        "refundPct": "0"
+                      }
+                    ]
+                  },
+                  "notesTemplateUuid": null,
+                  "description": "Drive smile others listen quality international stand citizen media body meeting expect material tend main.",
+                  "label": "Premium Economy Fare Cancellation",
+                  "contentHash": "b161d765b3089e5e",
+                  "policyUuid": "14167382355785826432",
+                  "snapshottedAt": "2026-06-18 04:38:08.633483"
+                }
+              }
+            },
+            {
+              "quoteItemUuid": "00224088982637527168",
+              "quoteUuid": "23192587828709048448",
+              "requestData": null
+            },
+            {
+              "quoteItemUuid": "02576411302125650048",
+              "quoteUuid": "18318134560484769920",
+              "requestData": {
+                "cancellationPolicySnapshot": {
+                  "tiers": {
+                    "tiers": [
+                      {
+                        "hoursBeforeDepartureGte": "168",
+                        "refundPct": "1"
+                      },
+                      {
+                        "hoursBeforeDepartureGte": "24",
+                        "refundPct": "0.5"
+                      },
+                      {
+                        "hoursBeforeDepartureGte": "0",
+                        "refundPct": "0"
+                      }
+                    ]
+                  },
+                  "notesTemplateUuid": null,
+                  "description": "Congress cold rather the do cultural there method rule police.",
+                  "label": "Economy Fare Cancellation",
+                  "contentHash": "b8346bc8dc73a30b",
+                  "policyUuid": "24523578811601666176",
+                  "snapshottedAt": "2026-06-21 23:51:16.482611"
+                }
+              }
+            }
+          ],
+          "total": 76
+        }
+      }
+    },
+    "ms": 659,
+    "status": "pass"
+  },
+  {
+    "sid": "INT-010 bundles",
+    "doc": "query BL($limit:Int){bundleList(limit:$limit){bundleList{bundleUuid bundleName bundleType}total}}",
+    "vars": {
+      "limit": 100
+    },
+    "resp": {
+      "data": {
+        "bundleList": {
+          "bundleList": [
+            {
+              "bundleUuid": "80092055917037633664",
+              "bundleName": "Flight Itinerary DFW->SIN + ATL->ORD + CDG->JFK",
+              "bundleType": "flight_itinerary"
+            },
+            {
+              "bundleUuid": "49956565412585947264",
+              "bundleName": "Flight Itinerary ATL->ORD + LAX->HKG + CDG->JFK",
+              "bundleType": "flight_itinerary"
+            },
+            {
+              "bundleUuid": "93368762935240835200",
+              "bundleName": "Flight Itinerary SYD->JFK + NRT->SFO + HKG->SYD",
+              "bundleType": "flight_itinerary"
+            },
+            {
+              "bundleUuid": "78062979082549739648",
+              "bundleName": "Flight Itinerary HKG->SYD + SFO->BOS + SYD->JFK",
+              "bundleType": "flight_itinerary"
+            },
+            {
+              "bundleUuid": "82121064754013290624",
+              "bundleName": "Flight Itinerary SFO->SYD + CDG->SFO + LAX->MIA",
+              "bundleType": "flight_itinerary"
+            },
+            {
+              "bundleUuid": "21965879857802920064",
+              "bundleName": "Flight Itinerary HKG->SFO + SFO->SYD + ATL->LAX",
+              "bundleType": "flight_itinerary"
+            }
+          ],
+          "total": 6
+        }
+      }
+    },
+    "ms": 463,
+    "status": "pass"
+  },
+  {
+    "sid": "P11 unknown item",
+    "doc": "query GI($uuid:String!){item(itemUuid:$uuid){itemUuid}}",
+    "vars": {
+      "uuid": "00000000-0000-0000-0000-000000000000"
+    },
+    "resp": {
+      "data": {
+        "item": null
+      }
+    },
+    "ms": 48,
+    "status": "pass"
+  },
+  {
+    "sid": "P11 unknown quote",
+    "doc": "query GQ($rid:String!,$qid:String!){quote(requestUuid:$rid,quoteUuid:$qid){quoteUuid}}",
+    "vars": {
+      "rid": "nonexistent-rid",
+      "qid": "nonexistent-qid"
+    },
+    "resp": {
+      "data": {
+        "quote": null
+      }
+    },
+    "ms": 61,
+    "status": "pass"
+  },
+  {
+    "sid": "P11 delete non-existent",
+    "doc": "mutation DI($uuid:String!){deleteItem(itemUuid:$uuid){ok}}",
+    "vars": {
+      "uuid": "00000000-0000-0000-0000-000000000000"
+    },
+    "resp": {
+      "errors": [
+        {
+          "message": "Item does not exist\n\nGraphQL request:1:28\n1 | mutation DI($uuid:String!){deleteItem(itemUuid:$uuid){ok}}\n  |                            ^"
+        }
+      ]
+    },
+    "ms": 15295,
+    "status": "pass",
+    "note": "DynamoDB returns errors (Item does not exist) for non-existent delete ? valid graceful handling, different from PostgreSQL (which returns ok=true)"
+  },
+  {
+    "sid": "P11 invalid quote_item",
+    "doc": "mutation CQI($qid:String!,$uuid:String!,$by:String!){insertUpdateQuoteItem(quoteUuid:$qid,quoteItemUuid:$uuid,updatedBy:$by){quoteItem{quoteItemUuid}}}",
+    "vars": {
+      "qid": "nonexistent-qid",
+      "uuid": "nonexistent-uuid",
+      "by": "test"
+    },
+    "resp": {
+      "errors": [
+        {
+          "message": "Cannot find the quote_item with the quote_uuid/quote_item_uuid (nonexistent-qid/nonexistent-uuid) at 20:45:41.\n\nGraphQL request:1:54\n1 | mutation CQI($qid:String!,$uuid:String!,$by:String!){insertUpdateQuoteItem(quote\n  |                                                      ^\n  | Uuid:$qid,quoteItemUuid:$uuid,updatedBy:$by){quoteItem{quoteItemUuid}}}"
+        }
+      ]
+    },
+    "ms": 64,
+    "status": "pass"
+  },
+  {
+    "sid": "P11 no match",
+    "doc": "query IL($type:String!,$limit:Int){itemList(itemType:$type,limit:$limit){itemList{itemUuid}total}}",
+    "vars": {
+      "type": "nonexistent_type_xyz",
+      "limit": 10
+    },
+    "resp": {
+      "data": {
+        "itemList": {
+          "itemList": [],
+          "total": 0
+        }
+      }
+    },
+    "ms": 52,
+    "status": "pass"
+  },
+  {
+    "sid": "P11 ping",
+    "doc": "query {ping}",
+    "vars": {},
+    "resp": {
+      "data": {
+        "ping": "Hello at 20:45:41!!"
+      }
+    },
+    "ms": 5,
+    "status": "pass"
+  }
+]
