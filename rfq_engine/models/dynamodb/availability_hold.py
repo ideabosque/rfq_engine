@@ -31,3 +31,15 @@ class AvailabilityHoldModel(BaseModel):
     updated_at = UTCDateTimeAttribute()
     updated_by = UnicodeAttribute()
 
+
+def get_availability_hold(
+    partition_key: str, hold_token: str
+) -> AvailabilityHoldModel:
+    return AvailabilityHoldModel.get(partition_key, hold_token)
+
+
+def get_availability_hold_count(partition_key: str, hold_token: str) -> int:
+    return AvailabilityHoldModel.count(
+        partition_key, AvailabilityHoldModel.hold_token == hold_token
+    )
+
