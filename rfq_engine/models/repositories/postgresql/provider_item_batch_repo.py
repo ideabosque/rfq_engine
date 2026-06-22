@@ -403,7 +403,7 @@ class ProviderItemBatchPGRepository(EntityRepository):
                 logger.error(traceback.format_exc())
             raise e
 
-    def get_type(self, info: ResolveInfo, row: Any) -> ProviderItemBatchType:
+    def get_type(self, info: ResolveInfo, row: Any) -> ProviderItemBatchType | None:
         """Convert a SQLAlchemy row to ProviderItemBatchType."""
         data = normalize_row(row)
         if data is None:

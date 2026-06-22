@@ -254,7 +254,7 @@ class QuotePGRepository(EntityRepository):
                 logger.error(traceback.format_exc())
             raise e
 
-    def get_type(self, info: ResolveInfo, row: Any) -> QuoteType:
+    def get_type(self, info: ResolveInfo, row: Any) -> QuoteType | None:
         """Convert a SQLAlchemy row to QuoteType."""
         data = normalize_row(row)
         if data is None:

@@ -242,7 +242,7 @@ class BundleComponentPGRepository(EntityRepository):
                 logger.error(traceback.format_exc())
             raise e
 
-    def get_type(self, info: ResolveInfo, row: Any) -> BundleComponentType:
+    def get_type(self, info: ResolveInfo, row: Any) -> BundleComponentType | None:
         """Convert a SQLAlchemy row to BundleComponentType."""
         data = normalize_row(row)
         if data is None:

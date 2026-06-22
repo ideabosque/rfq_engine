@@ -221,7 +221,7 @@ class ItemCatalogRefPGRepository(EntityRepository):
                 logger.error(traceback.format_exc())
             raise e
 
-    def get_type(self, info: ResolveInfo, row: Any) -> ItemCatalogRefType:
+    def get_type(self, info: ResolveInfo, row: Any) -> ItemCatalogRefType | None:
         """Convert a SQLAlchemy row to ItemCatalogRefType."""
         data = normalize_row(row)
         if data is None:

@@ -254,7 +254,7 @@ class RequestPGRepository(EntityRepository):
                 logger.error(traceback.format_exc())
             raise e
 
-    def get_type(self, info: ResolveInfo, row: Any) -> RequestType:
+    def get_type(self, info: ResolveInfo, row: Any) -> RequestType | None:
         """Convert a SQLAlchemy row to RequestType."""
         data = normalize_row(row)
         if data is None:

@@ -186,7 +186,7 @@ class FilePGRepository(EntityRepository):
                 logger.error(traceback.format_exc())
             raise e
 
-    def get_type(self, info: ResolveInfo, row: Any) -> FileType:
+    def get_type(self, info: ResolveInfo, row: Any) -> FileType | None:
         """Convert a SQLAlchemy row to FileType."""
         data = normalize_row(row)
         if data is None:

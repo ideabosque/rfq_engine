@@ -218,7 +218,7 @@ class DiscountPromptPGRepository(EntityRepository):
                 logger.error(traceback.format_exc())
             raise e
 
-    def get_type(self, info: ResolveInfo, row: Any) -> DiscountPromptType:
+    def get_type(self, info: ResolveInfo, row: Any) -> DiscountPromptType | None:
         """Convert a SQLAlchemy row to DiscountPromptType."""
         data = normalize_row(row)
         if data is None:

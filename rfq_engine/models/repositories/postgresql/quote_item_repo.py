@@ -652,7 +652,7 @@ class QuoteItemPGRepository(EntityRepository):
                 logger.error(traceback.format_exc())
             raise e
 
-    def get_type(self, info: ResolveInfo, row: Any) -> QuoteItemType:
+    def get_type(self, info: ResolveInfo, row: Any) -> QuoteItemType | None:
         """Convert a SQLAlchemy row to QuoteItemType."""
         data = normalize_row(row)
         if data is None:
