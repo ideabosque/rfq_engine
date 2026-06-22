@@ -1,0 +1,60 @@
+# -*- coding: utf-8 -*-
+from __future__ import print_function
+
+__author__ = "bibow"
+
+import traceback
+from typing import Any, Dict
+
+from graphene import Boolean, DateTime, Field, List, Mutation, String
+from silvaengine_utility import JSONCamelCase
+
+from ..models.repositories import get_repo
+from ..types.request import RequestType
+
+
+class InsertUpdateRequest(Mutation):
+    request = Field(RequestType)
+
+    class Arguments:
+        request_uuid = String(required=False)
+        email = String(required=False)
+        request_title = String(required=False)
+        request_description = String(required=False)
+        billing_address = JSONCamelCase(required=False)
+        shipping_address = JSONCamelCase(required=False)
+        items = List(JSONCamelCase, required=False)
+        notes = String(required=False)
+        bundle_uuid = String(required=False)
+        status = String(required=False)
+        expired_at = DateTime(required=False)
+        updated_by = String(required=True)
+
+    @staticmethod
+    def mutate(root: Any, info: Any, **kwargs: Dict[str, Any]) -> "InsertUpdateRequest":
+        try:
+            request = get_repo("request").insert_update(info, **kwargs)
+        except Exception as e:
+            log = traceback.format_exc()
+            info.context.get("logger").error(log)
+            raise e
+
+        return InsertUpdateRequest(request=request)
+
+
+class DeleteRequest(Mutation):
+    ok = Boolean()
+
+    class Arguments:
+        request_uuid = String(required=True)
+
+    @staticmethod
+    def mutate(root: Any, info: Any, **kwargs: Dict[str, Any]) -> "DeleteRequest":
+        try:
+            ok = get_repo("request").delete(info, **kwargs)
+        except Exception as e:
+            log = traceback.format_exc()
+            info.context.get("logger").error(log)
+            raise e
+
+        return DeleteRequest(ok=ok)

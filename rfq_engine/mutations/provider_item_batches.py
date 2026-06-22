@@ -1,0 +1,70 @@
+# -*- coding: utf-8 -*-
+from __future__ import print_function
+
+__author__ = "bibow"
+
+import traceback
+from typing import Any, Dict
+
+from graphene import Boolean, DateTime, Field, Mutation, String
+from silvaengine_utility import SafeFloat as Float
+
+from ..models.repositories import get_repo
+from ..types.provider_item_batches import ProviderItemBatchType
+
+
+class InsertUpdateProviderItemBatch(Mutation):
+    provider_item_batch = Field(ProviderItemBatchType)
+
+    class Arguments:
+        provider_item_uuid = String(required=False)
+        batch_no = String(required=False)
+        item_uuid = String(required=False)
+        expired_at = DateTime(required=False)
+        produced_at = DateTime(required=False)
+        service_start_at = DateTime(required=False)
+        service_end_at = DateTime(required=False)
+        cost_per_uom = Float(required=False)
+        freight_cost_per_uom = Float(required=False)
+        additional_cost_per_uom = Float(required=False)
+        guardrail_margin_per_uom = Float(required=False)
+        slow_move_item = Boolean(required=False)
+        in_stock = Boolean(required=False)
+        availability_qty = Float(required=False)
+        currency = String(required=False)
+        cancellation_policy_uuid = String(required=False)
+        updated_by = String(required=True)
+
+    @staticmethod
+    def mutate(
+        root: Any, info: Any, **kwargs: Dict[str, Any]
+    ) -> "InsertUpdateProviderItemBatch":
+        try:
+            provider_item_batch = get_repo("provider_item_batch").insert_update(info, **kwargs)
+        except Exception as e:
+            log = traceback.format_exc()
+            info.context.get("logger").error(log)
+            raise e
+
+        return InsertUpdateProviderItemBatch(provider_item_batch=provider_item_batch)
+
+
+class DeleteProviderItemBatch(Mutation):
+    ok = Boolean()
+
+    class Arguments:
+        provider_item_uuid = String(required=True)
+        batch_no = String(required=True)
+
+    @staticmethod
+    def mutate(
+        root: Any, info: Any, **kwargs: Dict[str, Any]
+    ) -> "DeleteProviderItemBatch":
+        try:
+            ok = get_repo("provider_item_batch").delete(info, **kwargs)
+        except Exception as e:
+            log = traceback.format_exc()
+            info.context.get("logger").error(log)
+            raise e
+
+        return DeleteProviderItemBatch(ok=ok)

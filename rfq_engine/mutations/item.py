@@ -1,0 +1,55 @@
+# -*- coding: utf-8 -*-
+from __future__ import print_function
+
+__author__ = "bibow"
+
+import traceback
+from typing import Any, Dict
+
+from graphene import Boolean, Field, Mutation, String
+
+from ..models.repositories import get_repo
+from ..types.item import ItemType
+
+
+class InsertUpdateItem(Mutation):
+    item = Field(ItemType)
+
+    class Arguments:
+        item_uuid = String(required=False)
+        item_type = String(required=False)
+        item_name = String(required=False)
+        item_description = String(required=False)
+        pricing_mode = String(required=False)
+        uom = String(required=False)
+        item_external_id = String(required=False)
+        updated_by = String(required=True)
+
+    @staticmethod
+    def mutate(root: Any, info: Any, **kwargs: Dict[str, Any]) -> "InsertUpdateItem":
+        try:
+            item = get_repo("item").insert_update(info, **kwargs)
+        except Exception as e:
+            log = traceback.format_exc()
+            info.context.get("logger").error(log)
+            raise e
+
+        return InsertUpdateItem(item=item)
+
+
+class DeleteItem(Mutation):
+    ok = Boolean()
+
+    class Arguments:
+        item_uuid = String(required=True)
+
+    @staticmethod
+    def mutate(root: Any, info: Any, **kwargs: Dict[str, Any]) -> "DeleteItem":
+        try:
+            ok = get_repo("item").delete(info, **kwargs)
+        except Exception as e:
+            log = traceback.format_exc()
+            info.context.get("logger").error(log)
+            raise e
+
+        return DeleteItem(ok=ok)

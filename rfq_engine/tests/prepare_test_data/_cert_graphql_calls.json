@@ -1,0 +1,779 @@
+[
+  {
+    "sid": "INT-003 create",
+    "doc": "mutation CreateItem($type:String,$name:String,$uom:String,$by:String!){insertUpdateItem(itemType:$type,itemName:$name,uom:$uom,updatedBy:$by){item{itemUuid itemName itemType}}}",
+    "vars": {
+      "type": "test_product",
+      "name": "Cert Test Item",
+      "uom": "each",
+      "by": "cert"
+    },
+    "resp": {
+      "data": {
+        "insertUpdateItem": {
+          "item": {
+            "itemUuid": "3c50a5a3-31c7-4a93-ab5d-a06acd46daa8",
+            "itemName": "Cert Test Item",
+            "itemType": "test_product"
+          }
+        }
+      }
+    },
+    "ms": 129,
+    "status": "pass"
+  },
+  {
+    "sid": "INT-003 query",
+    "doc": "query GetItem($uuid:String!){item(itemUuid:$uuid){itemUuid itemName itemType}}",
+    "vars": {
+      "uuid": "3c50a5a3-31c7-4a93-ab5d-a06acd46daa8"
+    },
+    "resp": {
+      "data": {
+        "item": {
+          "itemUuid": "3c50a5a3-31c7-4a93-ab5d-a06acd46daa8",
+          "itemName": "Cert Test Item",
+          "itemType": "test_product"
+        }
+      }
+    },
+    "ms": 11,
+    "status": "pass"
+  },
+  {
+    "sid": "INT-003 update",
+    "doc": "mutation UpdateItem($uuid:String!,$name:String,$by:String!){insertUpdateItem(itemUuid:$uuid,itemName:$name,updatedBy:$by){item{itemName}}}",
+    "vars": {
+      "uuid": "3c50a5a3-31c7-4a93-ab5d-a06acd46daa8",
+      "name": "Cert Test Item v2",
+      "by": "cert"
+    },
+    "resp": {
+      "data": {
+        "insertUpdateItem": {
+          "item": {
+            "itemName": "Cert Test Item v2"
+          }
+        }
+      }
+    },
+    "ms": 13,
+    "status": "pass"
+  },
+  {
+    "sid": "INT-003 list",
+    "doc": "query ItemList($type:String,$limit:Int){itemList(itemType:$type,limit:$limit){itemList{itemUuid itemName}total}}",
+    "vars": {
+      "type": "test_product",
+      "limit": 10
+    },
+    "resp": {
+      "data": {
+        "itemList": {
+          "itemList": [
+            {
+              "itemUuid": "3c50a5a3-31c7-4a93-ab5d-a06acd46daa8",
+              "itemName": "Cert Test Item v2"
+            }
+          ],
+          "total": 1
+        }
+      }
+    },
+    "ms": 9,
+    "status": "pass"
+  },
+  {
+    "sid": "INT-003 delete",
+    "doc": "mutation DeleteItem($uuid:String!){deleteItem(itemUuid:$uuid){ok}}",
+    "vars": {
+      "uuid": "3c50a5a3-31c7-4a93-ab5d-a06acd46daa8"
+    },
+    "resp": {
+      "data": {
+        "deleteItem": {
+          "ok": true
+        }
+      }
+    },
+    "ms": 18,
+    "status": "pass"
+  },
+  {
+    "sid": "INT-003 post-delete",
+    "doc": "query GetItem($uuid:String!){item(itemUuid:$uuid){itemUuid}}",
+    "vars": {
+      "uuid": "3c50a5a3-31c7-4a93-ab5d-a06acd46daa8"
+    },
+    "resp": {
+      "data": {
+        "item": null
+      }
+    },
+    "ms": 8,
+    "status": "pass"
+  },
+  {
+    "sid": "INT-005 scopes",
+    "doc": "query DPL($limit:Int){discountPromptList(limit:$limit){discountPromptList{discountPromptUuid scope status priority}total}}",
+    "vars": {
+      "limit": 30
+    },
+    "resp": {
+      "data": {
+        "discountPromptList": {
+          "discountPromptList": [
+            {
+              "discountPromptUuid": "bfd85eee-2dc0-4708-8c41-b8ed16fa218d",
+              "scope": "provider_item",
+              "status": "active",
+              "priority": 4
+            },
+            {
+              "discountPromptUuid": "3be12527-06cc-4ea6-808f-3e71ba860366",
+              "scope": "item",
+              "status": "active",
+              "priority": 3
+            },
+            {
+              "discountPromptUuid": "f45b0341-d672-43b1-a067-b23a734b1f09",
+              "scope": "provider_item",
+              "status": "active",
+              "priority": 5
+            },
+            {
+              "discountPromptUuid": "09cac069-f2b3-4a34-86bc-5f46b83f4191",
+              "scope": "item",
+              "status": "active",
+              "priority": 9
+            },
+            {
+              "discountPromptUuid": "185779c5-f6e3-4860-ba47-bbbaa6ee225f",
+              "scope": "provider_item",
+              "status": "active",
+              "priority": 7
+            },
+            {
+              "discountPromptUuid": "2c04ed7a-f293-4385-b281-d47c94e7fb66",
+              "scope": "item",
+              "status": "active",
+              "priority": 4
+            },
+            {
+              "discountPromptUuid": "2c77266b-54db-472e-9298-cb4ce8615ba6",
+              "scope": "provider_item",
+              "status": "in_review",
+              "priority": 2
+            },
+            {
+              "discountPromptUuid": "616fb316-19d9-41cd-aa36-1d15c0d25890",
+              "scope": "item",
+              "status": "in_review",
+              "priority": 7
+            },
+            {
+              "discountPromptUuid": "5e600555-1215-411d-bc9a-a71df77a92be",
+              "scope": "provider_item",
+              "status": "in_review",
+              "priority": 8
+            },
+            {
+              "discountPromptUuid": "e07c8826-8b74-4f86-ba02-b2681c281baa",
+              "scope": "item",
+              "status": "active",
+              "priority": 6
+            },
+            {
+              "discountPromptUuid": "773008cb-2d72-4ab8-a794-e3bef5ba5a17",
+              "scope": "segment",
+              "status": "active",
+              "priority": 4
+            },
+            {
+              "discountPromptUuid": "17686f64-b9cf-4439-a2d8-f16e4496fb42",
+              "scope": "segment",
+              "status": "active",
+              "priority": 9
+            },
+            {
+              "discountPromptUuid": "4196f37c-1670-423a-92b6-06e18b518aaf",
+              "scope": "segment",
+              "status": "active",
+              "priority": 6
+            },
+            {
+              "discountPromptUuid": "684f25dd-5362-44f0-90cf-61125c63c07a",
+              "scope": "segment",
+              "status": "active",
+              "priority": 1
+            },
+            {
+              "discountPromptUuid": "4b007152-e3bf-47ef-9064-6a6188dc2d82",
+              "scope": "segment",
+              "status": "active",
+              "priority": 5
+            },
+            {
+              "discountPromptUuid": "66b38675-98f0-40cf-aab9-432be87a31ff",
+              "scope": "segment",
+              "status": "in_review",
+              "priority": 8
+            },
+            {
+              "discountPromptUuid": "cf9325f3-48b8-4200-8ce6-2b375618abd8",
+              "scope": "global",
+              "status": "in_review",
+              "priority": 3
+            },
+            {
+              "discountPromptUuid": "d7bc2aad-1981-4949-a4ba-b35e216f9d80",
+              "scope": "global",
+              "status": "active",
+              "priority": 10
+            },
+            {
+              "discountPromptUuid": "a1cf9375-0e50-4a9f-bf43-d3d283febd3b",
+              "scope": "global",
+              "status": "in_review",
+              "priority": 6
+            }
+          ],
+          "total": 19
+        }
+      }
+    },
+    "ms": 17,
+    "status": "pass"
+  },
+  {
+    "sid": "INT-006 quotes",
+    "doc": "query QL($limit:Int){quoteList(limit:$limit){quoteList{quoteUuid requestUuid totalQuoteAmount totalQuoteDiscount finalTotalQuoteAmount shippingAmount currency displayCurrency fxRate rounds status}total}}",
+    "vars": {
+      "limit": 20
+    },
+    "resp": {
+      "data": {
+        "quoteList": {
+          "quoteList": [
+            {
+              "quoteUuid": "55ac4a3d-2db1-410c-ab9a-31c1ba54cc69",
+              "requestUuid": "04637337-21fb-4b66-8681-7d2e22a5dd87",
+              "totalQuoteAmount": "16730.7336",
+              "totalQuoteDiscount": "0.0",
+              "finalTotalQuoteAmount": "16730.7336",
+              "shippingAmount": "0.0",
+              "currency": "USD",
+              "displayCurrency": "AUD",
+              "fxRate": "1.549142",
+              "rounds": 0,
+              "status": "initial"
+            },
+            {
+              "quoteUuid": "37f38864-f58c-4fef-b26a-71c533240594",
+              "requestUuid": "b8baca15-1f0f-49e4-a0b6-46c9e4e25283",
+              "totalQuoteAmount": "12746.421",
+              "totalQuoteDiscount": "104.37",
+              "finalTotalQuoteAmount": "12642.051",
+              "shippingAmount": "0.0",
+              "currency": "USD",
+              "displayCurrency": "CNY",
+              "fxRate": "7.081345",
+              "rounds": 0,
+              "status": "initial"
+            },
+            {
+              "quoteUuid": "83c04bda-fe01-4087-8f93-fccd0f406c0e",
+              "requestUuid": "5c633ad5-ff13-4c4d-9180-120bd675166a",
+              "totalQuoteAmount": "5576.9112000000005",
+              "totalQuoteDiscount": "0.0",
+              "finalTotalQuoteAmount": "5576.9112000000005",
+              "shippingAmount": "0.0",
+              "currency": "USD",
+              "displayCurrency": "AUD",
+              "fxRate": "1.549142",
+              "rounds": 0,
+              "status": "pending"
+            },
+            {
+              "quoteUuid": "e6926abb-ec55-424e-b0e6-27a5719e7449",
+              "requestUuid": "18e5c5d5-97a8-43cb-8dc7-796edfb28f5a",
+              "totalQuoteAmount": "401.0755",
+              "totalQuoteDiscount": "0.0",
+              "finalTotalQuoteAmount": "401.0755",
+              "shippingAmount": "0.0",
+              "currency": "USD",
+              "displayCurrency": "GBP",
+              "fxRate": "0.802151",
+              "rounds": 0,
+              "status": "initial"
+            },
+            {
+              "quoteUuid": "35cec26e-15a3-4164-86ed-95611ac178d6",
+              "requestUuid": "57059aca-60db-4833-ae3b-39ae5d86c3a6",
+              "totalQuoteAmount": "1258.677875",
+              "totalQuoteDiscount": "159.18",
+              "finalTotalQuoteAmount": "1122.577875",
+              "shippingAmount": "23.08",
+              "currency": "USD",
+              "displayCurrency": "AUD",
+              "fxRate": "1.549142",
+              "rounds": 0,
+              "status": "initial"
+            },
+            {
+              "quoteUuid": "ba50db78-aa55-40f9-bc78-7535331f0e9a",
+              "requestUuid": "04637337-21fb-4b66-8681-7d2e22a5dd87",
+              "totalQuoteAmount": "0.0",
+              "totalQuoteDiscount": "0.0",
+              "finalTotalQuoteAmount": "0.0",
+              "shippingAmount": "0.0",
+              "currency": "USD",
+              "displayCurrency": "CNY",
+              "fxRate": "7.081345",
+              "rounds": 0,
+              "status": "pending"
+            },
+            {
+              "quoteUuid": "ff7b8c49-a4c2-42c0-8103-998df6954e1b",
+              "requestUuid": "b8baca15-1f0f-49e4-a0b6-46c9e4e25283",
+              "totalQuoteAmount": "0.0",
+              "totalQuoteDiscount": "0.0",
+              "finalTotalQuoteAmount": "0.0",
+              "shippingAmount": "0.0",
+              "currency": "USD",
+              "displayCurrency": "CNY",
+              "fxRate": "7.081345",
+              "rounds": 0,
+              "status": "initial"
+            },
+            {
+              "quoteUuid": "923bdf60-ec63-4bb1-a432-483d3faa7a8d",
+              "requestUuid": "18e5c5d5-97a8-43cb-8dc7-796edfb28f5a",
+              "totalQuoteAmount": "0.0",
+              "totalQuoteDiscount": "0.0",
+              "finalTotalQuoteAmount": "0.0",
+              "shippingAmount": "0.0",
+              "currency": "USD",
+              "displayCurrency": null,
+              "fxRate": null,
+              "rounds": 0,
+              "status": "initial"
+            }
+          ],
+          "total": 8
+        }
+      }
+    },
+    "ms": 16,
+    "status": "pass"
+  },
+  {
+    "sid": "INT-007 create",
+    "doc": "mutation CI($qid:String!,$rid:String!,$p:Int,$a:SafeFloat,$d:DateTime,$m:String,$by:String!){insertUpdateInstallment(quoteUuid:$qid,requestUuid:$rid,priority:$p,installmentAmount:$a,scheduledDate:$d,paymentMethod:$m,updatedBy:$by){installment{installmentUuid installmentRatio installmentAmount priority}}}",
+    "vars": {
+      "qid": "55ac4a3d-2db1-410c-ab9a-31c1ba54cc69",
+      "rid": "04637337-21fb-4b66-8681-7d2e22a5dd87",
+      "p": 1,
+      "a": 5019.22,
+      "d": "2026-07-22T03:29:10.123528Z",
+      "m": "bank_transfer",
+      "by": "cert"
+    },
+    "resp": {
+      "data": {
+        "insertUpdateInstallment": {
+          "installment": {
+            "installmentUuid": "6d0d7512-616e-41bd-9c8f-ebb82aaf4f9f",
+            "installmentRatio": "29.999999521838067",
+            "installmentAmount": "5019.22",
+            "priority": 1
+          }
+        }
+      }
+    },
+    "ms": 21,
+    "status": "pass"
+  },
+  {
+    "sid": "INT-007 list",
+    "doc": "query IL($qid:String){installmentList(quoteUuid:$qid,limit:10){installmentList{installmentUuid installmentRatio installmentAmount priority}total}}",
+    "vars": {
+      "qid": "55ac4a3d-2db1-410c-ab9a-31c1ba54cc69"
+    },
+    "resp": {
+      "data": {
+        "installmentList": {
+          "installmentList": [
+            {
+              "installmentUuid": "6d0d7512-616e-41bd-9c8f-ebb82aaf4f9f",
+              "installmentRatio": "29.999999521838067",
+              "installmentAmount": "5019.22",
+              "priority": 1
+            }
+          ],
+          "total": 1
+        }
+      }
+    },
+    "ms": 10,
+    "status": "pass"
+  },
+  {
+    "sid": "INT-008 fx",
+    "doc": "query QL($limit:Int){quoteList(limit:$limit){quoteList{quoteUuid currency displayCurrency fxRate totalQuoteAmount}total}}",
+    "vars": {
+      "limit": 20
+    },
+    "resp": {
+      "data": {
+        "quoteList": {
+          "quoteList": [
+            {
+              "quoteUuid": "55ac4a3d-2db1-410c-ab9a-31c1ba54cc69",
+              "currency": "USD",
+              "displayCurrency": "AUD",
+              "fxRate": "1.549142",
+              "totalQuoteAmount": "16730.7336"
+            },
+            {
+              "quoteUuid": "37f38864-f58c-4fef-b26a-71c533240594",
+              "currency": "USD",
+              "displayCurrency": "CNY",
+              "fxRate": "7.081345",
+              "totalQuoteAmount": "12746.421"
+            },
+            {
+              "quoteUuid": "83c04bda-fe01-4087-8f93-fccd0f406c0e",
+              "currency": "USD",
+              "displayCurrency": "AUD",
+              "fxRate": "1.549142",
+              "totalQuoteAmount": "5576.9112000000005"
+            },
+            {
+              "quoteUuid": "e6926abb-ec55-424e-b0e6-27a5719e7449",
+              "currency": "USD",
+              "displayCurrency": "GBP",
+              "fxRate": "0.802151",
+              "totalQuoteAmount": "401.0755"
+            },
+            {
+              "quoteUuid": "35cec26e-15a3-4164-86ed-95611ac178d6",
+              "currency": "USD",
+              "displayCurrency": "AUD",
+              "fxRate": "1.549142",
+              "totalQuoteAmount": "1258.677875"
+            },
+            {
+              "quoteUuid": "ba50db78-aa55-40f9-bc78-7535331f0e9a",
+              "currency": "USD",
+              "displayCurrency": "CNY",
+              "fxRate": "7.081345",
+              "totalQuoteAmount": "0.0"
+            },
+            {
+              "quoteUuid": "ff7b8c49-a4c2-42c0-8103-998df6954e1b",
+              "currency": "USD",
+              "displayCurrency": "CNY",
+              "fxRate": "7.081345",
+              "totalQuoteAmount": "0.0"
+            },
+            {
+              "quoteUuid": "923bdf60-ec63-4bb1-a432-483d3faa7a8d",
+              "currency": "USD",
+              "displayCurrency": null,
+              "fxRate": null,
+              "totalQuoteAmount": "0.0"
+            }
+          ],
+          "total": 8
+        }
+      }
+    },
+    "ms": 8,
+    "status": "pass"
+  },
+  {
+    "sid": "INT-009 snapshots",
+    "doc": "query QIL($limit:Int){quoteItemList(limit:$limit){quoteItemList{quoteItemUuid quoteUuid requestData}total}}",
+    "vars": {
+      "limit": 20
+    },
+    "resp": {
+      "data": {
+        "quoteItemList": {
+          "quoteItemList": [
+            {
+              "quoteItemUuid": "fe6d93ba-c836-4f38-a89d-72f0405bf064",
+              "quoteUuid": "55ac4a3d-2db1-410c-ab9a-31c1ba54cc69",
+              "requestData": {
+                "cancellationPolicySnapshot": {
+                  "label": "Business Fare Cancellation",
+                  "tiers": {
+                    "tiers": [
+                      {
+                        "refundPct": "1",
+                        "hoursBeforeDepartureGte": "24"
+                      },
+                      {
+                        "refundPct": "0.5",
+                        "hoursBeforeDepartureGte": "2"
+                      },
+                      {
+                        "refundPct": "0",
+                        "hoursBeforeDepartureGte": "0"
+                      }
+                    ]
+                  },
+                  "description": "Central conference money discussion structure same sort church age others morning prepare.",
+                  "policyUuid": "9c9b9290-cc46-4cac-9eb4-be271de9220b",
+                  "snapshottedAt": "2026-06-22 03:27:48.788818",
+                  "notesTemplateUuid": null
+                }
+              }
+            },
+            {
+              "quoteItemUuid": "5e860d51-9fc5-4fc0-a042-d145a2dfbc06",
+              "quoteUuid": "37f38864-f58c-4fef-b26a-71c533240594",
+              "requestData": {
+                "cancellationPolicySnapshot": {
+                  "label": "Business Fare Cancellation",
+                  "tiers": {
+                    "tiers": [
+                      {
+                        "refundPct": "1",
+                        "hoursBeforeDepartureGte": "24"
+                      },
+                      {
+                        "refundPct": "0.5",
+                        "hoursBeforeDepartureGte": "2"
+                      },
+                      {
+                        "refundPct": "0",
+                        "hoursBeforeDepartureGte": "0"
+                      }
+                    ]
+                  },
+                  "description": "Central conference money discussion structure same sort church age others morning prepare.",
+                  "policyUuid": "9c9b9290-cc46-4cac-9eb4-be271de9220b",
+                  "snapshottedAt": "2026-06-22 03:27:48.767559",
+                  "notesTemplateUuid": null
+                }
+              }
+            },
+            {
+              "quoteItemUuid": "524f34a6-b7a4-431d-804b-0d9fa27915f6",
+              "quoteUuid": "83c04bda-fe01-4087-8f93-fccd0f406c0e",
+              "requestData": {
+                "cancellationPolicySnapshot": {
+                  "label": "Business Fare Cancellation",
+                  "tiers": {
+                    "tiers": [
+                      {
+                        "refundPct": "1",
+                        "hoursBeforeDepartureGte": "24"
+                      },
+                      {
+                        "refundPct": "0.5",
+                        "hoursBeforeDepartureGte": "2"
+                      },
+                      {
+                        "refundPct": "0",
+                        "hoursBeforeDepartureGte": "0"
+                      }
+                    ]
+                  },
+                  "description": "Central conference money discussion structure same sort church age others morning prepare.",
+                  "policyUuid": "9c9b9290-cc46-4cac-9eb4-be271de9220b",
+                  "snapshottedAt": "2026-06-22 03:27:48.747665",
+                  "notesTemplateUuid": null
+                }
+              }
+            },
+            {
+              "quoteItemUuid": "6a7d66cc-ecb2-4fdf-b43b-76700ad75d2e",
+              "quoteUuid": "e6926abb-ec55-424e-b0e6-27a5719e7449",
+              "requestData": {
+                "cancellationPolicySnapshot": {
+                  "label": "Economy Fare Cancellation",
+                  "tiers": {
+                    "tiers": [
+                      {
+                        "refundPct": "1",
+                        "hoursBeforeDepartureGte": "168"
+                      },
+                      {
+                        "refundPct": "0.5",
+                        "hoursBeforeDepartureGte": "24"
+                      },
+                      {
+                        "refundPct": "0",
+                        "hoursBeforeDepartureGte": "0"
+                      }
+                    ]
+                  },
+                  "description": "Campaign let response less like consumer risk six him stop source.",
+                  "policyUuid": "9d2d658a-3056-47f8-83eb-5550f5ff2cf6",
+                  "snapshottedAt": "2026-06-22 03:27:48.726254",
+                  "notesTemplateUuid": null
+                }
+              }
+            },
+            {
+              "quoteItemUuid": "b6f15f18-2d8f-4683-9362-b042a988ea6f",
+              "quoteUuid": "35cec26e-15a3-4164-86ed-95611ac178d6",
+              "requestData": {
+                "cancellationPolicySnapshot": {
+                  "label": "Economy Fare Cancellation",
+                  "tiers": {
+                    "tiers": [
+                      {
+                        "refundPct": "1",
+                        "hoursBeforeDepartureGte": "168"
+                      },
+                      {
+                        "refundPct": "0.5",
+                        "hoursBeforeDepartureGte": "24"
+                      },
+                      {
+                        "refundPct": "0",
+                        "hoursBeforeDepartureGte": "0"
+                      }
+                    ]
+                  },
+                  "description": "Campaign let response less like consumer risk six him stop source.",
+                  "policyUuid": "9d2d658a-3056-47f8-83eb-5550f5ff2cf6",
+                  "snapshottedAt": "2026-06-22 03:27:48.686562",
+                  "notesTemplateUuid": null
+                }
+              }
+            }
+          ],
+          "total": 5
+        }
+      }
+    },
+    "ms": 18,
+    "status": "pass"
+  },
+  {
+    "sid": "INT-010 bundles",
+    "doc": "query BL($limit:Int){bundleList(limit:$limit){bundleList{bundleUuid bundleName bundleType}total}}",
+    "vars": {
+      "limit": 10
+    },
+    "resp": {
+      "data": {
+        "bundleList": {
+          "bundleList": [
+            {
+              "bundleUuid": "3d0129f8-a8ba-40cf-a0c3-62243f0f74b2",
+              "bundleName": "Flight Itinerary CDG->DFW + LAX->MIA + LAX->CDG",
+              "bundleType": "flight_itinerary"
+            },
+            {
+              "bundleUuid": "b5e6388b-6e19-41ec-90b6-23633e54a171",
+              "bundleName": "Flight Itinerary LAX->MIA + JFK->HKG + LAX->CDG",
+              "bundleType": "flight_itinerary"
+            }
+          ],
+          "total": 2
+        }
+      }
+    },
+    "ms": 14,
+    "status": "pass"
+  },
+  {
+    "sid": "P11 unknown item",
+    "doc": "query GI($uuid:String!){item(itemUuid:$uuid){itemUuid}}",
+    "vars": {
+      "uuid": "00000000-0000-0000-0000-000000000000"
+    },
+    "resp": {
+      "data": {
+        "item": null
+      }
+    },
+    "ms": 6,
+    "status": "pass"
+  },
+  {
+    "sid": "P11 unknown quote",
+    "doc": "query GQ($rid:String!,$qid:String!){quote(requestUuid:$rid,quoteUuid:$qid){quoteUuid}}",
+    "vars": {
+      "rid": "00000000-0000-0000-0000-000000000000",
+      "qid": "00000000-0000-0000-0000-000000000000"
+    },
+    "resp": {
+      "data": {
+        "quote": null
+      }
+    },
+    "ms": 7,
+    "status": "pass"
+  },
+  {
+    "sid": "P11 delete non-existent",
+    "doc": "mutation DI($uuid:String!){deleteItem(itemUuid:$uuid){ok}}",
+    "vars": {
+      "uuid": "00000000-0000-0000-0000-000000000000"
+    },
+    "resp": {
+      "data": {
+        "deleteItem": {
+          "ok": true
+        }
+      }
+    },
+    "ms": 35,
+    "status": "pass"
+  },
+  {
+    "sid": "P11 invalid quote_item",
+    "doc": "mutation CQI($qid:String!,$uuid:String!,$by:String!){insertUpdateQuoteItem(quoteUuid:$qid,quoteItemUuid:$uuid,updatedBy:$by){quoteItem{quoteItemUuid}}}",
+    "vars": {
+      "qid": "00000000-0000-0000-0000-000000000000",
+      "uuid": "00000000-0000-0000-0000-000000000000",
+      "by": "test"
+    },
+    "resp": {
+      "errors": [
+        {
+          "message": "(psycopg2.errors.NotNullViolation) null value in column \"provider_item_uuid\" of relation \"quote_items\" violates not-null constraint\nDETAIL:  Failing row contains (00000000-0000-0000-0000-000000000000, 00000000-0000-0000-0000-000000000000, null, null, null, null, gpt#nestaging, null, null, null, null, null, null, null, 0.0, null, 0.0, null, 0.0, null, null, null, 2026-06-22 03:29:10.251402+00, test, 2026-06-22 03:29:10.251402+00).\n\n[SQL: INSERT INTO quote_items (quote_uuid, quote_item_uuid, provider_item_uuid, item_uuid, batch_no, request_uuid, partition_key, price_per_uom, qty, bundle_uuid, bundle_label, bundle_component_uuid, subtotal, subtotal_discount, final_subtotal, currency, subtotal_native, notes, hold_token, hold_expires_at, created_at, updated_by, updated_at) VALUES (%(quote_uuid)s::UUID, %(quote_item_uuid)s::UUID, %(provider_item_uuid)s::UUID, %(item_uuid)s::UUID, %(batch_no)s, %(request_uuid)s::UUID, %(partition_key)s, %(price_per_uom)s, %(qty)s, %(bundle_uuid)s::UUID, %(bundle_label)s, %(bundle_component_uuid)s::UUID, %(subtotal)s, %(subtotal_discount)s, %(final_subtotal)s, %(currency)s, %(subtotal_native)s, %(notes)s, %(hold_token)s, %(hold_expires_at)s, %(created_at)s, %(updated_by)s, %(updated_at)s)]\n[parameters: {'quote_uuid': '00000000-0000-0000-0000-000000000000', 'quote_item_uuid': '00000000-0000-0000-0000-000000000000', 'provider_item_uuid': None, 'item_uuid': None, 'batch_no': None, 'request_uuid': None, 'partition_key': 'gpt#nestaging', 'price_per_uom': None, 'qty': None, 'bundle_uuid': None, 'bundle_label': None, 'bundle_component_uuid': None, 'subtotal': 0.0, 'subtotal_discount': None, 'final_subtotal': 0.0, 'currency': None, 'subtotal_native': 0.0, 'notes': None, 'hold_token': None, 'hold_expires_at': None, 'created_at': DateTime(2026, 6, 22, 3, 29, 10, 251402, tzinfo=Timezone('UTC')), 'updated_by': 'test', 'updated_at': DateTime(2026, 6, 22, 3, 29, 10, 251402, tzinfo=Timezone('UTC'))}]\n(Background on this error at: https://sqlalche.me/e/20/gkpj)\n\nGraphQL request:1:54\n1 | mutation CQI($qid:String!,$uuid:String!,$by:String!){insertUpdateQuoteItem(quote\n  |                                                      ^\n  | Uuid:$qid,quoteItemUuid:$uuid,updatedBy:$by){quoteItem{quoteItemUuid}}}"
+        }
+      ]
+    },
+    "ms": 16,
+    "status": "pass"
+  },
+  {
+    "sid": "P11 no match",
+    "doc": "query IL($type:String!,$limit:Int){itemList(itemType:$type,limit:$limit){itemList{itemUuid}total}}",
+    "vars": {
+      "type": "nonexistent_type",
+      "limit": 10
+    },
+    "resp": {
+      "data": {
+        "itemList": {
+          "itemList": [],
+          "total": 0
+        }
+      }
+    },
+    "ms": 9,
+    "status": "pass"
+  },
+  {
+    "sid": "P11 ping",
+    "doc": "query {ping}",
+    "vars": {},
+    "resp": {
+      "data": {
+        "ping": "Hello at 20:29:10!!"
+      }
+    },
+    "ms": 4,
+    "status": "pass"
+  }
+]

@@ -1,0 +1,60 @@
+from __future__ import print_function
+
+__author__ = "bibow"
+
+import traceback
+from typing import Any, Dict
+
+from graphene import Boolean, DateTime, Field, Int, Mutation, String
+from silvaengine_utility import SafeFloat as Float
+
+from ..models.repositories import get_repo
+from ..types.installment import InstallmentType
+
+
+class InsertUpdateInstallment(Mutation):
+    installment = Field(InstallmentType)
+
+    class Arguments:
+        quote_uuid = String(required=True)
+        installment_uuid = String(required=False)
+        request_uuid = String(required=False)
+        priority = Int(required=False)
+        salesorder_no = String(required=False)
+        payment_method = String(required=False)
+        scheduled_date = DateTime(required=False)
+        installment_amount = Float(required=False)
+        status = String(required=False)
+        updated_by = String(required=True)
+
+    @staticmethod
+    def mutate(
+        root: Any, info: Any, **kwargs: Dict[str, Any]
+    ) -> "InsertUpdateInstallment":
+        try:
+            installment = get_repo("installment").insert_update(info, **kwargs)
+        except Exception as e:
+            log = traceback.format_exc()
+            info.context.get("logger").error(log)
+            raise e
+
+        return InsertUpdateInstallment(installment=installment)
+
+
+class DeleteInstallment(Mutation):
+    ok = Boolean()
+
+    class Arguments:
+        quote_uuid = String(required=True)
+        installment_uuid = String(required=True)
+
+    @staticmethod
+    def mutate(root: Any, info: Any, **kwargs: Dict[str, Any]) -> "DeleteInstallment":
+        try:
+            ok = get_repo("installment").delete(info, **kwargs)
+        except Exception as e:
+            log = traceback.format_exc()
+            info.context.get("logger").error(log)
+            raise e
+
+        return DeleteInstallment(ok=ok)
