@@ -9,7 +9,7 @@ from typing import Any, Dict
 from ....utils.normalization import normalize_to_json
 
 
-def _normalize(model: Any) -> Dict[str, Any]:
+def _normalize(model: Any) -> Dict[str, Any] | None:
     """Convert a PynamoDB model instance to a normalized dict."""
     if model is None:
         return None
