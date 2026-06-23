@@ -322,9 +322,27 @@ def dispatch_graphql(**params: Any) -> Any:
     """Execute a GraphQL query/mutation against the RFQ Engine.
 
     Requires Config.initialize() to have been called (done by gateway startup).
+
+    On the PostgreSQL backend, ``Config.db_session`` is a module-level
+    ``scoped_session`` reused across requests on the same thread. If any
+    statement fails without a rollback, the session is left in an aborted
+    state and every subsequent request raises ``InFailedSqlTransaction``
+    until the process restarts. Guard the request boundary: roll back on
+    error and always ``remove()`` the scoped session so each request starts
+    from a clean connection. (No-op on the DynamoDB backend, where
+    ``db_session`` is ``None``.)
     """
     from .handlers.config import Config
 
     logger = Config.get_logger()
     instance = RFQEngine(logger, **Config.get_setting())
-    return instance.rfq_graphql(**params)
+    db_session = Config.db_session
+    try:
+        return instance.rfq_graphql(**params)
+    except Exception:
+        if db_session is not None:
+            db_session.rollback()
+        raise
+    finally:
+        if db_session is not None:
+            db_session.remove()
