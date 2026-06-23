@@ -6,6 +6,7 @@ from __future__ import annotations
 __author__ = "bibow"
 
 import hashlib
+import traceback
 import uuid
 from typing import Any, Optional, TypedDict
 
@@ -13,6 +14,8 @@ import pendulum
 from graphene import ResolveInfo
 from pynamodb.exceptions import DoesNotExist, TransactWriteError
 from pynamodb.transactions import TransactWrite
+
+from ...handlers.config import Config
 
 
 class _RequiredAvailabilityRequest(TypedDict):
@@ -111,13 +114,91 @@ def _updated_by(info: ResolveInfo) -> str:
     )
 
 
+def _is_postgresql_backend() -> bool:
+    """True only when the PostgreSQL backend is actually initialized.
+
+    ``Config.DB_BACKEND`` may be set to ``"postgresql"`` by test fixtures
+    before ``Config.db_session`` is initialized (or in unit tests that never
+    initialize it). Guarding on ``db_session`` avoids routing hold-lifecycle
+    calls to the PostgreSQL path in unit tests that mock the DynamoDB models.
+    """
+    return Config.DB_BACKEND == "postgresql" and Config.db_session is not None
+
+
 def _get_hold(partition_key: str, hold_token: str) -> Any:
+    if _is_postgresql_backend():
+        return _pg_get_hold(partition_key, hold_token)
     from rfq_engine.models.dynamodb.availability_hold import AvailabilityHoldModel
 
     try:
         return AvailabilityHoldModel.get(partition_key, hold_token)
     except DoesNotExist as exc:
         raise UnknownHoldError("Unknown availability hold token") from exc
+
+
+def _pg_get_hold(partition_key: str, hold_token: str) -> Any:
+    """PostgreSQL hold lookup. Returns a normalized dict-like row or raises."""
+    from rfq_engine.models.postgresql.availability_hold import AvailabilityHoldModel
+
+    session = Config.db_session
+    row = (
+        session.query(AvailabilityHoldModel)
+        .filter(
+            AvailabilityHoldModel.partition_key == partition_key,
+            AvailabilityHoldModel.hold_token == hold_token,
+        )
+        .first()
+    )
+    if row is None:
+        raise UnknownHoldError("Unknown availability hold token")
+    return _PGHoldWrapper(row)
+
+
+class _PGHoldWrapper:
+    """Adapter exposing the attribute-style access used by the hold lifecycle.
+
+    Wraps a SQLAlchemy AvailabilityHoldModel row so the existing DynamoDB-shaped
+    handler code (which reads hold.status, hold.batch_no, hold.expires_at, etc.)
+    works unchanged on the PostgreSQL backend.
+    """
+
+    def __init__(self, row: Any) -> None:
+        self._row = row
+
+    def __getattr__(self, name: str) -> Any:
+        return getattr(self._row, name)
+
+    @property
+    def partition_key(self) -> str:
+        return self._row.partition_key
+
+    @property
+    def hold_token(self) -> str:
+        return str(self._row.hold_token)
+
+    @property
+    def provider_item_uuid(self) -> str:
+        return str(self._row.provider_item_uuid)
+
+    @property
+    def batch_no(self) -> str:
+        return self._row.batch_no
+
+    @property
+    def status(self) -> str:
+        return self._row.status
+
+    @property
+    def qty(self) -> Any:
+        return self._row.qty
+
+    @property
+    def expires_at(self) -> Any:
+        return self._row.expires_at
+
+    @property
+    def _raw(self) -> Any:
+        return self._row
 
 
 def _reserve_capacity_for_hold(
@@ -133,6 +214,19 @@ def _reserve_capacity_for_hold(
     quote_uuid: Optional[str] = None,
     quote_item_uuid: Optional[str] = None,
 ) -> Any:
+    if _is_postgresql_backend():
+        return _pg_reserve_capacity_for_hold(
+            info,
+            provider_item_uuid=provider_item_uuid,
+            batch_no=batch_no,
+            qty=qty,
+            hold_token=hold_token,
+            service_start_at=service_start_at,
+            service_end_at=service_end_at,
+            expires_at=expires_at,
+            quote_uuid=quote_uuid,
+            quote_item_uuid=quote_item_uuid,
+        )
     from rfq_engine.models.dynamodb.availability_hold import AvailabilityHoldModel
     from rfq_engine.models.dynamodb.provider_item_batches import (
         ProviderItemBatchModel,
@@ -188,7 +282,85 @@ def _reserve_capacity_for_hold(
     return hold
 
 
+def _pg_reserve_capacity_for_hold(
+    info: ResolveInfo,
+    *,
+    provider_item_uuid: str,
+    batch_no: str,
+    qty: float,
+    hold_token: str,
+    service_start_at: Any,
+    service_end_at: Any,
+    expires_at: Any,
+    quote_uuid: Optional[str] = None,
+    quote_item_uuid: Optional[str] = None,
+) -> Any:
+    """PostgreSQL atomic hold acquisition using SELECT ... FOR UPDATE.
+
+    Decrements batch availability_qty inside a row-locked transaction and inserts
+    the hold row. Returns the hold row on success or None if capacity was
+    insufficient (mirroring the DynamoDB TransactWriteError -> None contract).
+    """
+    from rfq_engine.models.postgresql.availability_hold import (
+        AvailabilityHoldModel as PGHoldModel,
+    )
+    from rfq_engine.models.postgresql.provider_item_batch import (
+        ProviderItemBatchModel as PGBatchModel,
+    )
+
+    session = Config.db_session
+    logger = info.context.get("logger")
+    now = pendulum.now("UTC")
+    try:
+        batch = (
+            session.query(PGBatchModel)
+            .filter(
+                PGBatchModel.provider_item_uuid == provider_item_uuid,
+                PGBatchModel.batch_no == batch_no,
+            )
+            .with_for_update()
+            .first()
+        )
+        if batch is None or not batch.in_stock:
+            session.rollback()
+            return None
+        available_qty = batch.availability_qty
+        if available_qty is None or float(available_qty) < float(qty):
+            session.rollback()
+            return None
+
+        batch.availability_qty = float(available_qty) - float(qty)
+        batch.updated_at = now
+
+        hold = PGHoldModel(
+            partition_key=info.context["partition_key"],
+            hold_token=hold_token,
+            provider_item_uuid=provider_item_uuid,
+            batch_no=batch_no,
+            quote_uuid=quote_uuid,
+            quote_item_uuid=quote_item_uuid,
+            qty=float(qty),
+            service_start_at=_parse_dt(service_start_at),
+            service_end_at=_parse_dt(service_end_at),
+            status=PGHoldModel.HELD,
+            expires_at=expires_at,
+            created_at=now,
+            updated_at=now,
+            updated_by=_updated_by(info),
+        )
+        session.add(hold)
+        session.commit()
+        return _PGHoldWrapper(hold)
+    except Exception:
+        session.rollback()
+        if logger:
+            logger.error(traceback.format_exc())
+        return None
+
+
 def _confirm_stored_hold(info: ResolveInfo, hold: Any) -> Any:
+    if _is_postgresql_backend():
+        return _pg_confirm_stored_hold(info, hold)
     from rfq_engine.models.dynamodb.availability_hold import AvailabilityHoldModel
 
     now = pendulum.now("UTC")
@@ -224,7 +396,55 @@ def _confirm_stored_hold(info: ResolveInfo, hold: Any) -> Any:
     return hold
 
 
+def _pg_confirm_stored_hold(info: ResolveInfo, hold: Any) -> Any:
+    """PostgreSQL confirm: row-lock the hold and transition HELD -> CONFIRMED."""
+    from rfq_engine.models.postgresql.availability_hold import (
+        AvailabilityHoldModel as PGHoldModel,
+    )
+
+    session = Config.db_session
+    logger = info.context.get("logger")
+    now = pendulum.now("UTC")
+    try:
+        row = (
+            session.query(PGHoldModel)
+            .filter(
+                PGHoldModel.partition_key == hold.partition_key,
+                PGHoldModel.hold_token == hold.hold_token,
+            )
+            .with_for_update()
+            .first()
+        )
+        if row is None:
+            raise UnknownHoldError("Unknown availability hold token")
+        if row.status == PGHoldModel.CONFIRMED:
+            session.rollback()
+            return _PGHoldWrapper(row)
+        if row.status in {PGHoldModel.RELEASED, PGHoldModel.EXPIRED}:
+            session.rollback()
+            raise UnknownHoldError(f"Availability hold is already {row.status}")
+        if row.expires_at <= now:
+            session.rollback()
+            _pg_restore_stored_hold(info, hold, PGHoldModel.EXPIRED)
+            raise UnknownHoldError("Availability hold has expired")
+        row.status = PGHoldModel.CONFIRMED
+        row.updated_at = now
+        row.updated_by = _updated_by(info)
+        session.commit()
+        return _PGHoldWrapper(row)
+    except UnknownHoldError:
+        session.rollback()
+        raise
+    except Exception:
+        session.rollback()
+        if logger:
+            logger.error(traceback.format_exc())
+        raise UnknownHoldError("Availability hold cannot be confirmed")
+
+
 def _restore_stored_hold(info: ResolveInfo, hold: Any, status: str) -> Any:
+    if _is_postgresql_backend():
+        return _pg_restore_stored_hold(info, hold, status)
     from rfq_engine.models.dynamodb.availability_hold import AvailabilityHoldModel
     from rfq_engine.models.dynamodb.provider_item_batches import (
         ProviderItemBatchModel,
@@ -268,6 +488,69 @@ def _restore_stored_hold(info: ResolveInfo, hold: Any, status: str) -> Any:
     return hold
 
 
+def _pg_restore_stored_hold(info: ResolveInfo, hold: Any, status: str) -> Any:
+    """PostgreSQL release/expire: row-lock hold+batch, restore capacity, transition status."""
+    from rfq_engine.models.postgresql.availability_hold import (
+        AvailabilityHoldModel as PGHoldModel,
+    )
+    from rfq_engine.models.postgresql.provider_item_batch import (
+        ProviderItemBatchModel as PGBatchModel,
+    )
+
+    session = Config.db_session
+    logger = info.context.get("logger")
+    now = pendulum.now("UTC")
+    try:
+        row = (
+            session.query(PGHoldModel)
+            .filter(
+                PGHoldModel.partition_key == hold.partition_key,
+                PGHoldModel.hold_token == hold.hold_token,
+            )
+            .with_for_update()
+            .first()
+        )
+        if row is None:
+            raise UnknownHoldError("Unknown availability hold token")
+        if row.status == status:
+            session.rollback()
+            return _PGHoldWrapper(row)
+        if row.status in {PGHoldModel.RELEASED, PGHoldModel.EXPIRED}:
+            session.rollback()
+            raise UnknownHoldError(f"Availability hold is already {row.status}")
+        if row.status == PGHoldModel.CONFIRMED:
+            session.rollback()
+            raise UnknownHoldError("Confirmed reservation cannot be released as a hold")
+
+        batch = (
+            session.query(PGBatchModel)
+            .filter(
+                PGBatchModel.provider_item_uuid == row.provider_item_uuid,
+                PGBatchModel.batch_no == row.batch_no,
+            )
+            .with_for_update()
+            .first()
+        )
+        if batch is not None:
+            current_qty = float(batch.availability_qty or 0)
+            batch.availability_qty = current_qty + float(row.qty)
+            batch.updated_at = now
+
+        row.status = status
+        row.updated_at = now
+        row.updated_by = _updated_by(info)
+        session.commit()
+        return _PGHoldWrapper(row)
+    except UnknownHoldError:
+        session.rollback()
+        raise
+    except Exception:
+        session.rollback()
+        if logger:
+            logger.error(traceback.format_exc())
+        raise UnknownHoldError("Availability hold cannot be released")
+
+
 def _find_matching_batches(
     info: ResolveInfo,
     provider_item_uuid: str,
@@ -275,7 +558,11 @@ def _find_matching_batches(
     service_end_at: Any = None,
     batch_no: Optional[str] = None,
 ) -> list:
-    from rfq_engine.models.dynamodb.provider_item_batches import resolve_provider_item_batch_list
+    # Use the backend-agnostic query resolver so the active backend (DynamoDB
+    # or PostgreSQL) is dispatched correctly via ``get_repo``. The previous
+    # import of the DynamoDB-specific resolver broke PostgreSQL deployments
+    # because it always queried DynamoDB regardless of ``DB_BACKEND``.
+    from rfq_engine.queries.provider_item_batches import resolve_provider_item_batch_list
 
     kwargs: dict[str, Any] = {
         "provider_item_uuid": provider_item_uuid,
