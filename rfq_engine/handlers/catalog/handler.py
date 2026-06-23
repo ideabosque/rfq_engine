@@ -102,10 +102,17 @@ def _search_inquiry(
         )
     logger = info.context.get("logger") or logging.getLogger("catalog")
 
+    # KGE was already initialized by the gateway with its own pg_table_prefix
+    # (e.g. "kge_"). The Invoker re-initializes the target Config with the
+    # setting dict, so we must ensure KGE's prefix is not overwritten by
+    # RFQ's prefix. Use the per-module prefix from the setting dict.
+    kge_setting = dict(setting)
+    kge_setting["pg_table_prefix"] = setting.get("kge_pg_table_prefix", "")
+
     try:
         data = Invoker.invoke_funct_on_local(
             logger,
-            setting,
+            kge_setting,
             "knowledge_graph_graphql",
             query=_KGE_SEARCH_QUERY,
             variables={
