@@ -10,6 +10,20 @@ from alembic import context
 # Import Base metadata for autogenerate support
 from rfq_engine.models.postgresql.base import Base
 
+# Apply table prefix from env var or Config so migrations create prefixed tables.
+import os as _os
+
+_pg_table_prefix = _os.environ.get("PG_TABLE_PREFIX", "")
+if not _pg_table_prefix:
+    try:
+        from rfq_engine.handlers.config import Config
+
+        if Config._initialized:
+            _pg_table_prefix = Config.PG_TABLE_PREFIX
+    except Exception:
+        pass
+Base.table_prefix = _pg_table_prefix or ""
+
 # this is the Alembic Config object
 config = context.config
 

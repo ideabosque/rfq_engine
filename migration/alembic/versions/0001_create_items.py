@@ -8,6 +8,7 @@ Create Date: 2026-06-21
 from alembic import op
 import sqlalchemy as sa
 from sqlalchemy.dialects.postgresql import UUID
+from rfq_engine.models.postgresql.base import prefixed_table, prefixed_index
 
 # revision identifiers, used by Alembic.
 revision = "0001"
@@ -21,7 +22,7 @@ def upgrade():
     op.execute("CREATE EXTENSION IF NOT EXISTS \"uuid-ossp\"")
 
     op.create_table(
-        "items",
+        prefixed_table("items"),
         sa.Column("partition_key", sa.String(128), nullable=False),
         sa.Column(
             "item_uuid",
@@ -54,24 +55,24 @@ def upgrade():
     )
 
     op.create_index(
-        "idx_items_partition_item_type",
-        "items",
+        prefixed_index("idx_items_partition_item_type"),
+        prefixed_table("items"),
         ["partition_key", "item_type"],
     )
     op.create_index(
-        "idx_items_partition_updated_at",
-        "items",
+        prefixed_index("idx_items_partition_updated_at"),
+        prefixed_table("items"),
         ["partition_key", "updated_at"],
     )
     op.create_index(
-        "idx_items_partition_external_id",
-        "items",
+        prefixed_index("idx_items_partition_external_id"),
+        prefixed_table("items"),
         ["partition_key", "item_external_id"],
     )
 
 
 def downgrade():
-    op.drop_index("idx_items_partition_external_id", table_name="items")
-    op.drop_index("idx_items_partition_updated_at", table_name="items")
-    op.drop_index("idx_items_partition_item_type", table_name="items")
-    op.drop_table("items")
+    op.drop_index(prefixed_index("idx_items_partition_external_id"), table_name=prefixed_table("items"))
+    op.drop_index(prefixed_index("idx_items_partition_updated_at"), table_name=prefixed_table("items"))
+    op.drop_index(prefixed_index("idx_items_partition_item_type"), table_name=prefixed_table("items"))
+    op.drop_table(prefixed_table("items"))

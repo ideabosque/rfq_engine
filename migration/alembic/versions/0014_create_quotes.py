@@ -8,6 +8,7 @@ Create Date: 2026-06-21
 from alembic import op
 import sqlalchemy as sa
 from sqlalchemy.dialects.postgresql import UUID
+from rfq_engine.models.postgresql.base import prefixed_table, prefixed_index
 
 # revision identifiers, used by Alembic.
 revision = "0014"
@@ -18,7 +19,7 @@ depends_on = None
 
 def upgrade():
     op.create_table(
-        "quotes",
+        prefixed_table("quotes"),
         sa.Column("request_uuid", UUID(as_uuid=True), nullable=False),
         sa.Column(
             "quote_uuid",
@@ -65,34 +66,30 @@ def upgrade():
     )
 
     op.create_index(
-        "idx_quotes_request_provider_corp_external_id",
-        "quotes",
+        prefixed_index("idx_quotes_request_provider_corp_external_id"),
+        prefixed_table("quotes"),
         ["request_uuid", "provider_corp_external_id"],
     )
     op.create_index(
-        "idx_quotes_request_updated_at",
-        "quotes",
+        prefixed_index("idx_quotes_request_updated_at"),
+        prefixed_table("quotes"),
         ["request_uuid", "updated_at"],
     )
     op.create_index(
-        "idx_quotes_provider_corp_external_id_quote_uuid",
-        "quotes",
+        prefixed_index("idx_quotes_provider_corp_external_id_quote_uuid"),
+        prefixed_table("quotes"),
         ["provider_corp_external_id", "quote_uuid"],
     )
     op.create_index(
-        "idx_quotes_partition_key",
-        "quotes",
+        prefixed_index("idx_quotes_partition_key"),
+        prefixed_table("quotes"),
         ["partition_key"],
     )
 
 
 def downgrade():
-    op.drop_index("idx_quotes_partition_key", table_name="quotes")
-    op.drop_index(
-        "idx_quotes_provider_corp_external_id_quote_uuid", table_name="quotes"
-    )
-    op.drop_index("idx_quotes_request_updated_at", table_name="quotes")
-    op.drop_index(
-        "idx_quotes_request_provider_corp_external_id", table_name="quotes"
-    )
-    op.drop_table("quotes")
+    op.drop_index(prefixed_index("idx_quotes_partition_key"), table_name=prefixed_table("quotes"))
+    op.drop_index(prefixed_index("idx_quotes_provider_corp_external_id_quote_uuid"), table_name=prefixed_table("quotes"))
+    op.drop_index(prefixed_index("idx_quotes_request_updated_at"), table_name=prefixed_table("quotes"))
+    op.drop_index(prefixed_index("idx_quotes_request_provider_corp_external_id"), table_name=prefixed_table("quotes"))
+    op.drop_table(prefixed_table("quotes"))

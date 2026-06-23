@@ -8,6 +8,7 @@ Create Date: 2026-06-21
 from alembic import op
 import sqlalchemy as sa
 from sqlalchemy.dialects.postgresql import UUID
+from rfq_engine.models.postgresql.base import prefixed_table, prefixed_index
 
 # revision identifiers, used by Alembic.
 revision = "0016"
@@ -18,7 +19,7 @@ depends_on = None
 
 def upgrade():
     op.create_table(
-        "installments",
+        prefixed_table("installments"),
         sa.Column("quote_uuid", UUID(as_uuid=True), nullable=False),
         sa.Column(
             "installment_uuid",
@@ -52,24 +53,24 @@ def upgrade():
     )
 
     op.create_index(
-        "idx_installments_quote_updated_at",
-        "installments",
+        prefixed_index("idx_installments_quote_updated_at"),
+        prefixed_table("installments"),
         ["quote_uuid", "updated_at"],
     )
     op.create_index(
-        "idx_installments_partition_key",
-        "installments",
+        prefixed_index("idx_installments_partition_key"),
+        prefixed_table("installments"),
         ["partition_key"],
     )
     op.create_index(
-        "idx_installments_request_uuid",
-        "installments",
+        prefixed_index("idx_installments_request_uuid"),
+        prefixed_table("installments"),
         ["request_uuid"],
     )
 
 
 def downgrade():
-    op.drop_index("idx_installments_request_uuid", table_name="installments")
-    op.drop_index("idx_installments_partition_key", table_name="installments")
-    op.drop_index("idx_installments_quote_updated_at", table_name="installments")
-    op.drop_table("installments")
+    op.drop_index(prefixed_index("idx_installments_request_uuid"), table_name=prefixed_table("installments"))
+    op.drop_index(prefixed_index("idx_installments_partition_key"), table_name=prefixed_table("installments"))
+    op.drop_index(prefixed_index("idx_installments_quote_updated_at"), table_name=prefixed_table("installments"))
+    op.drop_table(prefixed_table("installments"))

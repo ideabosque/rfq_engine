@@ -8,6 +8,7 @@ Create Date: 2026-06-21
 from alembic import op
 import sqlalchemy as sa
 from sqlalchemy.dialects.postgresql import JSONB, UUID
+from rfq_engine.models.postgresql.base import prefixed_table, prefixed_index
 
 # revision identifiers, used by Alembic.
 revision = "0007"
@@ -18,7 +19,7 @@ depends_on = None
 
 def upgrade():
     op.create_table(
-        "cancellation_policies",
+        prefixed_table("cancellation_policies"),
         sa.Column("partition_key", sa.String(128), nullable=False),
         sa.Column(
             "policy_uuid",
@@ -54,13 +55,13 @@ def upgrade():
     )
 
     op.create_index(
-        "idx_cancellation_policies_partition_provider_item_uuid",
-        "cancellation_policies",
+        prefixed_index("idx_cancellation_policies_partition_provider_item_uuid"),
+        prefixed_table("cancellation_policies"),
         ["partition_key", "provider_item_uuid"],
     )
     op.create_index(
-        "idx_cancellation_policies_partition_updated_at",
-        "cancellation_policies",
+        prefixed_index("idx_cancellation_policies_partition_updated_at"),
+        prefixed_table("cancellation_policies"),
         ["partition_key", "updated_at"],
     )
 
@@ -74,4 +75,4 @@ def downgrade():
         "idx_cancellation_policies_partition_provider_item_uuid",
         table_name="cancellation_policies",
     )
-    op.drop_table("cancellation_policies")
+    op.drop_table(prefixed_table("cancellation_policies"))

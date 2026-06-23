@@ -8,6 +8,7 @@ Create Date: 2026-06-21
 from alembic import op
 import sqlalchemy as sa
 from sqlalchemy.dialects.postgresql import UUID, JSONB
+from rfq_engine.models.postgresql.base import prefixed_table, prefixed_index
 
 # revision identifiers, used by Alembic.
 revision = "0011"
@@ -18,7 +19,7 @@ depends_on = None
 
 def upgrade():
     op.create_table(
-        "item_price_tiers",
+        prefixed_table("item_price_tiers"),
         sa.Column("item_uuid", UUID(as_uuid=True), nullable=False),
         sa.Column(
             "item_price_tier_uuid",
@@ -55,32 +56,30 @@ def upgrade():
     )
 
     op.create_index(
-        "idx_item_price_tiers_item_provider_item_uuid",
-        "item_price_tiers",
+        prefixed_index("idx_item_price_tiers_item_provider_item_uuid"),
+        prefixed_table("item_price_tiers"),
         ["item_uuid", "provider_item_uuid"],
     )
     op.create_index(
-        "idx_item_price_tiers_item_segment_uuid",
-        "item_price_tiers",
+        prefixed_index("idx_item_price_tiers_item_segment_uuid"),
+        prefixed_table("item_price_tiers"),
         ["item_uuid", "segment_uuid"],
     )
     op.create_index(
-        "idx_item_price_tiers_item_updated_at",
-        "item_price_tiers",
+        prefixed_index("idx_item_price_tiers_item_updated_at"),
+        prefixed_table("item_price_tiers"),
         ["item_uuid", "updated_at"],
     )
     op.create_index(
-        "idx_item_price_tiers_partition_key",
-        "item_price_tiers",
+        prefixed_index("idx_item_price_tiers_partition_key"),
+        prefixed_table("item_price_tiers"),
         ["partition_key"],
     )
 
 
 def downgrade():
-    op.drop_index("idx_item_price_tiers_partition_key", table_name="item_price_tiers")
-    op.drop_index("idx_item_price_tiers_item_updated_at", table_name="item_price_tiers")
-    op.drop_index("idx_item_price_tiers_item_segment_uuid", table_name="item_price_tiers")
-    op.drop_index(
-        "idx_item_price_tiers_item_provider_item_uuid", table_name="item_price_tiers"
-    )
-    op.drop_table("item_price_tiers")
+    op.drop_index(prefixed_index("idx_item_price_tiers_partition_key"), table_name=prefixed_table("item_price_tiers"))
+    op.drop_index(prefixed_index("idx_item_price_tiers_item_updated_at"), table_name=prefixed_table("item_price_tiers"))
+    op.drop_index(prefixed_index("idx_item_price_tiers_item_segment_uuid"), table_name=prefixed_table("item_price_tiers"))
+    op.drop_index(prefixed_index("idx_item_price_tiers_item_provider_item_uuid"), table_name=prefixed_table("item_price_tiers"))
+    op.drop_table(prefixed_table("item_price_tiers"))

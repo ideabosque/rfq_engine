@@ -8,6 +8,7 @@ Create Date: 2026-06-21
 from alembic import op
 import sqlalchemy as sa
 from sqlalchemy.dialects.postgresql import UUID, JSONB
+from rfq_engine.models.postgresql.base import prefixed_table, prefixed_index
 
 # revision identifiers, used by Alembic.
 revision = "0015"
@@ -18,7 +19,7 @@ depends_on = None
 
 def upgrade():
     op.create_table(
-        "quote_items",
+        prefixed_table("quote_items"),
         sa.Column("quote_uuid", UUID(as_uuid=True), nullable=False),
         sa.Column(
             "quote_item_uuid",
@@ -63,46 +64,42 @@ def upgrade():
     )
 
     op.create_index(
-        "idx_quote_items_quote_provider_item_uuid",
-        "quote_items",
+        prefixed_index("idx_quote_items_quote_provider_item_uuid"),
+        prefixed_table("quote_items"),
         ["quote_uuid", "provider_item_uuid"],
     )
     op.create_index(
-        "idx_quote_items_quote_item_uuid",
-        "quote_items",
+        prefixed_index("idx_quote_items_quote_item_uuid"),
+        prefixed_table("quote_items"),
         ["quote_uuid", "item_uuid"],
     )
     op.create_index(
-        "idx_quote_items_quote_updated_at",
-        "quote_items",
+        prefixed_index("idx_quote_items_quote_updated_at"),
+        prefixed_table("quote_items"),
         ["quote_uuid", "updated_at"],
     )
     op.create_index(
-        "idx_quote_items_item_uuid_provider_item_uuid",
-        "quote_items",
+        prefixed_index("idx_quote_items_item_uuid_provider_item_uuid"),
+        prefixed_table("quote_items"),
         ["item_uuid", "provider_item_uuid"],
     )
     op.create_index(
-        "idx_quote_items_partition_key",
-        "quote_items",
+        prefixed_index("idx_quote_items_partition_key"),
+        prefixed_table("quote_items"),
         ["partition_key"],
     )
     op.create_index(
-        "idx_quote_items_request_uuid",
-        "quote_items",
+        prefixed_index("idx_quote_items_request_uuid"),
+        prefixed_table("quote_items"),
         ["request_uuid"],
     )
 
 
 def downgrade():
-    op.drop_index("idx_quote_items_request_uuid", table_name="quote_items")
-    op.drop_index("idx_quote_items_partition_key", table_name="quote_items")
-    op.drop_index(
-        "idx_quote_items_item_uuid_provider_item_uuid", table_name="quote_items"
-    )
-    op.drop_index("idx_quote_items_quote_updated_at", table_name="quote_items")
-    op.drop_index("idx_quote_items_quote_item_uuid", table_name="quote_items")
-    op.drop_index(
-        "idx_quote_items_quote_provider_item_uuid", table_name="quote_items"
-    )
-    op.drop_table("quote_items")
+    op.drop_index(prefixed_index("idx_quote_items_request_uuid"), table_name=prefixed_table("quote_items"))
+    op.drop_index(prefixed_index("idx_quote_items_partition_key"), table_name=prefixed_table("quote_items"))
+    op.drop_index(prefixed_index("idx_quote_items_item_uuid_provider_item_uuid"), table_name=prefixed_table("quote_items"))
+    op.drop_index(prefixed_index("idx_quote_items_quote_updated_at"), table_name=prefixed_table("quote_items"))
+    op.drop_index(prefixed_index("idx_quote_items_quote_item_uuid"), table_name=prefixed_table("quote_items"))
+    op.drop_index(prefixed_index("idx_quote_items_quote_provider_item_uuid"), table_name=prefixed_table("quote_items"))
+    op.drop_table(prefixed_table("quote_items"))

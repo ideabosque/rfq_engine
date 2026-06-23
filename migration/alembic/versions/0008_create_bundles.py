@@ -8,6 +8,7 @@ Create Date: 2026-06-21
 from alembic import op
 import sqlalchemy as sa
 from sqlalchemy.dialects.postgresql import JSONB, UUID
+from rfq_engine.models.postgresql.base import prefixed_table, prefixed_index
 
 # revision identifiers, used by Alembic.
 revision = "0008"
@@ -18,7 +19,7 @@ depends_on = None
 
 def upgrade():
     op.create_table(
-        "bundles",
+        prefixed_table("bundles"),
         sa.Column("partition_key", sa.String(128), nullable=False),
         sa.Column(
             "bundle_uuid",
@@ -59,18 +60,18 @@ def upgrade():
     )
 
     op.create_index(
-        "idx_bundles_partition_bundle_code",
-        "bundles",
+        prefixed_index("idx_bundles_partition_bundle_code"),
+        prefixed_table("bundles"),
         ["partition_key", "bundle_code"],
     )
     op.create_index(
-        "idx_bundles_partition_updated_at",
-        "bundles",
+        prefixed_index("idx_bundles_partition_updated_at"),
+        prefixed_table("bundles"),
         ["partition_key", "updated_at"],
     )
 
 
 def downgrade():
-    op.drop_index("idx_bundles_partition_updated_at", table_name="bundles")
-    op.drop_index("idx_bundles_partition_bundle_code", table_name="bundles")
-    op.drop_table("bundles")
+    op.drop_index(prefixed_index("idx_bundles_partition_updated_at"), table_name=prefixed_table("bundles"))
+    op.drop_index(prefixed_index("idx_bundles_partition_bundle_code"), table_name=prefixed_table("bundles"))
+    op.drop_table(prefixed_table("bundles"))

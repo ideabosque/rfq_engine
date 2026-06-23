@@ -8,6 +8,7 @@ Create Date: 2026-06-21
 from alembic import op
 import sqlalchemy as sa
 from sqlalchemy.dialects.postgresql import UUID
+from rfq_engine.models.postgresql.base import prefixed_table, prefixed_index
 
 # revision identifiers, used by Alembic.
 revision = "0006"
@@ -18,7 +19,7 @@ depends_on = None
 
 def upgrade():
     op.create_table(
-        "fx_rates",
+        prefixed_table("fx_rates"),
         sa.Column("partition_key", sa.String(128), nullable=False),
         sa.Column(
             "fx_rate_uuid",
@@ -56,18 +57,18 @@ def upgrade():
     )
 
     op.create_index(
-        "idx_fx_rates_partition_currency_pair_date",
-        "fx_rates",
+        prefixed_index("idx_fx_rates_partition_currency_pair_date"),
+        prefixed_table("fx_rates"),
         ["partition_key", "currency_pair_date"],
     )
     op.create_index(
-        "idx_fx_rates_partition_updated_at",
-        "fx_rates",
+        prefixed_index("idx_fx_rates_partition_updated_at"),
+        prefixed_table("fx_rates"),
         ["partition_key", "updated_at"],
     )
 
 
 def downgrade():
-    op.drop_index("idx_fx_rates_partition_updated_at", table_name="fx_rates")
-    op.drop_index("idx_fx_rates_partition_currency_pair_date", table_name="fx_rates")
-    op.drop_table("fx_rates")
+    op.drop_index(prefixed_index("idx_fx_rates_partition_updated_at"), table_name=prefixed_table("fx_rates"))
+    op.drop_index(prefixed_index("idx_fx_rates_partition_currency_pair_date"), table_name=prefixed_table("fx_rates"))
+    op.drop_table(prefixed_table("fx_rates"))

@@ -22,16 +22,20 @@ from sqlalchemy import (
     Numeric,
     text,
 )
+from sqlalchemy.orm import declared_attr
 from sqlalchemy.dialects.postgresql import UUID, JSONB
 
-from .base import Base
+from .base import Base, prefixed_index, prefixed_table
 
 
 class QuoteItemModel(Base):
     """SQLAlchemy model for the QuoteItem entity (table: quote_items)."""
 
-    __tablename__ = "quote_items"
+    @declared_attr
 
+    def __tablename__(cls) -> str:
+
+        return prefixed_table("quote_items")
     # Primary key: composite (quote_uuid, quote_item_uuid)
     quote_uuid = Column(UUID(as_uuid=True), nullable=False, primary_key=True)
     quote_item_uuid = Column(

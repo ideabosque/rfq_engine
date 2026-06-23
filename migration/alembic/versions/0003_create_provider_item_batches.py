@@ -8,6 +8,7 @@ Create Date: 2026-06-21
 from alembic import op
 import sqlalchemy as sa
 from sqlalchemy.dialects.postgresql import UUID
+from rfq_engine.models.postgresql.base import prefixed_table, prefixed_index
 
 # revision identifiers, used by Alembic.
 revision = "0003"
@@ -18,7 +19,7 @@ depends_on = None
 
 def upgrade():
     op.create_table(
-        "provider_item_batches",
+        prefixed_table("provider_item_batches"),
         sa.Column(
             "provider_item_uuid",
             UUID(as_uuid=True),
@@ -74,18 +75,18 @@ def upgrade():
     )
 
     op.create_index(
-        "idx_provider_item_batches_piu_item_uuid",
-        "provider_item_batches",
+        prefixed_index("idx_provider_item_batches_piu_item_uuid"),
+        prefixed_table("provider_item_batches"),
         ["provider_item_uuid", "item_uuid"],
     )
     op.create_index(
-        "idx_provider_item_batches_piu_updated_at",
-        "provider_item_batches",
+        prefixed_index("idx_provider_item_batches_piu_updated_at"),
+        prefixed_table("provider_item_batches"),
         ["provider_item_uuid", "updated_at"],
     )
     op.create_index(
-        "idx_provider_item_batches_partition_key",
-        "provider_item_batches",
+        prefixed_index("idx_provider_item_batches_partition_key"),
+        prefixed_table("provider_item_batches"),
         ["partition_key"],
     )
 
@@ -103,4 +104,4 @@ def downgrade():
         "idx_provider_item_batches_piu_item_uuid",
         table_name="provider_item_batches",
     )
-    op.drop_table("provider_item_batches")
+    op.drop_table(prefixed_table("provider_item_batches"))

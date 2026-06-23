@@ -126,6 +126,7 @@ def engine():
         "execute_mode": "local_for_all",
         "initialize_tables": False,
         "cache_enabled": False,
+        "pg_table_prefix": os.getenv("PG_TABLE_PREFIX", "rfq_"),
     }
 
     logger = logging.getLogger("test_pg_graphql")

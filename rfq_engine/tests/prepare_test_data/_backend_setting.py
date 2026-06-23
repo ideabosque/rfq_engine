@@ -91,6 +91,10 @@ def build_setting() -> Dict[str, Any]:
         setting["db_backend"] = "postgresql"
         pg = _resolve_pg_connection()
         setting.update(pg)
+        # Table prefix to avoid collisions in shared databases.
+        pg_prefix = os.getenv("PG_TABLE_PREFIX", "")
+        if pg_prefix:
+            setting["pg_table_prefix"] = pg_prefix
     else:
         setting["db_backend"] = "dynamodb"
 
