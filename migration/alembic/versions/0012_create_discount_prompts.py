@@ -8,6 +8,7 @@ Create Date: 2026-06-21
 from alembic import op
 import sqlalchemy as sa
 from sqlalchemy.dialects.postgresql import UUID, JSONB
+from rfq_engine.models.postgresql.base import prefixed_table, prefixed_index
 
 # revision identifiers, used by Alembic.
 revision = "0012"
@@ -18,7 +19,7 @@ depends_on = None
 
 def upgrade():
     op.create_table(
-        "discount_prompts",
+        prefixed_table("discount_prompts"),
         sa.Column("partition_key", sa.String(128), nullable=False),
         sa.Column(
             "discount_prompt_uuid",
@@ -50,20 +51,18 @@ def upgrade():
     )
 
     op.create_index(
-        "idx_discount_prompts_partition_scope",
-        "discount_prompts",
+        prefixed_index("idx_discount_prompts_partition_scope"),
+        prefixed_table("discount_prompts"),
         ["partition_key", "scope"],
     )
     op.create_index(
-        "idx_discount_prompts_partition_updated_at",
-        "discount_prompts",
+        prefixed_index("idx_discount_prompts_partition_updated_at"),
+        prefixed_table("discount_prompts"),
         ["partition_key", "updated_at"],
     )
 
 
 def downgrade():
-    op.drop_index(
-        "idx_discount_prompts_partition_updated_at", table_name="discount_prompts"
-    )
-    op.drop_index("idx_discount_prompts_partition_scope", table_name="discount_prompts")
-    op.drop_table("discount_prompts")
+    op.drop_index(prefixed_index("idx_discount_prompts_partition_updated_at"), table_name=prefixed_table("discount_prompts"))
+    op.drop_index(prefixed_index("idx_discount_prompts_partition_scope"), table_name=prefixed_table("discount_prompts"))
+    op.drop_table(prefixed_table("discount_prompts"))

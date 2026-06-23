@@ -20,16 +20,20 @@ from sqlalchemy import (
     Numeric,
     text,
 )
+from sqlalchemy.orm import declared_attr
 from sqlalchemy.dialects.postgresql import UUID, JSONB
 
-from .base import Base
+from .base import Base, prefixed_index, prefixed_table
 
 
 class ItemPriceTierModel(Base):
     """SQLAlchemy model for the ItemPriceTier entity (table: item_price_tiers)."""
 
-    __tablename__ = "item_price_tiers"
+    @declared_attr
 
+    def __tablename__(cls) -> str:
+
+        return prefixed_table("item_price_tiers")
     # Primary key: composite (item_uuid, item_price_tier_uuid)
     item_uuid = Column(UUID(as_uuid=True), nullable=False, primary_key=True)
     item_price_tier_uuid = Column(

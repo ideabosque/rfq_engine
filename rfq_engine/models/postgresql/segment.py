@@ -18,16 +18,20 @@ from sqlalchemy import (
     TIMESTAMP,
     text,
 )
+from sqlalchemy.orm import declared_attr
 from sqlalchemy.dialects.postgresql import UUID
 
-from .base import Base
+from .base import Base, prefixed_index, prefixed_table
 
 
 class SegmentModel(Base):
     """SQLAlchemy model for the Segment entity (table: segments)."""
 
-    __tablename__ = "segments"
+    @declared_attr
 
+    def __tablename__(cls) -> str:
+
+        return prefixed_table("segments")
     # Primary key: composite (partition_key, segment_uuid)
     partition_key = Column(String(128), nullable=False, primary_key=True)
     segment_uuid = Column(

@@ -18,16 +18,20 @@ from sqlalchemy import (
     TIMESTAMP,
     text,
 )
+from sqlalchemy.orm import declared_attr
 from sqlalchemy.dialects.postgresql import UUID
 
-from .base import Base
+from .base import Base, prefixed_index, prefixed_table
 
 
 class ItemModel(Base):
     """SQLAlchemy model for the Item entity (table: items)."""
 
-    __tablename__ = "items"
+    @declared_attr
 
+    def __tablename__(cls) -> str:
+
+        return prefixed_table("items")
     # Primary key: composite (partition_key, item_uuid)
     partition_key = Column(String(128), nullable=False, primary_key=True)
     item_uuid = Column(
@@ -65,10 +69,10 @@ class ItemModel(Base):
 
     __table_args__ = (
         # LSI equivalents: item_type-index, updated_at-index
-        Index("idx_items_partition_item_type", "partition_key", "item_type"),
-        Index("idx_items_partition_updated_at", "partition_key", "updated_at"),
+        Index(prefixed_index("idx_items_partition_item_type"), "partition_key", "item_type"),
+        Index(prefixed_index("idx_items_partition_updated_at"), "partition_key", "updated_at"),
         # GSI equivalent for item_external_id lookup
-        Index("idx_items_partition_external_id", "partition_key", "item_external_id"),
+        Index(prefixed_index("idx_items_partition_external_id"), "partition_key", "item_external_id"),
     )
 
 

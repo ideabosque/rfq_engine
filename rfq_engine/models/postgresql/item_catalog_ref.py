@@ -20,16 +20,20 @@ from sqlalchemy import (
     Text,
     text,
 )
+from sqlalchemy.orm import declared_attr
 from sqlalchemy.dialects.postgresql import JSONB, UUID
 
-from .base import Base
+from .base import Base, prefixed_index, prefixed_table
 
 
 class ItemCatalogRefModel(Base):
     """SQLAlchemy model for the ItemCatalogRef entity (table: item_catalog_refs)."""
 
-    __tablename__ = "item_catalog_refs"
+    @declared_attr
 
+    def __tablename__(cls) -> str:
+
+        return prefixed_table("item_catalog_refs")
     # Primary key: composite (partition_key, catalog_ref_uuid)
     partition_key = Column(String(128), nullable=False, primary_key=True)
     catalog_ref_uuid = Column(
@@ -65,9 +69,9 @@ class ItemCatalogRefModel(Base):
 
     __table_args__ = (
         # LSI equivalents: namespace_node_index, item_lookup_index, updated_at-index
-        Index("idx_item_catalog_refs_partition_namespace_node_key", "partition_key", "namespace_node_key"),
-        Index("idx_item_catalog_refs_partition_item_lookup_key", "partition_key", "item_lookup_key"),
-        Index("idx_item_catalog_refs_partition_updated_at", "partition_key", "updated_at"),
+        Index(prefixed_index("idx_item_catalog_refs_partition_namespace_node_key"), "partition_key", "namespace_node_key"),
+        Index(prefixed_index("idx_item_catalog_refs_partition_item_lookup_key"), "partition_key", "item_lookup_key"),
+        Index(prefixed_index("idx_item_catalog_refs_partition_updated_at"), "partition_key", "updated_at"),
     )
 
 

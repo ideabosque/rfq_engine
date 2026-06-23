@@ -20,16 +20,20 @@ from sqlalchemy import (
     Text,
     text,
 )
+from sqlalchemy.orm import declared_attr
 from sqlalchemy.dialects.postgresql import UUID
 
-from .base import Base
+from .base import Base, prefixed_index, prefixed_table
 
 
 class FxRateModel(Base):
     """SQLAlchemy model for the FxRate entity (table: fx_rates)."""
 
-    __tablename__ = "fx_rates"
+    @declared_attr
 
+    def __tablename__(cls) -> str:
+
+        return prefixed_table("fx_rates")
     # Primary key: composite (partition_key, fx_rate_uuid)
     partition_key = Column(String(128), nullable=False, primary_key=True)
     fx_rate_uuid = Column(
@@ -65,8 +69,8 @@ class FxRateModel(Base):
 
     __table_args__ = (
         # LSI equivalents: currency_pair_date-index, updated_at-index
-        Index("idx_fx_rates_partition_currency_pair_date", "partition_key", "currency_pair_date"),
-        Index("idx_fx_rates_partition_updated_at", "partition_key", "updated_at"),
+        Index(prefixed_index("idx_fx_rates_partition_currency_pair_date"), "partition_key", "currency_pair_date"),
+        Index(prefixed_index("idx_fx_rates_partition_updated_at"), "partition_key", "updated_at"),
     )
 
 

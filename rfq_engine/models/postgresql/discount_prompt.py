@@ -21,16 +21,20 @@ from sqlalchemy import (
     Numeric,
     text,
 )
+from sqlalchemy.orm import declared_attr
 from sqlalchemy.dialects.postgresql import UUID, JSONB
 
-from .base import Base
+from .base import Base, prefixed_index, prefixed_table
 
 
 class DiscountPromptModel(Base):
     """SQLAlchemy model for the DiscountPrompt entity (table: discount_prompts)."""
 
-    __tablename__ = "discount_prompts"
+    @declared_attr
 
+    def __tablename__(cls) -> str:
+
+        return prefixed_table("discount_prompts")
     # Primary key: composite (partition_key, discount_prompt_uuid)
     partition_key = Column(String(128), nullable=False, primary_key=True)
     discount_prompt_uuid = Column(

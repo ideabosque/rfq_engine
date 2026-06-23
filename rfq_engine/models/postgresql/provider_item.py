@@ -20,16 +20,20 @@ from sqlalchemy import (
     TIMESTAMP,
     text,
 )
+from sqlalchemy.orm import declared_attr
 from sqlalchemy.dialects.postgresql import JSONB, UUID
 
-from .base import Base
+from .base import Base, prefixed_index, prefixed_table
 
 
 class ProviderItemModel(Base):
     """SQLAlchemy model for the ProviderItem entity (table: provider_items)."""
 
-    __tablename__ = "provider_items"
+    @declared_attr
 
+    def __tablename__(cls) -> str:
+
+        return prefixed_table("provider_items")
     # Primary key: composite (partition_key, provider_item_uuid)
     partition_key = Column(String(128), nullable=False, primary_key=True)
     provider_item_uuid = Column(

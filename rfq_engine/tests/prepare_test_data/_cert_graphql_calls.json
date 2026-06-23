@@ -12,39 +12,39 @@
       "data": {
         "insertUpdateItem": {
           "item": {
-            "itemUuid": "3c50a5a3-31c7-4a93-ab5d-a06acd46daa8",
+            "itemUuid": "1fc878b8-f327-47dd-ab81-318572c223e1",
             "itemName": "Cert Test Item",
             "itemType": "test_product"
           }
         }
       }
     },
-    "ms": 129,
+    "ms": 112,
     "status": "pass"
   },
   {
     "sid": "INT-003 query",
     "doc": "query GetItem($uuid:String!){item(itemUuid:$uuid){itemUuid itemName itemType}}",
     "vars": {
-      "uuid": "3c50a5a3-31c7-4a93-ab5d-a06acd46daa8"
+      "uuid": "1fc878b8-f327-47dd-ab81-318572c223e1"
     },
     "resp": {
       "data": {
         "item": {
-          "itemUuid": "3c50a5a3-31c7-4a93-ab5d-a06acd46daa8",
+          "itemUuid": "1fc878b8-f327-47dd-ab81-318572c223e1",
           "itemName": "Cert Test Item",
           "itemType": "test_product"
         }
       }
     },
-    "ms": 11,
+    "ms": 10,
     "status": "pass"
   },
   {
     "sid": "INT-003 update",
     "doc": "mutation UpdateItem($uuid:String!,$name:String,$by:String!){insertUpdateItem(itemUuid:$uuid,itemName:$name,updatedBy:$by){item{itemName}}}",
     "vars": {
-      "uuid": "3c50a5a3-31c7-4a93-ab5d-a06acd46daa8",
+      "uuid": "1fc878b8-f327-47dd-ab81-318572c223e1",
       "name": "Cert Test Item v2",
       "by": "cert"
     },
@@ -72,7 +72,7 @@
         "itemList": {
           "itemList": [
             {
-              "itemUuid": "3c50a5a3-31c7-4a93-ab5d-a06acd46daa8",
+              "itemUuid": "1fc878b8-f327-47dd-ab81-318572c223e1",
               "itemName": "Cert Test Item v2"
             }
           ],
@@ -80,14 +80,14 @@
         }
       }
     },
-    "ms": 9,
+    "ms": 10,
     "status": "pass"
   },
   {
     "sid": "INT-003 delete",
     "doc": "mutation DeleteItem($uuid:String!){deleteItem(itemUuid:$uuid){ok}}",
     "vars": {
-      "uuid": "3c50a5a3-31c7-4a93-ab5d-a06acd46daa8"
+      "uuid": "1fc878b8-f327-47dd-ab81-318572c223e1"
     },
     "resp": {
       "data": {
@@ -96,21 +96,21 @@
         }
       }
     },
-    "ms": 18,
+    "ms": 16,
     "status": "pass"
   },
   {
     "sid": "INT-003 post-delete",
     "doc": "query GetItem($uuid:String!){item(itemUuid:$uuid){itemUuid}}",
     "vars": {
-      "uuid": "3c50a5a3-31c7-4a93-ab5d-a06acd46daa8"
+      "uuid": "1fc878b8-f327-47dd-ab81-318572c223e1"
     },
     "resp": {
       "data": {
         "item": null
       }
     },
-    "ms": 8,
+    "ms": 7,
     "status": "pass"
   },
   {
@@ -124,117 +124,117 @@
         "discountPromptList": {
           "discountPromptList": [
             {
-              "discountPromptUuid": "bfd85eee-2dc0-4708-8c41-b8ed16fa218d",
-              "scope": "provider_item",
-              "status": "active",
-              "priority": 4
-            },
-            {
-              "discountPromptUuid": "3be12527-06cc-4ea6-808f-3e71ba860366",
-              "scope": "item",
-              "status": "active",
-              "priority": 3
-            },
-            {
-              "discountPromptUuid": "f45b0341-d672-43b1-a067-b23a734b1f09",
+              "discountPromptUuid": "16d72610-f594-44ef-bafc-3e1db3ac6b93",
               "scope": "provider_item",
               "status": "active",
               "priority": 5
             },
             {
-              "discountPromptUuid": "09cac069-f2b3-4a34-86bc-5f46b83f4191",
+              "discountPromptUuid": "a37dcb7d-21db-4a40-ac2e-b9d8e47b6c1c",
+              "scope": "item",
+              "status": "active",
+              "priority": 10
+            },
+            {
+              "discountPromptUuid": "e99ca076-ad02-48fc-8272-2551c1b1fc72",
+              "scope": "provider_item",
+              "status": "active",
+              "priority": 4
+            },
+            {
+              "discountPromptUuid": "15abf680-1376-43b5-b4f6-700ea596916e",
               "scope": "item",
               "status": "active",
               "priority": 9
             },
             {
-              "discountPromptUuid": "185779c5-f6e3-4860-ba47-bbbaa6ee225f",
+              "discountPromptUuid": "1194283d-7070-49ea-ad98-3cd7b5aba2de",
               "scope": "provider_item",
               "status": "active",
               "priority": 7
             },
             {
-              "discountPromptUuid": "2c04ed7a-f293-4385-b281-d47c94e7fb66",
+              "discountPromptUuid": "298084d4-5a82-493b-a8da-8a5f092cc64c",
               "scope": "item",
               "status": "active",
               "priority": 4
             },
             {
-              "discountPromptUuid": "2c77266b-54db-472e-9298-cb4ce8615ba6",
+              "discountPromptUuid": "a063dc45-1e7f-4fc5-ac5d-f069198b6861",
+              "scope": "provider_item",
+              "status": "active",
+              "priority": 8
+            },
+            {
+              "discountPromptUuid": "b1b08aa0-35e0-4606-a87d-80dfc97c4312",
+              "scope": "item",
+              "status": "in_review",
+              "priority": 7
+            },
+            {
+              "discountPromptUuid": "9b82034e-2de0-43e3-81c8-76dbb2e7933e",
               "scope": "provider_item",
               "status": "in_review",
               "priority": 2
             },
             {
-              "discountPromptUuid": "616fb316-19d9-41cd-aa36-1d15c0d25890",
+              "discountPromptUuid": "e6e056d0-9ea2-4349-a34d-3a266fa27051",
               "scope": "item",
-              "status": "in_review",
-              "priority": 7
-            },
-            {
-              "discountPromptUuid": "5e600555-1215-411d-bc9a-a71df77a92be",
-              "scope": "provider_item",
-              "status": "in_review",
+              "status": "active",
               "priority": 8
             },
             {
-              "discountPromptUuid": "e07c8826-8b74-4f86-ba02-b2681c281baa",
-              "scope": "item",
-              "status": "active",
-              "priority": 6
-            },
-            {
-              "discountPromptUuid": "773008cb-2d72-4ab8-a794-e3bef5ba5a17",
+              "discountPromptUuid": "27b37507-0446-47b6-93e9-4dc77e086eb0",
               "scope": "segment",
               "status": "active",
-              "priority": 4
+              "priority": 7
             },
             {
-              "discountPromptUuid": "17686f64-b9cf-4439-a2d8-f16e4496fb42",
+              "discountPromptUuid": "eb530e2c-9c84-4871-894e-fd6c3460248c",
+              "scope": "segment",
+              "status": "in_review",
+              "priority": 2
+            },
+            {
+              "discountPromptUuid": "dc38d8fc-80f8-4571-a276-4128e5eec473",
               "scope": "segment",
               "status": "active",
-              "priority": 9
+              "priority": 3
             },
             {
-              "discountPromptUuid": "4196f37c-1670-423a-92b6-06e18b518aaf",
-              "scope": "segment",
-              "status": "active",
-              "priority": 6
-            },
-            {
-              "discountPromptUuid": "684f25dd-5362-44f0-90cf-61125c63c07a",
-              "scope": "segment",
-              "status": "active",
-              "priority": 1
-            },
-            {
-              "discountPromptUuid": "4b007152-e3bf-47ef-9064-6a6188dc2d82",
+              "discountPromptUuid": "e134e14e-3c50-4b3e-b94a-3bcf86c5e1c0",
               "scope": "segment",
               "status": "active",
               "priority": 5
             },
             {
-              "discountPromptUuid": "66b38675-98f0-40cf-aab9-432be87a31ff",
+              "discountPromptUuid": "0f1de2e9-71f2-4a61-bb0f-0cd3fb72d82b",
               "scope": "segment",
-              "status": "in_review",
-              "priority": 8
+              "status": "active",
+              "priority": 7
             },
             {
-              "discountPromptUuid": "cf9325f3-48b8-4200-8ce6-2b375618abd8",
-              "scope": "global",
-              "status": "in_review",
-              "priority": 3
+              "discountPromptUuid": "6ce1e338-1861-4436-a1b1-5d2f4314f18e",
+              "scope": "segment",
+              "status": "active",
+              "priority": 4
             },
             {
-              "discountPromptUuid": "d7bc2aad-1981-4949-a4ba-b35e216f9d80",
+              "discountPromptUuid": "b2474c47-ebe9-467b-9f72-1ca94a058551",
               "scope": "global",
               "status": "active",
-              "priority": 10
+              "priority": 4
             },
             {
-              "discountPromptUuid": "a1cf9375-0e50-4a9f-bf43-d3d283febd3b",
+              "discountPromptUuid": "db54f3f6-3aeb-4d83-b058-27c1d7851143",
               "scope": "global",
-              "status": "in_review",
+              "status": "active",
+              "priority": 1
+            },
+            {
+              "discountPromptUuid": "76fa1045-9619-4ea6-88e6-e4a85d027300",
+              "scope": "global",
+              "status": "active",
               "priority": 6
             }
           ],
@@ -242,7 +242,7 @@
         }
       }
     },
-    "ms": 17,
+    "ms": 13,
     "status": "pass"
   },
   {
@@ -256,99 +256,86 @@
         "quoteList": {
           "quoteList": [
             {
-              "quoteUuid": "55ac4a3d-2db1-410c-ab9a-31c1ba54cc69",
-              "requestUuid": "04637337-21fb-4b66-8681-7d2e22a5dd87",
-              "totalQuoteAmount": "16730.7336",
+              "quoteUuid": "d123b7f0-7a07-491c-9292-bbcbdb000c00",
+              "requestUuid": "4a4f773f-3862-48bd-9da4-21c1b46ffdeb",
+              "totalQuoteAmount": "3609.6794999999997",
               "totalQuoteDiscount": "0.0",
-              "finalTotalQuoteAmount": "16730.7336",
-              "shippingAmount": "0.0",
-              "currency": "USD",
-              "displayCurrency": "AUD",
-              "fxRate": "1.549142",
-              "rounds": 0,
-              "status": "initial"
-            },
-            {
-              "quoteUuid": "37f38864-f58c-4fef-b26a-71c533240594",
-              "requestUuid": "b8baca15-1f0f-49e4-a0b6-46c9e4e25283",
-              "totalQuoteAmount": "12746.421",
-              "totalQuoteDiscount": "104.37",
-              "finalTotalQuoteAmount": "12642.051",
-              "shippingAmount": "0.0",
-              "currency": "USD",
-              "displayCurrency": "CNY",
-              "fxRate": "7.081345",
-              "rounds": 0,
-              "status": "initial"
-            },
-            {
-              "quoteUuid": "83c04bda-fe01-4087-8f93-fccd0f406c0e",
-              "requestUuid": "5c633ad5-ff13-4c4d-9180-120bd675166a",
-              "totalQuoteAmount": "5576.9112000000005",
-              "totalQuoteDiscount": "0.0",
-              "finalTotalQuoteAmount": "5576.9112000000005",
-              "shippingAmount": "0.0",
-              "currency": "USD",
-              "displayCurrency": "AUD",
-              "fxRate": "1.549142",
-              "rounds": 0,
-              "status": "pending"
-            },
-            {
-              "quoteUuid": "e6926abb-ec55-424e-b0e6-27a5719e7449",
-              "requestUuid": "18e5c5d5-97a8-43cb-8dc7-796edfb28f5a",
-              "totalQuoteAmount": "401.0755",
-              "totalQuoteDiscount": "0.0",
-              "finalTotalQuoteAmount": "401.0755",
+              "finalTotalQuoteAmount": "3609.6794999999997",
               "shippingAmount": "0.0",
               "currency": "USD",
               "displayCurrency": "GBP",
               "fxRate": "0.802151",
               "rounds": 0,
-              "status": "initial"
+              "status": "pending"
             },
             {
-              "quoteUuid": "35cec26e-15a3-4164-86ed-95611ac178d6",
-              "requestUuid": "57059aca-60db-4833-ae3b-39ae5d86c3a6",
-              "totalQuoteAmount": "1258.677875",
-              "totalQuoteDiscount": "159.18",
-              "finalTotalQuoteAmount": "1122.577875",
-              "shippingAmount": "23.08",
+              "quoteUuid": "61dbecfa-ef6a-427f-ab30-d349e3dd3a43",
+              "requestUuid": "b7bd0b85-4158-4bae-b6bf-5f48a7ab0a99",
+              "totalQuoteAmount": "1104601.716",
+              "totalQuoteDiscount": "66.52",
+              "finalTotalQuoteAmount": "1104535.196",
+              "shippingAmount": "0.0",
               "currency": "USD",
-              "displayCurrency": "AUD",
-              "fxRate": "1.549142",
+              "displayCurrency": "JPY",
+              "fxRate": "153.416905",
               "rounds": 0,
               "status": "initial"
             },
             {
-              "quoteUuid": "ba50db78-aa55-40f9-bc78-7535331f0e9a",
-              "requestUuid": "04637337-21fb-4b66-8681-7d2e22a5dd87",
-              "totalQuoteAmount": "0.0",
+              "quoteUuid": "335c6caf-2087-4d9b-9519-612cde271a19",
+              "requestUuid": "b7bd0b85-4158-4bae-b6bf-5f48a7ab0a99",
+              "totalQuoteAmount": "1000.0",
               "totalQuoteDiscount": "0.0",
-              "finalTotalQuoteAmount": "0.0",
+              "finalTotalQuoteAmount": "1000.0",
               "shippingAmount": "0.0",
               "currency": "USD",
-              "displayCurrency": "CNY",
-              "fxRate": "7.081345",
+              "displayCurrency": null,
+              "fxRate": null,
+              "rounds": 0,
+              "status": "initial"
+            },
+            {
+              "quoteUuid": "52489593-63b7-4b73-b0fa-1b41bc0a5387",
+              "requestUuid": "b99fa5cd-9980-4cd6-8c6b-7a8fd1cb84f1",
+              "totalQuoteAmount": "12015.045",
+              "totalQuoteDiscount": "199.19",
+              "finalTotalQuoteAmount": "11815.855",
+              "shippingAmount": "0.0",
+              "currency": "USD",
+              "displayCurrency": "CAD",
+              "fxRate": "1.335005",
               "rounds": 0,
               "status": "pending"
             },
             {
-              "quoteUuid": "ff7b8c49-a4c2-42c0-8103-998df6954e1b",
-              "requestUuid": "b8baca15-1f0f-49e4-a0b6-46c9e4e25283",
+              "quoteUuid": "9e8378fa-f6b3-4353-bf9a-af2ff6036ff8",
+              "requestUuid": "c6e3730a-e8b5-4d18-bc54-10b0c86a1a4a",
+              "totalQuoteAmount": "9000.0",
+              "totalQuoteDiscount": "111.0",
+              "finalTotalQuoteAmount": "8889.0",
+              "shippingAmount": "0.0",
+              "currency": "USD",
+              "displayCurrency": null,
+              "fxRate": null,
+              "rounds": 0,
+              "status": "initial"
+            },
+            {
+              "quoteUuid": "0360bb1d-2ad4-4b6a-9615-9f29437735dc",
+              "requestUuid": "4a4f773f-3862-48bd-9da4-21c1b46ffdeb",
               "totalQuoteAmount": "0.0",
               "totalQuoteDiscount": "0.0",
               "finalTotalQuoteAmount": "0.0",
               "shippingAmount": "0.0",
               "currency": "USD",
-              "displayCurrency": "CNY",
-              "fxRate": "7.081345",
+              "displayCurrency": null,
+              "fxRate": null,
               "rounds": 0,
-              "status": "initial"
+              "status": "pending"
             },
             {
-              "quoteUuid": "923bdf60-ec63-4bb1-a432-483d3faa7a8d",
-              "requestUuid": "18e5c5d5-97a8-43cb-8dc7-796edfb28f5a",
+              "quoteUuid": "03bc8b22-c838-451d-a0e1-e4e1e0d53be5",
+              "requestUuid": "b99fa5cd-9980-4cd6-8c6b-7a8fd1cb84f1",
               "totalQuoteAmount": "0.0",
               "totalQuoteDiscount": "0.0",
               "finalTotalQuoteAmount": "0.0",
@@ -358,24 +345,50 @@
               "fxRate": null,
               "rounds": 0,
               "status": "initial"
+            },
+            {
+              "quoteUuid": "8ffa29cb-374a-4754-9a3f-c07f9b614853",
+              "requestUuid": "6e522e1a-0137-4fee-85fc-3292b0ad2846",
+              "totalQuoteAmount": "0.0",
+              "totalQuoteDiscount": "0.0",
+              "finalTotalQuoteAmount": "0.0",
+              "shippingAmount": "0.0",
+              "currency": "USD",
+              "displayCurrency": null,
+              "fxRate": null,
+              "rounds": 0,
+              "status": "pending"
+            },
+            {
+              "quoteUuid": "b048a1d4-a24b-4f12-a969-823c42e2a8f2",
+              "requestUuid": "6e522e1a-0137-4fee-85fc-3292b0ad2846",
+              "totalQuoteAmount": "0.0",
+              "totalQuoteDiscount": "0.0",
+              "finalTotalQuoteAmount": "0.0",
+              "shippingAmount": "23.3",
+              "currency": "USD",
+              "displayCurrency": "SGD",
+              "fxRate": "1.342456",
+              "rounds": 0,
+              "status": "pending"
             }
           ],
-          "total": 8
+          "total": 9
         }
       }
     },
-    "ms": 16,
+    "ms": 14,
     "status": "pass"
   },
   {
     "sid": "INT-007 create",
     "doc": "mutation CI($qid:String!,$rid:String!,$p:Int,$a:SafeFloat,$d:DateTime,$m:String,$by:String!){insertUpdateInstallment(quoteUuid:$qid,requestUuid:$rid,priority:$p,installmentAmount:$a,scheduledDate:$d,paymentMethod:$m,updatedBy:$by){installment{installmentUuid installmentRatio installmentAmount priority}}}",
     "vars": {
-      "qid": "55ac4a3d-2db1-410c-ab9a-31c1ba54cc69",
-      "rid": "04637337-21fb-4b66-8681-7d2e22a5dd87",
+      "qid": "d123b7f0-7a07-491c-9292-bbcbdb000c00",
+      "rid": "4a4f773f-3862-48bd-9da4-21c1b46ffdeb",
       "p": 1,
-      "a": 5019.22,
-      "d": "2026-07-22T03:29:10.123528Z",
+      "a": 1082.9,
+      "d": "2026-07-22T21:18:50.378900Z",
       "m": "bank_transfer",
       "by": "cert"
     },
@@ -383,31 +396,31 @@
       "data": {
         "insertUpdateInstallment": {
           "installment": {
-            "installmentUuid": "6d0d7512-616e-41bd-9c8f-ebb82aaf4f9f",
-            "installmentRatio": "29.999999521838067",
-            "installmentAmount": "5019.22",
+            "installmentUuid": "5c40e3d3-a98b-40ad-87f3-2350a72bcb30",
+            "installmentRatio": "29.99989334233137",
+            "installmentAmount": "1082.9",
             "priority": 1
           }
         }
       }
     },
-    "ms": 21,
+    "ms": 20,
     "status": "pass"
   },
   {
     "sid": "INT-007 list",
     "doc": "query IL($qid:String){installmentList(quoteUuid:$qid,limit:10){installmentList{installmentUuid installmentRatio installmentAmount priority}total}}",
     "vars": {
-      "qid": "55ac4a3d-2db1-410c-ab9a-31c1ba54cc69"
+      "qid": "d123b7f0-7a07-491c-9292-bbcbdb000c00"
     },
     "resp": {
       "data": {
         "installmentList": {
           "installmentList": [
             {
-              "installmentUuid": "6d0d7512-616e-41bd-9c8f-ebb82aaf4f9f",
-              "installmentRatio": "29.999999521838067",
-              "installmentAmount": "5019.22",
+              "installmentUuid": "5c40e3d3-a98b-40ad-87f3-2350a72bcb30",
+              "installmentRatio": "29.99989334233137",
+              "installmentAmount": "1082.9",
               "priority": 1
             }
           ],
@@ -415,7 +428,7 @@
         }
       }
     },
-    "ms": 10,
+    "ms": 9,
     "status": "pass"
   },
   {
@@ -429,63 +442,70 @@
         "quoteList": {
           "quoteList": [
             {
-              "quoteUuid": "55ac4a3d-2db1-410c-ab9a-31c1ba54cc69",
-              "currency": "USD",
-              "displayCurrency": "AUD",
-              "fxRate": "1.549142",
-              "totalQuoteAmount": "16730.7336"
-            },
-            {
-              "quoteUuid": "37f38864-f58c-4fef-b26a-71c533240594",
-              "currency": "USD",
-              "displayCurrency": "CNY",
-              "fxRate": "7.081345",
-              "totalQuoteAmount": "12746.421"
-            },
-            {
-              "quoteUuid": "83c04bda-fe01-4087-8f93-fccd0f406c0e",
-              "currency": "USD",
-              "displayCurrency": "AUD",
-              "fxRate": "1.549142",
-              "totalQuoteAmount": "5576.9112000000005"
-            },
-            {
-              "quoteUuid": "e6926abb-ec55-424e-b0e6-27a5719e7449",
+              "quoteUuid": "d123b7f0-7a07-491c-9292-bbcbdb000c00",
               "currency": "USD",
               "displayCurrency": "GBP",
               "fxRate": "0.802151",
-              "totalQuoteAmount": "401.0755"
+              "totalQuoteAmount": "3609.6794999999997"
             },
             {
-              "quoteUuid": "35cec26e-15a3-4164-86ed-95611ac178d6",
+              "quoteUuid": "61dbecfa-ef6a-427f-ab30-d349e3dd3a43",
               "currency": "USD",
-              "displayCurrency": "AUD",
-              "fxRate": "1.549142",
-              "totalQuoteAmount": "1258.677875"
+              "displayCurrency": "JPY",
+              "fxRate": "153.416905",
+              "totalQuoteAmount": "1104601.716"
             },
             {
-              "quoteUuid": "ba50db78-aa55-40f9-bc78-7535331f0e9a",
+              "quoteUuid": "335c6caf-2087-4d9b-9519-612cde271a19",
               "currency": "USD",
-              "displayCurrency": "CNY",
-              "fxRate": "7.081345",
-              "totalQuoteAmount": "0.0"
+              "displayCurrency": null,
+              "fxRate": null,
+              "totalQuoteAmount": "1000.0"
             },
             {
-              "quoteUuid": "ff7b8c49-a4c2-42c0-8103-998df6954e1b",
+              "quoteUuid": "52489593-63b7-4b73-b0fa-1b41bc0a5387",
               "currency": "USD",
-              "displayCurrency": "CNY",
-              "fxRate": "7.081345",
-              "totalQuoteAmount": "0.0"
+              "displayCurrency": "CAD",
+              "fxRate": "1.335005",
+              "totalQuoteAmount": "12015.045"
             },
             {
-              "quoteUuid": "923bdf60-ec63-4bb1-a432-483d3faa7a8d",
+              "quoteUuid": "9e8378fa-f6b3-4353-bf9a-af2ff6036ff8",
+              "currency": "USD",
+              "displayCurrency": null,
+              "fxRate": null,
+              "totalQuoteAmount": "9000.0"
+            },
+            {
+              "quoteUuid": "0360bb1d-2ad4-4b6a-9615-9f29437735dc",
               "currency": "USD",
               "displayCurrency": null,
               "fxRate": null,
               "totalQuoteAmount": "0.0"
+            },
+            {
+              "quoteUuid": "03bc8b22-c838-451d-a0e1-e4e1e0d53be5",
+              "currency": "USD",
+              "displayCurrency": null,
+              "fxRate": null,
+              "totalQuoteAmount": "0.0"
+            },
+            {
+              "quoteUuid": "8ffa29cb-374a-4754-9a3f-c07f9b614853",
+              "currency": "USD",
+              "displayCurrency": null,
+              "fxRate": null,
+              "totalQuoteAmount": "0.0"
+            },
+            {
+              "quoteUuid": "b048a1d4-a24b-4f12-a969-823c42e2a8f2",
+              "currency": "USD",
+              "displayCurrency": "SGD",
+              "fxRate": "1.342456",
+              "totalQuoteAmount": "0.0"
             }
           ],
-          "total": 8
+          "total": 9
         }
       }
     },
@@ -503,8 +523,8 @@
         "quoteItemList": {
           "quoteItemList": [
             {
-              "quoteItemUuid": "fe6d93ba-c836-4f38-a89d-72f0405bf064",
-              "quoteUuid": "55ac4a3d-2db1-410c-ab9a-31c1ba54cc69",
+              "quoteItemUuid": "5d7a9561-a78f-4088-b508-bba209fc857d",
+              "quoteUuid": "d123b7f0-7a07-491c-9292-bbcbdb000c00",
               "requestData": {
                 "cancellationPolicySnapshot": {
                   "label": "Business Fare Cancellation",
@@ -524,16 +544,16 @@
                       }
                     ]
                   },
-                  "description": "Central conference money discussion structure same sort church age others morning prepare.",
-                  "policyUuid": "9c9b9290-cc46-4cac-9eb4-be271de9220b",
-                  "snapshottedAt": "2026-06-22 03:27:48.788818",
+                  "description": "Treatment hour detail east health point certainly share leader mission south fact consumer.",
+                  "policyUuid": "fe726045-e17a-4bb2-aca3-d473f23eeda2",
+                  "snapshottedAt": "2026-06-22 21:14:34.268877",
                   "notesTemplateUuid": null
                 }
               }
             },
             {
-              "quoteItemUuid": "5e860d51-9fc5-4fc0-a042-d145a2dfbc06",
-              "quoteUuid": "37f38864-f58c-4fef-b26a-71c533240594",
+              "quoteItemUuid": "2348a724-7da6-42de-97b3-6b31211c5234",
+              "quoteUuid": "61dbecfa-ef6a-427f-ab30-d349e3dd3a43",
               "requestData": {
                 "cancellationPolicySnapshot": {
                   "label": "Business Fare Cancellation",
@@ -553,45 +573,16 @@
                       }
                     ]
                   },
-                  "description": "Central conference money discussion structure same sort church age others morning prepare.",
-                  "policyUuid": "9c9b9290-cc46-4cac-9eb4-be271de9220b",
-                  "snapshottedAt": "2026-06-22 03:27:48.767559",
+                  "description": "Treatment hour detail east health point certainly share leader mission south fact consumer.",
+                  "policyUuid": "fe726045-e17a-4bb2-aca3-d473f23eeda2",
+                  "snapshottedAt": "2026-06-22 21:14:34.247573",
                   "notesTemplateUuid": null
                 }
               }
             },
             {
-              "quoteItemUuid": "524f34a6-b7a4-431d-804b-0d9fa27915f6",
-              "quoteUuid": "83c04bda-fe01-4087-8f93-fccd0f406c0e",
-              "requestData": {
-                "cancellationPolicySnapshot": {
-                  "label": "Business Fare Cancellation",
-                  "tiers": {
-                    "tiers": [
-                      {
-                        "refundPct": "1",
-                        "hoursBeforeDepartureGte": "24"
-                      },
-                      {
-                        "refundPct": "0.5",
-                        "hoursBeforeDepartureGte": "2"
-                      },
-                      {
-                        "refundPct": "0",
-                        "hoursBeforeDepartureGte": "0"
-                      }
-                    ]
-                  },
-                  "description": "Central conference money discussion structure same sort church age others morning prepare.",
-                  "policyUuid": "9c9b9290-cc46-4cac-9eb4-be271de9220b",
-                  "snapshottedAt": "2026-06-22 03:27:48.747665",
-                  "notesTemplateUuid": null
-                }
-              }
-            },
-            {
-              "quoteItemUuid": "6a7d66cc-ecb2-4fdf-b43b-76700ad75d2e",
-              "quoteUuid": "e6926abb-ec55-424e-b0e6-27a5719e7449",
+              "quoteItemUuid": "6ff3b391-cc0b-49c0-bd9a-7bacabf98d68",
+              "quoteUuid": "335c6caf-2087-4d9b-9519-612cde271a19",
               "requestData": {
                 "cancellationPolicySnapshot": {
                   "label": "Economy Fare Cancellation",
@@ -611,28 +602,28 @@
                       }
                     ]
                   },
-                  "description": "Campaign let response less like consumer risk six him stop source.",
-                  "policyUuid": "9d2d658a-3056-47f8-83eb-5550f5ff2cf6",
-                  "snapshottedAt": "2026-06-22 03:27:48.726254",
+                  "description": "Entire any until maintain guess hour seven other book business store scene than.",
+                  "policyUuid": "fb4bacab-435a-4f82-bb7f-fc164af8adb1",
+                  "snapshottedAt": "2026-06-22 21:14:34.225204",
                   "notesTemplateUuid": null
                 }
               }
             },
             {
-              "quoteItemUuid": "b6f15f18-2d8f-4683-9362-b042a988ea6f",
-              "quoteUuid": "35cec26e-15a3-4164-86ed-95611ac178d6",
+              "quoteItemUuid": "65b4e715-e4cd-4302-8406-e8ed80745c1d",
+              "quoteUuid": "52489593-63b7-4b73-b0fa-1b41bc0a5387",
               "requestData": {
                 "cancellationPolicySnapshot": {
-                  "label": "Economy Fare Cancellation",
+                  "label": "First Fare Cancellation",
                   "tiers": {
                     "tiers": [
                       {
                         "refundPct": "1",
-                        "hoursBeforeDepartureGte": "168"
+                        "hoursBeforeDepartureGte": "24"
                       },
                       {
                         "refundPct": "0.5",
-                        "hoursBeforeDepartureGte": "24"
+                        "hoursBeforeDepartureGte": "2"
                       },
                       {
                         "refundPct": "0",
@@ -640,9 +631,38 @@
                       }
                     ]
                   },
-                  "description": "Campaign let response less like consumer risk six him stop source.",
-                  "policyUuid": "9d2d658a-3056-47f8-83eb-5550f5ff2cf6",
-                  "snapshottedAt": "2026-06-22 03:27:48.686562",
+                  "description": "Job service instead mention whatever between seek chance back.",
+                  "policyUuid": "b2ede6e5-e595-4719-b0b8-07a1f5f74baf",
+                  "snapshottedAt": "2026-06-22 21:14:34.205351",
+                  "notesTemplateUuid": null
+                }
+              }
+            },
+            {
+              "quoteItemUuid": "84336230-ce18-4a57-bf2b-4b8759255781",
+              "quoteUuid": "9e8378fa-f6b3-4353-bf9a-af2ff6036ff8",
+              "requestData": {
+                "cancellationPolicySnapshot": {
+                  "label": "First Fare Cancellation",
+                  "tiers": {
+                    "tiers": [
+                      {
+                        "refundPct": "1",
+                        "hoursBeforeDepartureGte": "24"
+                      },
+                      {
+                        "refundPct": "0.5",
+                        "hoursBeforeDepartureGte": "2"
+                      },
+                      {
+                        "refundPct": "0",
+                        "hoursBeforeDepartureGte": "0"
+                      }
+                    ]
+                  },
+                  "description": "Job service instead mention whatever between seek chance back.",
+                  "policyUuid": "b2ede6e5-e595-4719-b0b8-07a1f5f74baf",
+                  "snapshottedAt": "2026-06-22 21:14:34.164191",
                   "notesTemplateUuid": null
                 }
               }
@@ -652,7 +672,7 @@
         }
       }
     },
-    "ms": 18,
+    "ms": 16,
     "status": "pass"
   },
   {
@@ -666,13 +686,13 @@
         "bundleList": {
           "bundleList": [
             {
-              "bundleUuid": "3d0129f8-a8ba-40cf-a0c3-62243f0f74b2",
-              "bundleName": "Flight Itinerary CDG->DFW + LAX->MIA + LAX->CDG",
+              "bundleUuid": "78af79fc-f9bc-4661-b968-72ab4233df5b",
+              "bundleName": "Flight Itinerary NRT->BOS + DFW->CDG + NRT->CDG",
               "bundleType": "flight_itinerary"
             },
             {
-              "bundleUuid": "b5e6388b-6e19-41ec-90b6-23633e54a171",
-              "bundleName": "Flight Itinerary LAX->MIA + JFK->HKG + LAX->CDG",
+              "bundleUuid": "0f19ab66-07f9-44fa-ac17-5d87434e6639",
+              "bundleName": "Flight Itinerary CDG->ORD + NRT->BOS + NRT->CDG",
               "bundleType": "flight_itinerary"
             }
           ],
@@ -680,7 +700,7 @@
         }
       }
     },
-    "ms": 14,
+    "ms": 13,
     "status": "pass"
   },
   {
@@ -694,7 +714,7 @@
         "item": null
       }
     },
-    "ms": 6,
+    "ms": 7,
     "status": "pass"
   },
   {
@@ -709,7 +729,7 @@
         "quote": null
       }
     },
-    "ms": 7,
+    "ms": 6,
     "status": "pass"
   },
   {
@@ -725,7 +745,7 @@
         }
       }
     },
-    "ms": 35,
+    "ms": 41,
     "status": "pass"
   },
   {
@@ -739,11 +759,11 @@
     "resp": {
       "errors": [
         {
-          "message": "(psycopg2.errors.NotNullViolation) null value in column \"provider_item_uuid\" of relation \"quote_items\" violates not-null constraint\nDETAIL:  Failing row contains (00000000-0000-0000-0000-000000000000, 00000000-0000-0000-0000-000000000000, null, null, null, null, gpt#nestaging, null, null, null, null, null, null, null, 0.0, null, 0.0, null, 0.0, null, null, null, 2026-06-22 03:29:10.251402+00, test, 2026-06-22 03:29:10.251402+00).\n\n[SQL: INSERT INTO quote_items (quote_uuid, quote_item_uuid, provider_item_uuid, item_uuid, batch_no, request_uuid, partition_key, price_per_uom, qty, bundle_uuid, bundle_label, bundle_component_uuid, subtotal, subtotal_discount, final_subtotal, currency, subtotal_native, notes, hold_token, hold_expires_at, created_at, updated_by, updated_at) VALUES (%(quote_uuid)s::UUID, %(quote_item_uuid)s::UUID, %(provider_item_uuid)s::UUID, %(item_uuid)s::UUID, %(batch_no)s, %(request_uuid)s::UUID, %(partition_key)s, %(price_per_uom)s, %(qty)s, %(bundle_uuid)s::UUID, %(bundle_label)s, %(bundle_component_uuid)s::UUID, %(subtotal)s, %(subtotal_discount)s, %(final_subtotal)s, %(currency)s, %(subtotal_native)s, %(notes)s, %(hold_token)s, %(hold_expires_at)s, %(created_at)s, %(updated_by)s, %(updated_at)s)]\n[parameters: {'quote_uuid': '00000000-0000-0000-0000-000000000000', 'quote_item_uuid': '00000000-0000-0000-0000-000000000000', 'provider_item_uuid': None, 'item_uuid': None, 'batch_no': None, 'request_uuid': None, 'partition_key': 'gpt#nestaging', 'price_per_uom': None, 'qty': None, 'bundle_uuid': None, 'bundle_label': None, 'bundle_component_uuid': None, 'subtotal': 0.0, 'subtotal_discount': None, 'final_subtotal': 0.0, 'currency': None, 'subtotal_native': 0.0, 'notes': None, 'hold_token': None, 'hold_expires_at': None, 'created_at': DateTime(2026, 6, 22, 3, 29, 10, 251402, tzinfo=Timezone('UTC')), 'updated_by': 'test', 'updated_at': DateTime(2026, 6, 22, 3, 29, 10, 251402, tzinfo=Timezone('UTC'))}]\n(Background on this error at: https://sqlalche.me/e/20/gkpj)\n\nGraphQL request:1:54\n1 | mutation CQI($qid:String!,$uuid:String!,$by:String!){insertUpdateQuoteItem(quote\n  |                                                      ^\n  | Uuid:$qid,quoteItemUuid:$uuid,updatedBy:$by){quoteItem{quoteItemUuid}}}"
+          "message": "(psycopg2.errors.NotNullViolation) null value in column \"provider_item_uuid\" of relation \"rfq_quote_items\" violates not-null constraint\nDETAIL:  Failing row contains (00000000-0000-0000-0000-000000000000, 00000000-0000-0000-0000-000000000000, null, null, null, null, gpt#nestaging, null, null, null, null, null, null, null, 0.0, null, 0.0, null, 0.0, null, null, null, 2026-06-22 21:18:50.510392+00, test, 2026-06-22 21:18:50.510392+00).\n\n[SQL: INSERT INTO rfq_quote_items (quote_uuid, quote_item_uuid, provider_item_uuid, item_uuid, batch_no, request_uuid, partition_key, price_per_uom, qty, bundle_uuid, bundle_label, bundle_component_uuid, subtotal, subtotal_discount, final_subtotal, currency, subtotal_native, notes, hold_token, hold_expires_at, created_at, updated_by, updated_at) VALUES (%(quote_uuid)s::UUID, %(quote_item_uuid)s::UUID, %(provider_item_uuid)s::UUID, %(item_uuid)s::UUID, %(batch_no)s, %(request_uuid)s::UUID, %(partition_key)s, %(price_per_uom)s, %(qty)s, %(bundle_uuid)s::UUID, %(bundle_label)s, %(bundle_component_uuid)s::UUID, %(subtotal)s, %(subtotal_discount)s, %(final_subtotal)s, %(currency)s, %(subtotal_native)s, %(notes)s, %(hold_token)s, %(hold_expires_at)s, %(created_at)s, %(updated_by)s, %(updated_at)s)]\n[parameters: {'quote_uuid': '00000000-0000-0000-0000-000000000000', 'quote_item_uuid': '00000000-0000-0000-0000-000000000000', 'provider_item_uuid': None, 'item_uuid': None, 'batch_no': None, 'request_uuid': None, 'partition_key': 'gpt#nestaging', 'price_per_uom': None, 'qty': None, 'bundle_uuid': None, 'bundle_label': None, 'bundle_component_uuid': None, 'subtotal': 0.0, 'subtotal_discount': None, 'final_subtotal': 0.0, 'currency': None, 'subtotal_native': 0.0, 'notes': None, 'hold_token': None, 'hold_expires_at': None, 'created_at': DateTime(2026, 6, 22, 21, 18, 50, 510392, tzinfo=Timezone('UTC')), 'updated_by': 'test', 'updated_at': DateTime(2026, 6, 22, 21, 18, 50, 510392, tzinfo=Timezone('UTC'))}]\n(Background on this error at: https://sqlalche.me/e/20/gkpj)\n\nGraphQL request:1:54\n1 | mutation CQI($qid:String!,$uuid:String!,$by:String!){insertUpdateQuoteItem(quote\n  |                                                      ^\n  | Uuid:$qid,quoteItemUuid:$uuid,updatedBy:$by){quoteItem{quoteItemUuid}}}"
         }
       ]
     },
-    "ms": 16,
+    "ms": 19,
     "status": "pass"
   },
   {
@@ -770,10 +790,10 @@
     "vars": {},
     "resp": {
       "data": {
-        "ping": "Hello at 20:29:10!!"
+        "ping": "Hello at 14:18:50!!"
       }
     },
-    "ms": 4,
+    "ms": 5,
     "status": "pass"
   }
 ]

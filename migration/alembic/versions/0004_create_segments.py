@@ -8,6 +8,7 @@ Create Date: 2026-06-21
 from alembic import op
 import sqlalchemy as sa
 from sqlalchemy.dialects.postgresql import UUID
+from rfq_engine.models.postgresql.base import prefixed_table, prefixed_index
 
 # revision identifiers, used by Alembic.
 revision = "0004"
@@ -18,7 +19,7 @@ depends_on = None
 
 def upgrade():
     op.create_table(
-        "segments",
+        prefixed_table("segments"),
         sa.Column("partition_key", sa.String(128), nullable=False),
         sa.Column(
             "segment_uuid",
@@ -53,22 +54,18 @@ def upgrade():
     )
 
     op.create_index(
-        "idx_segments_partition_provider_corp",
-        "segments",
+        prefixed_index("idx_segments_partition_provider_corp"),
+        prefixed_table("segments"),
         ["partition_key", "provider_corp_external_id"],
     )
     op.create_index(
-        "idx_segments_partition_updated_at",
-        "segments",
+        prefixed_index("idx_segments_partition_updated_at"),
+        prefixed_table("segments"),
         ["partition_key", "updated_at"],
     )
 
 
 def downgrade():
-    op.drop_index(
-        "idx_segments_partition_updated_at", table_name="segments"
-    )
-    op.drop_index(
-        "idx_segments_partition_provider_corp", table_name="segments"
-    )
-    op.drop_table("segments")
+    op.drop_index(prefixed_index("idx_segments_partition_updated_at"), table_name=prefixed_table("segments"))
+    op.drop_index(prefixed_index("idx_segments_partition_provider_corp"), table_name=prefixed_table("segments"))
+    op.drop_table(prefixed_table("segments"))

@@ -18,16 +18,20 @@ from sqlalchemy import (
     TIMESTAMP,
     text,
 )
+from sqlalchemy.orm import declared_attr
 from sqlalchemy.dialects.postgresql import UUID
 
-from .base import Base
+from .base import Base, prefixed_index, prefixed_table
 
 
 class FileModel(Base):
     """SQLAlchemy model for the File entity (table: files)."""
 
-    __tablename__ = "files"
+    @declared_attr
 
+    def __tablename__(cls) -> str:
+
+        return prefixed_table("files")
     # Primary key: composite (request_uuid, file_name)
     request_uuid = Column(UUID(as_uuid=True), nullable=False, primary_key=True)
     file_name = Column(String(512), nullable=False, primary_key=True)

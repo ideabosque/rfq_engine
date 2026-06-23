@@ -22,16 +22,20 @@ from sqlalchemy import (
     TIMESTAMP,
     text,
 )
+from sqlalchemy.orm import declared_attr
 from sqlalchemy.dialects.postgresql import UUID
 
-from .base import Base
+from .base import Base, prefixed_index, prefixed_table
 
 
 class ProviderItemBatchModel(Base):
     """SQLAlchemy model for the ProviderItemBatch entity (table: provider_item_batches)."""
 
-    __tablename__ = "provider_item_batches"
+    @declared_attr
 
+    def __tablename__(cls) -> str:
+
+        return prefixed_table("provider_item_batches")
     # Primary key: composite (provider_item_uuid, batch_no)
     # NOTE: provider_item_uuid is a UUID but is the hash key, not auto-generated.
     provider_item_uuid = Column(UUID(as_uuid=True), nullable=False, primary_key=True)

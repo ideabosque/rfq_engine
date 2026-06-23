@@ -19,16 +19,20 @@ from sqlalchemy import (
     TIMESTAMP,
     text,
 )
+from sqlalchemy.orm import declared_attr
 from sqlalchemy.dialects.postgresql import UUID, JSONB
 
-from .base import Base
+from .base import Base, prefixed_index, prefixed_table
 
 
 class RequestModel(Base):
     """SQLAlchemy model for the Request entity (table: requests)."""
 
-    __tablename__ = "requests"
+    @declared_attr
 
+    def __tablename__(cls) -> str:
+
+        return prefixed_table("requests")
     # Primary key: composite (partition_key, request_uuid)
     partition_key = Column(String(128), nullable=False, primary_key=True)
     request_uuid = Column(

@@ -25,6 +25,11 @@ class Config:
     # PostgreSQL session (only initialized when DB_BACKEND == "postgresql")
     db_session = None
 
+    # PostgreSQL table prefix — prepended to all PG table and index names
+    # to avoid collisions in shared databases.  Set from ``pg_table_prefix``
+    # setting by ``_initialize_db_session``.  Empty string = no prefix.
+    PG_TABLE_PREFIX: str = ""
+
     # Class attributes
     aws_lambda = None
     aws_sqs = None
@@ -442,12 +447,23 @@ class Config:
         Initialize the PostgreSQL database session using SQLAlchemy.
 
         Expected setting keys:
-            db_host, db_port, db_user, db_password, db_schema
+            db_host, db_port, db_user, db_password, db_schema,
+            and optionally pg_table_prefix (e.g. "rfq_") to avoid table
+            name collisions in shared databases.
         """
         from urllib.parse import quote_plus
 
         from sqlalchemy import create_engine
         from sqlalchemy.orm import scoped_session, sessionmaker
+
+        from ..models.postgresql.base import Base
+
+        cls.PG_TABLE_PREFIX = str(setting.get("pg_table_prefix", "") or "")
+        Base.table_prefix = cls.PG_TABLE_PREFIX
+        if cls._logger:
+            cls._logger.info(
+                f"PostgreSQL table prefix set to '{cls.PG_TABLE_PREFIX}'."
+            )
 
         password = quote_plus(setting["db_password"])
         connection_string = (

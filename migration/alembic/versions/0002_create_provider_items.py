@@ -8,6 +8,7 @@ Create Date: 2026-06-21
 from alembic import op
 import sqlalchemy as sa
 from sqlalchemy.dialects.postgresql import JSONB, UUID
+from rfq_engine.models.postgresql.base import prefixed_table, prefixed_index
 
 # revision identifiers, used by Alembic.
 revision = "0002"
@@ -18,7 +19,7 @@ depends_on = None
 
 def upgrade():
     op.create_table(
-        "provider_items",
+        prefixed_table("provider_items"),
         sa.Column("partition_key", sa.String(128), nullable=False),
         sa.Column(
             "provider_item_uuid",
@@ -59,31 +60,29 @@ def upgrade():
     )
 
     op.create_index(
-        "idx_provider_items_partition_item_uuid",
-        "provider_items",
+        prefixed_index("idx_provider_items_partition_item_uuid"),
+        prefixed_table("provider_items"),
         ["partition_key", "item_uuid"],
     )
     op.create_index(
-        "idx_provider_items_partition_provider_corp",
-        "provider_items",
+        prefixed_index("idx_provider_items_partition_provider_corp"),
+        prefixed_table("provider_items"),
         ["partition_key", "provider_corp_external_id"],
     )
     op.create_index(
-        "idx_provider_items_partition_external_id",
-        "provider_items",
+        prefixed_index("idx_provider_items_partition_external_id"),
+        prefixed_table("provider_items"),
         ["partition_key", "provider_item_external_id"],
     )
     op.create_index(
-        "idx_provider_items_partition_updated_at",
-        "provider_items",
+        prefixed_index("idx_provider_items_partition_updated_at"),
+        prefixed_table("provider_items"),
         ["partition_key", "updated_at"],
     )
 
 
 def downgrade():
-    op.drop_index(
-        "idx_provider_items_partition_updated_at", table_name="provider_items"
-    )
+    op.drop_index(prefixed_index("idx_provider_items_partition_updated_at"), table_name=prefixed_table("provider_items"))
     op.drop_index(
         "idx_provider_items_partition_external_id",
         table_name="provider_items",
@@ -92,7 +91,5 @@ def downgrade():
         "idx_provider_items_partition_provider_corp",
         table_name="provider_items",
     )
-    op.drop_index(
-        "idx_provider_items_partition_item_uuid", table_name="provider_items"
-    )
-    op.drop_table("provider_items")
+    op.drop_index(prefixed_index("idx_provider_items_partition_item_uuid"), table_name=prefixed_table("provider_items"))
+    op.drop_table(prefixed_table("provider_items"))

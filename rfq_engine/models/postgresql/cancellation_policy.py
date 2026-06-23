@@ -19,16 +19,20 @@ from sqlalchemy import (
     Text,
     text,
 )
+from sqlalchemy.orm import declared_attr
 from sqlalchemy.dialects.postgresql import JSONB, UUID
 
-from .base import Base
+from .base import Base, prefixed_index, prefixed_table
 
 
 class CancellationPolicyModel(Base):
     """SQLAlchemy model for the CancellationPolicy entity (table: cancellation_policies)."""
 
-    __tablename__ = "cancellation_policies"
+    @declared_attr
 
+    def __tablename__(cls) -> str:
+
+        return prefixed_table("cancellation_policies")
     # Primary key: composite (partition_key, policy_uuid)
     partition_key = Column(String(128), nullable=False, primary_key=True)
     policy_uuid = Column(
@@ -62,8 +66,8 @@ class CancellationPolicyModel(Base):
 
     __table_args__ = (
         # LSI equivalents: provider_item_uuid-index, updated_at-index
-        Index("idx_cancellation_policies_partition_provider_item_uuid", "partition_key", "provider_item_uuid"),
-        Index("idx_cancellation_policies_partition_updated_at", "partition_key", "updated_at"),
+        Index(prefixed_index("idx_cancellation_policies_partition_provider_item_uuid"), "partition_key", "provider_item_uuid"),
+        Index(prefixed_index("idx_cancellation_policies_partition_updated_at"), "partition_key", "updated_at"),
     )
 
 

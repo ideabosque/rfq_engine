@@ -19,16 +19,20 @@ from sqlalchemy import (
     Text,
     text,
 )
+from sqlalchemy.orm import declared_attr
 from sqlalchemy.dialects.postgresql import JSONB, UUID
 
-from .base import Base
+from .base import Base, prefixed_index, prefixed_table
 
 
 class BundleModel(Base):
     """SQLAlchemy model for the Bundle entity (table: bundles)."""
 
-    __tablename__ = "bundles"
+    @declared_attr
 
+    def __tablename__(cls) -> str:
+
+        return prefixed_table("bundles")
     # Primary key: composite (partition_key, bundle_uuid)
     partition_key = Column(String(128), nullable=False, primary_key=True)
     bundle_uuid = Column(
@@ -62,8 +66,8 @@ class BundleModel(Base):
 
     __table_args__ = (
         # LSI equivalents: bundle_code-index, updated_at-index
-        Index("idx_bundles_partition_bundle_code", "partition_key", "bundle_code"),
-        Index("idx_bundles_partition_updated_at", "partition_key", "updated_at"),
+        Index(prefixed_index("idx_bundles_partition_bundle_code"), "partition_key", "bundle_code"),
+        Index(prefixed_index("idx_bundles_partition_updated_at"), "partition_key", "updated_at"),
     )
 
 

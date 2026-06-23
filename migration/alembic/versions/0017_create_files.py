@@ -8,6 +8,7 @@ Create Date: 2026-06-21
 from alembic import op
 import sqlalchemy as sa
 from sqlalchemy.dialects.postgresql import UUID
+from rfq_engine.models.postgresql.base import prefixed_table, prefixed_index
 
 # revision identifiers, used by Alembic.
 revision = "0017"
@@ -18,7 +19,7 @@ depends_on = None
 
 def upgrade():
     op.create_table(
-        "files",
+        prefixed_table("files"),
         sa.Column("request_uuid", UUID(as_uuid=True), nullable=False),
         sa.Column("file_name", sa.String(512), nullable=False),
         sa.Column("email", sa.String(255), nullable=False),
@@ -40,24 +41,24 @@ def upgrade():
     )
 
     op.create_index(
-        "idx_files_request_email",
-        "files",
+        prefixed_index("idx_files_request_email"),
+        prefixed_table("files"),
         ["request_uuid", "email"],
     )
     op.create_index(
-        "idx_files_request_updated_at",
-        "files",
+        prefixed_index("idx_files_request_updated_at"),
+        prefixed_table("files"),
         ["request_uuid", "updated_at"],
     )
     op.create_index(
-        "idx_files_partition_key",
-        "files",
+        prefixed_index("idx_files_partition_key"),
+        prefixed_table("files"),
         ["partition_key"],
     )
 
 
 def downgrade():
-    op.drop_index("idx_files_partition_key", table_name="files")
-    op.drop_index("idx_files_request_updated_at", table_name="files")
-    op.drop_index("idx_files_request_email", table_name="files")
-    op.drop_table("files")
+    op.drop_index(prefixed_index("idx_files_partition_key"), table_name=prefixed_table("files"))
+    op.drop_index(prefixed_index("idx_files_request_updated_at"), table_name=prefixed_table("files"))
+    op.drop_index(prefixed_index("idx_files_request_email"), table_name=prefixed_table("files"))
+    op.drop_table(prefixed_table("files"))

@@ -3,6 +3,16 @@
 
 This module is only imported when ``DB_BACKEND=postgresql``.
 DynamoDB-only installs never import SQLAlchemy.
+
+Table name prefix
+-----------------
+``Base.table_prefix`` is set by ``Config._initialize_db_session`` from the
+``pg_table_prefix`` setting (e.g. ``"rfq_"``).  All models use
+``declared_attr`` for ``__tablename__`` so the prefix is applied when the
+class is defined. Models must be imported **after** ``Base.table_prefix``
+is configured — the repository registration flow in
+``models/repositories/postgresql/__init__.py`` imports models lazily, so
+``Config.initialize`` runs before model import.
 """
 from __future__ import print_function
 
@@ -21,6 +31,18 @@ except ImportError:  # pragma: no cover - DynamoDB-only environments
     )
 
 Base = declarative_base()
+# Configured by Config._initialize_db_session before models are imported.
+Base.table_prefix = ""  # type: ignore[attr-defined]
+
+
+def prefixed_table(name: str) -> str:
+    """Return ``name`` with the configured table prefix prepended."""
+    return f"{Base.table_prefix}{name}"
+
+
+def prefixed_index(name: str) -> str:
+    """Return an index name with the configured table prefix prepended."""
+    return f"{Base.table_prefix}{name}"
 
 
 def normalize_row(row: Any) -> Optional[Dict[str, Any]]:
@@ -69,4 +91,4 @@ def _serialize_value(val: Any) -> Any:
     return val
 
 
-__all__ = ["Base", "normalize_row"]
+__all__ = ["Base", "normalize_row", "prefixed_table", "prefixed_index"]
