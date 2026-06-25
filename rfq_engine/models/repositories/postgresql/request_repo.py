@@ -162,6 +162,8 @@ class RequestPGRepository(EntityRepository):
             if logger:
                 logger.error(traceback.format_exc())
             raise e
+        finally:
+            Config.db_session.remove()
 
     def _create_row(self, info: ResolveInfo, **kwargs: Any) -> RequestModel:
         partition_key = info.context.get("partition_key")
@@ -253,6 +255,8 @@ class RequestPGRepository(EntityRepository):
             if logger:
                 logger.error(traceback.format_exc())
             raise e
+        finally:
+            Config.db_session.remove()
 
     def get_type(self, info: ResolveInfo, row: Any) -> RequestType | None:
         """Convert a SQLAlchemy row to RequestType."""

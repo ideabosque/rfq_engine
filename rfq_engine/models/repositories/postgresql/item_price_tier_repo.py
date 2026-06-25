@@ -178,6 +178,8 @@ class ItemPriceTierPGRepository(EntityRepository):
             if logger:
                 logger.error(traceback.format_exc())
             raise e
+        finally:
+            Config.db_session.remove()
 
     def _create_row(self, info: ResolveInfo, **kwargs: Any) -> ItemPriceTierModel:
         partition_key = kwargs.get("partition_key") or info.context.get("partition_key")
@@ -240,6 +242,8 @@ class ItemPriceTierPGRepository(EntityRepository):
             if logger:
                 logger.error(traceback.format_exc())
             raise e
+        finally:
+            Config.db_session.remove()
 
     def get_type(self, info: ResolveInfo, row: Any) -> ItemPriceTierType | None:
         """Convert a SQLAlchemy row to ItemPriceTierType."""

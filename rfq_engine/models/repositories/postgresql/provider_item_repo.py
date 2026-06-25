@@ -191,6 +191,8 @@ class ProviderItemPGRepository(EntityRepository):
             if logger:
                 logger.error(traceback.format_exc())
             raise e
+        finally:
+            Config.db_session.remove()
 
     def _create_row(
         self, info: ResolveInfo, **kwargs: Any
@@ -300,6 +302,8 @@ class ProviderItemPGRepository(EntityRepository):
             if logger:
                 logger.error(traceback.format_exc())
             raise e
+        finally:
+            Config.db_session.remove()
 
     def get_type(self, info: ResolveInfo, row: Any) -> ProviderItemType | None:
         """Convert a SQLAlchemy row to ProviderItemType."""

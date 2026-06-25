@@ -178,6 +178,8 @@ class QuoteItemPGRepository(EntityRepository):
             if logger:
                 logger.error(traceback.format_exc())
             raise e
+        finally:
+            Config.db_session.remove()
 
     # --- Pricing logic (ported from DynamoDB insert_update_quote_item) ------- #
 
@@ -651,6 +653,8 @@ class QuoteItemPGRepository(EntityRepository):
             if logger:
                 logger.error(traceback.format_exc())
             raise e
+        finally:
+            Config.db_session.remove()
 
     def get_type(self, info: ResolveInfo, row: Any) -> QuoteItemType | None:
         """Convert a SQLAlchemy row to QuoteItemType."""
