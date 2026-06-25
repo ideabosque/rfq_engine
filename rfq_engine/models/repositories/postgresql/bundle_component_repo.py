@@ -183,6 +183,8 @@ class BundleComponentPGRepository(EntityRepository):
             if logger:
                 logger.error(traceback.format_exc())
             raise e
+        finally:
+            Config.db_session.remove()
 
     def _create_row(self, info: ResolveInfo, **kwargs: Any) -> BundleComponentModel:
         partition_key = info.context.get("partition_key")
@@ -241,6 +243,8 @@ class BundleComponentPGRepository(EntityRepository):
             if logger:
                 logger.error(traceback.format_exc())
             raise e
+        finally:
+            Config.db_session.remove()
 
     def get_type(self, info: ResolveInfo, row: Any) -> BundleComponentType | None:
         """Convert a SQLAlchemy row to BundleComponentType."""

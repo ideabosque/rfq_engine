@@ -142,6 +142,8 @@ class FilePGRepository(EntityRepository):
             if logger:
                 logger.error(traceback.format_exc())
             raise e
+        finally:
+            Config.db_session.remove()
 
     def _create_row(self, info: ResolveInfo, **kwargs: Any) -> FileModel:
         partition_key = kwargs.get("partition_key") or info.context.get("partition_key")
@@ -185,6 +187,8 @@ class FilePGRepository(EntityRepository):
             if logger:
                 logger.error(traceback.format_exc())
             raise e
+        finally:
+            Config.db_session.remove()
 
     def get_type(self, info: ResolveInfo, row: Any) -> FileType | None:
         """Convert a SQLAlchemy row to FileType."""

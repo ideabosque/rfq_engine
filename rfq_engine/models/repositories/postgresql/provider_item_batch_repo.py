@@ -317,6 +317,8 @@ class ProviderItemBatchPGRepository(EntityRepository):
             if logger:
                 logger.error(traceback.format_exc())
             raise e
+        finally:
+            Config.db_session.remove()
 
     def _create_row(
         self, info: ResolveInfo, **kwargs: Any
@@ -402,6 +404,8 @@ class ProviderItemBatchPGRepository(EntityRepository):
             if logger:
                 logger.error(traceback.format_exc())
             raise e
+        finally:
+            Config.db_session.remove()
 
     def get_type(self, info: ResolveInfo, row: Any) -> ProviderItemBatchType | None:
         """Convert a SQLAlchemy row to ProviderItemBatchType."""

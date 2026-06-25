@@ -165,6 +165,8 @@ class QuotePGRepository(EntityRepository):
             if logger:
                 logger.error(traceback.format_exc())
             raise e
+        finally:
+            Config.db_session.remove()
 
     def _create_row(self, info: ResolveInfo, **kwargs: Any) -> QuoteModel:
         partition_key = kwargs.get("partition_key") or info.context.get("partition_key")
@@ -253,6 +255,8 @@ class QuotePGRepository(EntityRepository):
             if logger:
                 logger.error(traceback.format_exc())
             raise e
+        finally:
+            Config.db_session.remove()
 
     def get_type(self, info: ResolveInfo, row: Any) -> QuoteType | None:
         """Convert a SQLAlchemy row to QuoteType."""

@@ -154,6 +154,8 @@ class InstallmentPGRepository(EntityRepository):
             if logger:
                 logger.error(traceback.format_exc())
             raise e
+        finally:
+            Config.db_session.remove()
 
     def _create_row(self, info: ResolveInfo, **kwargs: Any) -> InstallmentModel:
         partition_key = kwargs.get("partition_key") or info.context.get("partition_key")
@@ -254,6 +256,8 @@ class InstallmentPGRepository(EntityRepository):
             if logger:
                 logger.error(traceback.format_exc())
             raise e
+        finally:
+            Config.db_session.remove()
 
     def get_type(self, info: ResolveInfo, row: Any) -> InstallmentType | None:
         """Convert a SQLAlchemy row to InstallmentType."""
