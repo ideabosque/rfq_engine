@@ -95,6 +95,13 @@ def build_setting() -> Dict[str, Any]:
         pg_prefix = os.getenv("PG_TABLE_PREFIX", "")
         if pg_prefix:
             setting["pg_table_prefix"] = pg_prefix
+        # KGE table prefix — used by the RFQ catalog handler and seed scripts
+        # to override pg_table_prefix when invoking knowledge_graph_engine
+        # via Invoker.invoke_funct_on_local. Mirrors the gateway's
+        # KGE_PG_TABLE_PREFIX setting.
+        kge_prefix = os.getenv("KGE_PG_TABLE_PREFIX", "")
+        if kge_prefix:
+            setting["kge_pg_table_prefix"] = kge_prefix
     else:
         setting["db_backend"] = "dynamodb"
 

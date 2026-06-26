@@ -44,6 +44,12 @@ class DiscountPromptGlobalLoader(SafeDataLoader):
                 rows = _query_prompts(session, partition_key, DiscountPromptScope.GLOBAL)
                 key_map[partition_key] = [normalize_row(row) for row in rows]
             except Exception as exc:
+                # Rollback the shared PG session to clear any
+                # InFailedSqlTransaction state before the next query.
+                try:
+                    session.rollback()
+                except Exception:
+                    pass
                 if self.logger:
                     self.logger.exception(exc)
                 key_map[partition_key] = []
@@ -66,6 +72,12 @@ class DiscountPromptBySegmentLoader(SafeDataLoader):
                 )
                 key_map[key] = [normalize_row(row) for row in rows]
             except Exception as exc:
+                # Rollback the shared PG session to clear any
+                # InFailedSqlTransaction state before the next query.
+                try:
+                    session.rollback()
+                except Exception:
+                    pass
                 if self.logger:
                     self.logger.exception(exc)
                 key_map[key] = []
@@ -86,6 +98,12 @@ class DiscountPromptByItemLoader(SafeDataLoader):
                 rows = _query_prompts(session, partition_key, DiscountPromptScope.ITEM, item_uuid)
                 key_map[key] = [normalize_row(row) for row in rows]
             except Exception as exc:
+                # Rollback the shared PG session to clear any
+                # InFailedSqlTransaction state before the next query.
+                try:
+                    session.rollback()
+                except Exception:
+                    pass
                 if self.logger:
                     self.logger.exception(exc)
                 key_map[key] = []
@@ -111,6 +129,12 @@ class DiscountPromptByProviderItemLoader(SafeDataLoader):
                 )
                 key_map[key] = [normalize_row(row) for row in rows]
             except Exception as exc:
+                # Rollback the shared PG session to clear any
+                # InFailedSqlTransaction state before the next query.
+                try:
+                    session.rollback()
+                except Exception:
+                    pass
                 if self.logger:
                     self.logger.exception(exc)
                 key_map[key] = []

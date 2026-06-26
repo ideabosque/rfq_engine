@@ -55,6 +55,12 @@ class PGSegmentContactLoader(SafeDataLoader):
                         key_map[key] = normalize_row(row)
 
             except Exception as exc:
+                # Rollback the shared PG session to clear any
+                # InFailedSqlTransaction state before the next query.
+                try:
+                    session.rollback()
+                except Exception:
+                    pass
                 if self.logger:
                     self.logger.exception(exc)
 

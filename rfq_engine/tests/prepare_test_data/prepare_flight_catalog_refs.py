@@ -146,8 +146,25 @@ def invoke(funct: str, query: str, variables: dict) -> dict | None:
     Call either ``ai_rfq_graphql`` or ``knowledge_graph_graphql`` through
     ``Invoker.invoke_funct_on_local``. The helper unwraps the body /
     error envelope for us and returns the GraphQL ``data`` payload.
+
+    KGE requires its own ``pg_table_prefix`` (e.g. ``kge_``) — the Invoker
+    passes the full setting dict to the target class constructor, so we
+    create a copy with the prefix overridden from ``kge_pg_table_prefix``.
+    This mirrors the production RFQ catalog handler pattern.
     """
     try:
+        if funct == "knowledge_graph_graphql":
+            kge_setting = dict(SETTING)
+            kge_setting["pg_table_prefix"] = SETTING.get("kge_pg_table_prefix", "")
+            return Invoker.invoke_funct_on_local(
+                logger,
+                kge_setting,
+                funct,
+                query=query,
+                variables=variables,
+                endpoint_id=SETTING["endpoint_id"],
+                part_id=SETTING["part_id"],
+            )
         return Invoker.invoke_funct_on_local(
             logger,
             SETTING,
