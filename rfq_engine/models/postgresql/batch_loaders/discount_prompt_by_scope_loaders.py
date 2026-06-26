@@ -7,7 +7,6 @@ __author__ = "bibow"
 from typing import Any, Dict, List, Optional, Tuple
 
 from promise import Promise
-from sqlalchemy import or_
 from silvaengine_constants import DiscountPromptScope, DiscountPromptStatus
 
 from .base import SafeDataLoader, normalize_row
@@ -22,11 +21,12 @@ def _query_prompts(session, partition_key: str, scope: str, tag: Optional[str] =
         DiscountPromptModel.status == DiscountPromptStatus.ACTIVE,
     )
     if tag:
+        # ``tags`` is a JSONB array (e.g. ["uuid"]).  Use ``@>`` containment
+        # with a single-element array so PostgreSQL casts the parameter as
+        # JSONB.  Passing a bare string (``str(tag)``) produces invalid JSON
+        # and raises ``InvalidTextRepresentation``.
         query = query.filter(
-            or_(
-                DiscountPromptModel.tags.contains([str(tag)]),
-                DiscountPromptModel.tags.contains(str(tag)),
-            )
+            DiscountPromptModel.tags.contains([str(tag)])
         )
     return query.order_by(DiscountPromptModel.priority.desc(), DiscountPromptModel.updated_at.desc()).all()
 
