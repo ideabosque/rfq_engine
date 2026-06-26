@@ -52,6 +52,12 @@ class PGItemPriceTierByProviderItemLoader(SafeDataLoader):
                         normalize_row(row) for row in rows
                     ]
             except Exception as exc:
+                # Rollback the shared PG session to clear any
+                # InFailedSqlTransaction state before the next query.
+                try:
+                    session.rollback()
+                except Exception:
+                    pass
                 if self.logger:
                     self.logger.exception(exc)
 
