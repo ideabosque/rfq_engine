@@ -28,7 +28,7 @@ class Config:
     # PostgreSQL table prefix — prepended to all PG table and index names
     # to avoid collisions in shared databases.  Set from ``pg_table_prefix``
     # setting by ``_initialize_db_session``.  Empty string = no prefix.
-    PG_TABLE_PREFIX: str = ""
+    PG_TABLE_PREFIX: str = "rfq_"
 
     # Class attributes
     aws_lambda = None
@@ -406,9 +406,7 @@ class Config:
         ):
             BaseModel.Meta.region = setting.get("region_name")
             BaseModel.Meta.aws_access_key_id = setting.get("aws_access_key_id")
-            BaseModel.Meta.aws_secret_access_key = setting.get(
-                "aws_secret_access_key"
-            )
+            BaseModel.Meta.aws_secret_access_key = setting.get("aws_secret_access_key")
 
     @classmethod
     def _initialize_optional_aws_services(cls, setting: Dict[str, Any]) -> None:
@@ -458,12 +456,10 @@ class Config:
 
         from ..models.postgresql.base import Base
 
-        cls.PG_TABLE_PREFIX = str(setting.get("pg_table_prefix", "") or "")
+        cls.PG_TABLE_PREFIX = str(setting.get("pg_table_prefix", "rfq_")).strip()
         Base.table_prefix = cls.PG_TABLE_PREFIX
         if cls._logger:
-            cls._logger.info(
-                f"PostgreSQL table prefix set to '{cls.PG_TABLE_PREFIX}'."
-            )
+            cls._logger.info(f"PostgreSQL table prefix set to '{cls.PG_TABLE_PREFIX}'.")
 
         password = quote_plus(setting["db_password"])
         connection_string = (
