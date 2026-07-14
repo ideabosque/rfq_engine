@@ -173,6 +173,7 @@ rfq_engine/tests/prepare_test_data/requests.json
 rfq_engine/tests/prepare_test_data/quotes.json
 rfq_engine/tests/prepare_test_data/quote_items.json
 docs/ARCHITECTURE_AND_ER_DIAGRAMS_ZH_TW.md
+docs/ARCHITECTURE_AND_ER_DIAGRAMS_B2B_MARKETPLACE.zh-TW.md
 .claude
 .zed
 sample_dataset/
