@@ -288,6 +288,12 @@ class RFQEngine(Graphql):
 
         self._apply_partition_defaults(params)
 
+        # In PostgreSQL mode, set the RLS tenant context for this request.
+        # No-op in DynamoDB mode. Session cleanup happens in dispatch_graphql.
+        partition_key = params.get("context", {}).get("partition_key")
+        if partition_key and Config.DB_BACKEND == "postgresql":
+            Config._set_rls_context(partition_key)
+
         schema = Schema(
             query=Query,
             mutation=Mutations,
