@@ -284,7 +284,7 @@ class RFQEngine(Graphql):
                 params["context"]["partition_key"] = f"{endpoint_id}#{part_id}"
 
 
-    def ai_rfq_graphql(self, **params: Dict[str, Any]) -> Any:
+    def rfq_graphql(self, **params: Dict[str, Any]) -> Any:
 
         self._apply_partition_defaults(params)
 
@@ -301,9 +301,9 @@ class RFQEngine(Graphql):
         )
         return self.execute(schema, **params)
 
-    # Backward-compatible alias; the deployment manifest funct key is
-    # ``ai_rfq_graphql`` and that is now the canonical method name.
-    rfq_graphql = ai_rfq_graphql
+    # Backward-compatible alias; callers that still use ``ai_rfq_graphql``
+    # (the old deployment manifest funct key) continue to work.
+    ai_rfq_graphql = rfq_graphql
 
     @staticmethod
     def build_graphql_schema() -> Schema:
