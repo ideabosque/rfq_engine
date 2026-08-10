@@ -366,7 +366,7 @@ class ProviderItemBatchPGRepository(EntityRepository):
             cols.get("guardrail_margin_per_uom", 0) or 0
         )
         cols["guardrail_price_per_uom"] = cols["total_cost_per_uom"] * (
-            1 + guardrail_margin_per_uom
+            1 + guardrail_margin_per_uom / 100
         )
 
         if kwargs.get("provider_item_uuid"):

@@ -16,12 +16,13 @@
 | Field | Value |
 |---|---|
 | SOP title | RFQ Engine Dual-Backend Integration Certification SOP |
-| Version | 1.0.0-draft |
-| Owner / contact | `<pending confirmation — project maintainer>` |
-| Last updated | 2026-06-21 |
+| Version | 1.0.1-approved |
+| Owner / contact | User (autonomous certification session) |
+| Last updated | 2026-08-08 |
 | Business domain | `ecommerce` (B2B procurement / RFQ; closest match in `skill-config.yaml`; hospitality sub-domain present) |
-| Target environment | `<pending confirmation — dev | staging | qa>` (never `production` without explicit approval) |
-| Approval status | `draft` |
+| Target environment | `dev` — PostgreSQL only, single environment (matches gateway `.env` `db_backend=postgresql`) |
+| Approval status | `approved` |
+| Execution method | All GraphQL operations routed through `silvaengine_gateway` HTTP endpoint `POST /{endpoint_id}/rfq_graphql` with JWT auth + `Part-Id` header |
 
 ## 2. Purpose and Scope
 
@@ -926,21 +927,26 @@ The report must include these minimum sections whenever certifying readiness:
 
 ---
 
-## Pending Confirmation Items
+## Confirmed Items (Approved 2026-08-08)
 
-Before any test execution (Phase 8) begins, the following placeholders need
-explicit decisions:
+All pending items resolved for this certification cycle:
 
-1. **Target environment** (Section 1): single environment for both backends, or separate `dev` (DynamoDB) + `qa` (PostgreSQL)?
-2. **SOP owner / contact** (Section 1): who owns this document?
-3. **Credential source confirmation** (Section 3): confirm `.env` + `DATABASE_URL`/`PG_*` as the approved secret sources; confirm AWS credential scope.
-4. **Dependency owners** (Section 4): who owns DynamoDB, PostgreSQL, and each library dependency for readiness sign-off?
-5. **Provisioning policy** (Section 3): confirm auto-provisioning of the disposable PostgreSQL schema (`Base.metadata.drop_all` + `create_all`) is allowed in the target environment.
-6. **CI cadence** (Section 11): confirm the PR-block / nightly-report / pre-release-block split.
-7. **Distribution list** (Section 12): who receives the certification report?
-8. **Sign-off roles** (Section 13): names for test owner, release manager, DB owner, AWS account owner.
-9. **Live KGE sign-off** (INT-019): confirm whether live KGE calls are in scope or remain mocked; if live, identify the KGE owner.
-10. **Scope confirmation** (Section 2): confirm `mcp_rfq_processor` and data-migration execution remain out of scope for this certification cycle.
+1. **Target environment** — PostgreSQL only, single `dev` environment (`db_backend=postgresql`).
+2. **SOP owner / contact** — User (autonomous certification session).
+3. **Credential source** — `.env` at `silvaengine_gateway/tests/.env` (gateway) and `rfq_engine/tests/.env` (engine); AWS creds for S3 only.
+4. **Dependency owners** — all assigned to User for this certification cycle.
+5. **Provisioning policy** — auto-provision fresh PostgreSQL schema (`Base.metadata.drop_all` + `create_all`) before testing.
+6. **CI cadence** — pre-release full suite (all P1 scenarios must pass).
+7. **Distribution** — certification report written to `rfq_engine/docs/test_results/`.
+8. **Sign-off roles** — all assigned to User.
+9. **Live KGE (INT-019)** — mocked only (no live external calls).
+10. **Scope** — `mcp_rfq_processor` and data-migration execution remain out of scope.
 
-Once these are confirmed, the SOP status moves from `draft` to `approved` and
-the 13-phase certification (or the agreed subset) may proceed.
+**Execution method amendment:** All GraphQL operations (INT-003 through INT-019)
+are executed through the `silvaengine_gateway` HTTP endpoint
+`POST /{endpoint_id}/rfq_graphql` with JWT Bearer auth and `Part-Id` header,
+not in-process `RFQEngine.ai_rfq_graphql()` calls. This validates the full
+gateway → dispatch → backend path including auth, rate limiting, and HTTP
+transport.
+
+SOP status: **approved**. The 13-phase certification may proceed.
