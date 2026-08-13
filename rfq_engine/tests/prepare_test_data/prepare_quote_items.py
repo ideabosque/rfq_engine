@@ -106,7 +106,9 @@ UPDATED_BY = "prepare_quote_items"
 OUTPUT_FILE = os.path.join(os.path.dirname(__file__), "quote_items.json")
 QUOTES_INPUT = os.path.join(os.path.dirname(__file__), "quotes.json")
 REQUESTS_INPUT = os.path.join(os.path.dirname(__file__), "requests.json")
-FLIGHTS_INPUT = os.path.join(os.path.dirname(__file__), "flight_products.json")
+FLIGHTS_INPUT = os.getenv("SEED_PRODUCTS_INPUT") or os.path.join(
+    os.path.dirname(__file__), "flight_products.json"
+)
 
 DISCOUNT_PROB = float(os.getenv("SEED_QITEM_DISCOUNT_PROB", "0.4"))
 DISCOUNT_MIN = float(os.getenv("SEED_QITEM_DISCOUNT_MIN", "20.0"))

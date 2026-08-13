@@ -86,7 +86,9 @@ OUTPUT_FILE = os.path.join(os.path.dirname(__file__), "discount_prompts.json")
 SEGMENTS_INPUT = os.path.join(
     os.path.dirname(__file__), "segments_and_contacts.json"
 )
-FLIGHTS_INPUT = os.path.join(os.path.dirname(__file__), "flight_products.json")
+FLIGHTS_INPUT = os.getenv("SEED_PRODUCTS_INPUT") or os.path.join(
+    os.path.dirname(__file__), "flight_products.json"
+)
 
 NUM_GLOBAL = int(os.getenv("SEED_DISCOUNT_NUM_GLOBAL", "3"))
 NUM_PER_SEGMENT = int(os.getenv("SEED_DISCOUNT_NUM_PER_SEGMENT", "2"))

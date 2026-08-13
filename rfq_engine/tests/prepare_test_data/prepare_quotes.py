@@ -102,7 +102,9 @@ fake = Faker()
 UPDATED_BY = "prepare_quotes"
 OUTPUT_FILE = os.path.join(os.path.dirname(__file__), "quotes.json")
 REQUESTS_INPUT = os.path.join(os.path.dirname(__file__), "requests.json")
-FLIGHTS_INPUT = os.path.join(os.path.dirname(__file__), "flight_products.json")
+FLIGHTS_INPUT = os.getenv("SEED_PRODUCTS_INPUT") or os.path.join(
+    os.path.dirname(__file__), "flight_products.json"
+)
 FX_INPUT = os.path.join(os.path.dirname(__file__), "fx_rates.json")
 
 MIN_PER_REQUEST = max(1, int(os.getenv("SEED_QUOTE_MIN_PER_REQUEST", "1")))
