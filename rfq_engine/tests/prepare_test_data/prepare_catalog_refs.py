@@ -436,7 +436,7 @@ def load_input() -> dict:
     if not os.path.isfile(INPUT_FILE):
         raise RuntimeError(
             f"Input file not found: {INPUT_FILE}. Run "
-            "prepare_flight_products.py first."
+            "prepare_products.py first."
         )
     with open(INPUT_FILE, "r", encoding="utf-8") as f:
         return json.load(f)

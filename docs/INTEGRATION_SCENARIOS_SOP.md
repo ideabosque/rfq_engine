@@ -120,13 +120,13 @@ The scripts **must** run in dependency order — each script reads the JSON outp
 | Step | Script | Reads | Writes | Entities created |
 |---|---|---|---|---|
 | 1 | `prepare_segments_and_contacts.py` | — | `segments_and_contacts.json` | Segment, SegmentContact |
-| 2 | `prepare_flight_products.py` | `segments_and_contacts.json` (for segment_uuid) | `flight_products.json` | Item, ProviderItem, CancellationPolicy, ProviderItemBatch, ItemPriceTier, Bundle, BundleComponent |
-| 3 | `prepare_fx_rates.py` | `flight_products.json` (for currency pairs) | `fx_rates.json` | FxRate |
-| 4 | `prepare_discount_prompts.py` | `segments_and_contacts.json` + `flight_products.json` | `discount_prompts.json` | DiscountPrompt (GLOBAL, SEGMENT, ITEM, PROVIDER_ITEM scopes) |
-| 5 | `prepare_requests.py` | `segments_and_contacts.json` + `flight_products.json` | `requests.json` | Request |
-| 6 | `prepare_quotes.py` | `requests.json` + `flight_products.json` | `quotes.json` | Quote |
-| 7 | `prepare_quote_items.py` | `quotes.json` + `requests.json` + `flight_products.json` | `quote_items.json` | QuoteItem (auto-calculates `price_per_uom` from tier, FX conversion, cancellation snapshot, rolls up quote totals) |
-| 8 | `prepare_flight_catalog_refs.py` | `flight_products.json` + KGE | `flight_catalog_refs.json` | ItemCatalogRef (optional — requires KGE) |
+| 2 | `prepare_products.py` | `segments_and_contacts.json` (for segment_uuid) | `products.json` | Item, ProviderItem, CancellationPolicy, ProviderItemBatch, ItemPriceTier, Bundle, BundleComponent |
+| 3 | `prepare_fx_rates.py` | `products.json` (for currency pairs) | `fx_rates.json` | FxRate |
+| 4 | `prepare_discount_prompts.py` | `segments_and_contacts.json` + `products.json` | `discount_prompts.json` | DiscountPrompt (GLOBAL, SEGMENT, ITEM, PROVIDER_ITEM scopes) |
+| 5 | `prepare_requests.py` | `segments_and_contacts.json` + `products.json` | `requests.json` | Request |
+| 6 | `prepare_quotes.py` | `requests.json` + `products.json` | `quotes.json` | Quote |
+| 7 | `prepare_quote_items.py` | `quotes.json` + `requests.json` + `products.json` | `quote_items.json` | QuoteItem (auto-calculates `price_per_uom` from tier, FX conversion, cancellation snapshot, rolls up quote totals) |
+| 8 | `prepare_catalog_refs.py` | `products.json` + KGE | `catalog_refs.json` | ItemCatalogRef (optional — requires KGE) |
 
 **Configurable counts** (env vars, defaults shown):
 - `SEED_NUM_SEGMENTS=3`, `SEED_NUM_CONTACTS_PER_SEGMENT=5`
@@ -162,21 +162,21 @@ field on the child, and the seed script that creates the child.
 |---|---|---|---|---|---|
 | 1 | Segment | — (root) | — | `prepare_segments_and_contacts.py` | Tenant-partitioned master data |
 | 2 | SegmentContact | Segment | `segment_uuid` | `prepare_segments_and_contacts.py` | Email-keyed membership; segment must exist first |
-| 3 | Item | — (root) | — | `prepare_flight_products.py` | Catalog master; `pricing_mode` drives downstream pricing |
-| 4 | CancellationPolicy | — (root) | — | `prepare_flight_products.py` | Independent; linked from ProviderItemBatch |
-| 5 | Bundle | — (root) | — | `prepare_flight_products.py` | Reusable package/itinerary template |
+| 3 | Item | — (root) | — | `prepare_products.py` | Catalog master; `pricing_mode` drives downstream pricing |
+| 4 | CancellationPolicy | — (root) | — | `prepare_products.py` | Independent; linked from ProviderItemBatch |
+| 5 | Bundle | — (root) | — | `prepare_products.py` | Reusable package/itinerary template |
 | 6 | FxRate | — (root) | — | `prepare_fx_rates.py` | Independent; locked rate copied onto Quote |
 | 7 | DiscountPrompt | Segment / Item / ProviderItem | `tags[]` (contains UUID) | `prepare_discount_prompts.py` | Scope-based; tags reference parent UUIDs |
-| 8 | ProviderItem | Item | `item_uuid` | `prepare_flight_products.py` | Supplier offering of a catalog item |
-| 9 | ProviderItemBatch | ProviderItem | `provider_item_uuid` | `prepare_flight_products.py` | Inventory lot; also references Item + CancellationPolicy |
-| 10 | ProviderItemBatch | Item | `item_uuid` (denormalized) | `prepare_flight_products.py` | Denormalized FK for reverse lookups |
-| 11 | ProviderItemBatch | CancellationPolicy | `cancellation_policy_uuid` (optional) | `prepare_flight_products.py` | Optional link for snapshot capture |
-| 12 | ItemPriceTier | Item | `item_uuid` | `prepare_flight_products.py` | Tier keyed by item; also references ProviderItem + Segment |
-| 13 | ItemPriceTier | ProviderItem | `provider_item_uuid` | `prepare_flight_products.py` | Provider-specific pricing |
-| 14 | ItemPriceTier | Segment | `segment_uuid` | `prepare_flight_products.py` | Segment-specific pricing |
-| 15 | BundleComponent | Bundle | `bundle_uuid` | `prepare_flight_products.py` | Default component in a bundle template |
-| 16 | BundleComponent | Item | `item_uuid` | `prepare_flight_products.py` | Default item for the component |
-| 17 | BundleComponent | ProviderItem | `provider_item_uuid` (optional) | `prepare_flight_products.py` | Optional default provider |
+| 8 | ProviderItem | Item | `item_uuid` | `prepare_products.py` | Supplier offering of a catalog item |
+| 9 | ProviderItemBatch | ProviderItem | `provider_item_uuid` | `prepare_products.py` | Inventory lot; also references Item + CancellationPolicy |
+| 10 | ProviderItemBatch | Item | `item_uuid` (denormalized) | `prepare_products.py` | Denormalized FK for reverse lookups |
+| 11 | ProviderItemBatch | CancellationPolicy | `cancellation_policy_uuid` (optional) | `prepare_products.py` | Optional link for snapshot capture |
+| 12 | ItemPriceTier | Item | `item_uuid` | `prepare_products.py` | Tier keyed by item; also references ProviderItem + Segment |
+| 13 | ItemPriceTier | ProviderItem | `provider_item_uuid` | `prepare_products.py` | Provider-specific pricing |
+| 14 | ItemPriceTier | Segment | `segment_uuid` | `prepare_products.py` | Segment-specific pricing |
+| 15 | BundleComponent | Bundle | `bundle_uuid` | `prepare_products.py` | Default component in a bundle template |
+| 16 | BundleComponent | Item | `item_uuid` | `prepare_products.py` | Default item for the component |
+| 17 | BundleComponent | ProviderItem | `provider_item_uuid` (optional) | `prepare_products.py` | Optional default provider |
 | 18 | Request | — (root) | — | `prepare_requests.py` | RFQ hub; optionally references Bundle via `bundle_uuid` |
 | 19 | Request | Bundle | `bundle_uuid` (optional) | `prepare_requests.py` | When request is for a package template |
 | 20 | Quote | Request | `request_uuid` | `prepare_quotes.py` | Supplier response to a request |
@@ -190,8 +190,8 @@ field on the child, and the seed script that creates the child.
 | 28 | File | Request | `request_uuid` | *(not seeded — runtime mutation)* | Document attachment; requires S3 |
 | 29 | AvailabilityHold | ProviderItem | `provider_item_uuid` | *(runtime — availability mutation)* | Durable hold on quantified capacity |
 | 30 | AvailabilityHold | ProviderItemBatch | `batch_no` (implicit) | *(runtime — availability mutation)* | Reserves `availability_qty` on the batch |
-| 31 | ItemCatalogRef | Item | `item_uuid` | `prepare_flight_catalog_refs.py` (optional) | Maps external KGE node → internal item |
-| 32 | ItemCatalogRef | ProviderItem | `provider_item_uuid` (optional) | `prepare_flight_catalog_refs.py` (optional) | Optional provider-specific mapping |
+| 31 | ItemCatalogRef | Item | `item_uuid` | `prepare_catalog_refs.py` (optional) | Maps external KGE node → internal item |
+| 32 | ItemCatalogRef | ProviderItem | `provider_item_uuid` (optional) | `prepare_catalog_refs.py` (optional) | Optional provider-specific mapping |
 
 **Cascading delete protection** (parent cannot be deleted while children exist):
 - Segment ← SegmentContact, ItemPriceTier, DiscountPrompt
@@ -228,7 +228,7 @@ The certification run proceeds in two phases: **asset loading** (Phase 7 + Phase
 
 2. Seed scripts in dependency order (Section 5 seed-script sequence):
    prepare_segments_and_contacts.py    -> Segment, SegmentContact
-   prepare_flight_products.py          -> Item, ProviderItem, CancellationPolicy,
+   prepare_products.py          -> Item, ProviderItem, CancellationPolicy,
                                           ProviderItemBatch, ItemPriceTier,
                                           Bundle, BundleComponent
    prepare_fx_rates.py                 -> FxRate
@@ -237,7 +237,7 @@ The certification run proceeds in two phases: **asset loading** (Phase 7 + Phase
    prepare_quotes.py                   -> Quote
    prepare_quote_items.py              -> QuoteItem (auto-calculates pricing,
                                           FX, cancellation snapshot, quote totals)
-   prepare_flight_catalog_refs.py      -> ItemCatalogRef (optional, needs KGE)
+   prepare_catalog_refs.py      -> ItemCatalogRef (optional, needs KGE)
 
 3. Asset validation gate:
    -> Verify row counts per table (Section 9 reconciliation)
@@ -730,7 +730,7 @@ INT-013 skips if INT-011 or INT-012 fail (no validated hold lifecycle).
 - Environment validated: `Config.initialize` succeeds for the active backend; `initialize_tables` completes; `SELECT 1` (PostgreSQL) or `RequestModel.exists()` (DynamoDB) passes.
 - All P1 dependencies operational: dispatch boundary, repository registry (both backends), `Config.DB_BACKEND` selectable.
 - Schema provisioned: `alembic upgrade head` (PostgreSQL) or `initialize_tables` (DynamoDB) completes; all 18 entity tables exist.
-- Seed scripts executed in dependency order (Section 5 seed-script sequence): `prepare_segments_and_contacts.py` → `prepare_flight_products.py` → `prepare_fx_rates.py` → `prepare_discount_prompts.py` → `prepare_requests.py` → `prepare_quotes.py` → `prepare_quote_items.py`.
+- Seed scripts executed in dependency order (Section 5 seed-script sequence): `prepare_segments_and_contacts.py` → `prepare_products.py` → `prepare_fx_rates.py` → `prepare_discount_prompts.py` → `prepare_requests.py` → `prepare_quotes.py` → `prepare_quote_items.py`.
 - Asset validation: row counts per table > 0 for all loaded entities; referential integrity clean (no orphaned children); auto-calculated fields populated (`price_per_uom`, `subtotal`, `final_subtotal`, `total_cost_per_uom`, `guardrail_price_per_uom`, quote totals, cancellation snapshots).
 - `tests/test_repository_adoption_guard.py` and `tests/test_backend_agnostic_dispatch.py` pass (INT-001, INT-002).
 
@@ -799,7 +799,7 @@ Each call block must contain:
 |---|---|---|
 | **Number** | yes | Sequential call number (1, 2, 3, ...) |
 | **Group** | yes | Logical group: `Environment`, `Schema`, `Dependency`, `Seed`, `Tests`, `Transaction`, `Resilience`, `Reconciliation` |
-| **Method** | yes | The exact method/function/CLI invoked (e.g. `alembic upgrade head`, `pytest test_postgresql_repositories.py`, `SQLAlchemy SELECT`, `RFQEngine.ai_rfq_graphql`, `prepare_flight_products.py`) |
+| **Method** | yes | The exact method/function/CLI invoked (e.g. `alembic upgrade head`, `pytest test_postgresql_repositories.py`, `SQLAlchemy SELECT`, `RFQEngine.ai_rfq_graphql`, `prepare_products.py`) |
 | **Short description** | yes | One-line summary of what the call does |
 | **Status** | yes | `pass`, `fail`, `error`, `skipped`, or `blocked` |
 | **Elapsed** | yes | Duration in milliseconds or seconds |
