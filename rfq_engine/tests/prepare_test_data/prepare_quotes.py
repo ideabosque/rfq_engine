@@ -16,7 +16,7 @@ Inputs:
                                   bias provider selection so at least
                                   one quote matches the customer's
                                   preferred airline when possible).
-    * ``flight_products.json``  — the universe of airline corporate ids
+    * ``products.json``  — the universe of airline corporate ids
                                   available; provides realistic FX
                                   scenarios via the ``currency`` field.
 
@@ -103,7 +103,7 @@ UPDATED_BY = "prepare_quotes"
 OUTPUT_FILE = os.path.join(os.path.dirname(__file__), "quotes.json")
 REQUESTS_INPUT = os.path.join(os.path.dirname(__file__), "requests.json")
 FLIGHTS_INPUT = os.getenv("SEED_PRODUCTS_INPUT") or os.path.join(
-    os.path.dirname(__file__), "flight_products.json"
+    os.path.dirname(__file__), "products.json"
 )
 FX_INPUT = os.path.join(os.path.dirname(__file__), "fx_rates.json")
 
@@ -262,7 +262,7 @@ def _safe_load(path: str) -> dict | None:
 
 
 def _provider_corp_ids(flight_data: dict | None) -> dict[str, str]:
-    """Map providerItemUuid -> providerCorpExternalId from flight_products.json."""
+    """Map providerItemUuid -> providerCorpExternalId from products.json."""
     mapping: dict[str, str] = {}
     for pi in (flight_data or {}).get("provider_items", []) or []:
         pi_uuid = pi.get("providerItemUuid")

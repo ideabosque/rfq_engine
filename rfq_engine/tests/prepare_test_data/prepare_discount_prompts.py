@@ -14,7 +14,7 @@ Generates one or more discount-prompt rules at each scope from
 Reads previously-generated output to scope to real data:
 
     * ``segments_and_contacts.json`` (for segment scope)
-    * ``flight_products.json``        (for item + provider_item scopes)
+    * ``products.json``        (for item + provider_item scopes)
 
 If a JSON is missing the corresponding scoped prompts are skipped — the
 ``global`` block still runs, so this script is usable in isolation.
@@ -87,7 +87,7 @@ SEGMENTS_INPUT = os.path.join(
     os.path.dirname(__file__), "segments_and_contacts.json"
 )
 FLIGHTS_INPUT = os.getenv("SEED_PRODUCTS_INPUT") or os.path.join(
-    os.path.dirname(__file__), "flight_products.json"
+    os.path.dirname(__file__), "products.json"
 )
 
 NUM_GLOBAL = int(os.getenv("SEED_DISCOUNT_NUM_GLOBAL", "3"))
@@ -469,7 +469,7 @@ def generate(engine: RFQEngine) -> dict:
         output["item"] = item_out
         output["provider_item"] = pi_out
     else:
-        logger.info("Skipping item/provider_item prompts (no flight_products.json)")
+        logger.info("Skipping item/provider_item prompts (no products.json)")
 
     return output
 

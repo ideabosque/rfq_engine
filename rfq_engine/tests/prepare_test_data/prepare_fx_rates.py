@@ -10,7 +10,7 @@ analytics tests.
 
 The script:
 
-    1. Reads ``flight_products.json`` (if present) to learn which native
+    1. Reads ``products.json`` (if present) to learn which native
        currencies the existing inventory is denominated in. Logs a warning
        when something other than the configured base currencies appears.
     2. Generates rate records for every (source, target) currency pair
@@ -91,7 +91,7 @@ fake = Faker()
 
 UPDATED_BY = "prepare_fx_rates"
 OUTPUT_FILE = os.path.join(os.path.dirname(__file__), "fx_rates.json")
-FLIGHTS_INPUT = os.path.join(os.path.dirname(__file__), "flight_products.json")
+FLIGHTS_INPUT = os.path.join(os.path.dirname(__file__), "products.json")
 
 BASE_CURRENCIES = [
     c.strip().upper()
@@ -329,7 +329,7 @@ def generate(engine: RFQEngine) -> dict:
     native_in_use = discover_native_currencies()
     if native_in_use:
         logger.info(
-            "Detected native currencies in flight_products.json: %s",
+            "Detected native currencies in products.json: %s",
             ", ".join(sorted(native_in_use)),
         )
         unseen = native_in_use - set(BASE_CURRENCIES)

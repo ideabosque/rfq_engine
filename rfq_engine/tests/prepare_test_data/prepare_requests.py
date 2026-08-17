@@ -92,7 +92,7 @@ SEGMENTS_INPUT = os.path.join(
     os.path.dirname(__file__), "segments_and_contacts.json"
 )
 FLIGHTS_INPUT = os.getenv("SEED_PRODUCTS_INPUT") or os.path.join(
-    os.path.dirname(__file__), "flight_products.json"
+    os.path.dirname(__file__), "products.json"
 )
 
 NUM_REQUESTS = int(os.getenv("SEED_REQUEST_NUM_REQUESTS", "5"))
