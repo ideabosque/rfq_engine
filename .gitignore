@@ -164,8 +164,8 @@ cython_debug/
 diagrams/
 .vscode/
 test_data.json
-rfq_engine/tests/prepare_test_data/flight_products.json
-rfq_engine/tests/prepare_test_data/flight_catalog_refs.json
+rfq_engine/tests/prepare_test_data/products.json
+rfq_engine/tests/prepare_test_data/catalog_refs.json
 rfq_engine/tests/prepare_test_data/segments_and_contacts.json
 rfq_engine/tests/prepare_test_data/discount_prompts.json
 rfq_engine/tests/prepare_test_data/fx_rates.json

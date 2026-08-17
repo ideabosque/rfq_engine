@@ -1,10 +1,10 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 """
-Ingest AI RFQ flight products into the knowledge graph and bridge them
-back via ``ItemCatalogRef``.
+Ingest RFQ products into the knowledge graph and bridge them back via
+``ItemCatalogRef`` — domain-agnostic.
 
-End-to-end flow per item in ``flight_products.json``:
+End-to-end flow per item in ``products.json``:
 
     1. Compose a natural-language description from the bundled item +
        provider item(s) + batches + tiers + cancellation policy.
@@ -24,18 +24,18 @@ production aws_lambda_invoker path used by
 
 Usage::
 
-    python rfq_engine/tests/prepare_test_data/prepare_flight_catalog_refs.py
+    python rfq_engine/tests/prepare_test_data/prepare_catalog_refs.py
 
 Configurable via env vars::
 
-    SEED_CATALOG_INPUT=flight_products.json     # filename in this directory
-    SEED_CATALOG_NAMESPACE=FLIGHTS              # ItemCatalogRef namespace
-    SEED_CATALOG_SKIP_INGEST=0                  # 1 = link-only; search KGE for an existing node
-    SEED_CATALOG_SEARCH_MODE=vector             # used when SKIP_INGEST=1
-    SEED_CATALOG_TOP_K=5                        # used when SKIP_INGEST=1
-    SEED_CATALOG_FALLBACK_TO_EXTERNAL_ID=1      # link-only fallback when KGE returns nothing
+    SEED_CATALOG_INPUT=products.json          # filename in this directory
+    SEED_CATALOG_NAMESPACE=CATALOG            # ItemCatalogRef namespace
+    SEED_CATALOG_SKIP_INGEST=0                # 1 = link-only; search KGE for an existing node
+    SEED_CATALOG_SEARCH_MODE=vector           # used when SKIP_INGEST=1
+    SEED_CATALOG_TOP_K=5                      # used when SKIP_INGEST=1
+    SEED_CATALOG_FALLBACK_TO_EXTERNAL_ID=1    # link-only fallback when KGE returns nothing
 
-Writes ``flight_catalog_refs.json`` next to this script.
+Writes ``catalog_refs.json`` next to this script.
 """
 from __future__ import annotations
 
@@ -68,17 +68,17 @@ from silvaengine_utility import Invoker  # noqa: E402
 logging.basicConfig(
     level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s"
 )
-logger = logging.getLogger("prepare_flight_catalog_refs")
+logger = logging.getLogger("prepare_catalog_refs")
 
 
-UPDATED_BY = "prepare_flight_catalog_refs"
+UPDATED_BY = "prepare_catalog_refs"
 INPUT_FILE = os.path.join(
     os.path.dirname(__file__),
-    os.getenv("SEED_CATALOG_INPUT", "flight_products.json"),
+    os.getenv("SEED_CATALOG_INPUT", "products.json"),
 )
-OUTPUT_FILE = os.path.join(os.path.dirname(__file__), "flight_catalog_refs.json")
+OUTPUT_FILE = os.path.join(os.path.dirname(__file__), "catalog_refs.json")
 
-NAMESPACE = os.getenv("SEED_CATALOG_NAMESPACE", "FLIGHTS")
+NAMESPACE = os.getenv("SEED_CATALOG_NAMESPACE", "CATALOG")
 SKIP_INGEST = os.getenv("SEED_CATALOG_SKIP_INGEST", "0") == "1"
 SEARCH_MODE = os.getenv("SEED_CATALOG_SEARCH_MODE", "vector")
 TOP_K = int(os.getenv("SEED_CATALOG_TOP_K", "5"))
@@ -200,8 +200,8 @@ def _format_policy_tiers(tiers_blob: Any) -> str:
         if not isinstance(t, dict):
             continue
         gate = (
-            t.get("hours_before_departure_gte")
-            or t.get("hours_before_service_gte")
+            t.get("hours_before_service_gte")
+            or t.get("hours_before_departure_gte")
             or t.get("days_before_service_gte")
         )
         refund = t.get("refund_pct")
@@ -220,53 +220,46 @@ def compose_description(
     bundle_components: list[dict] | None = None,
     bundles_by_uuid: dict[str, dict] | None = None,
 ) -> str:
-    """Build the prose KGE will run extraction over."""
+    """Build the prose KGE will run extraction over — domain-agnostic."""
     lines: list[str] = []
     name = item.get("itemName") or item.get("itemExternalId") or item.get("itemUuid")
     description = item.get("itemDescription")
-    lines.append(f"Flight product: {name}.")
+    item_type = item.get("itemType") or "product"
+    lines.append(f"{item_type.title()} product: {name}.")
     if description:
         lines.append(description)
 
     if provider_items:
-        # All provider items under one item share itemSpec keys; treat the
-        # first as canonical for prose, then list every airline that sells it.
-        airlines = []
+        suppliers = []
         for pi in provider_items:
             spec = pi.get("itemSpec") or {}
-            code = spec.get("airline_code") or ""
-            airline_name = spec.get("airline_name") or "unknown carrier"
-            airlines.append(f"{airline_name} ({code})" if code else airline_name)
+            code = spec.get("supplier_code") or spec.get("airline_code") or ""
+            supplier_name = spec.get("supplier_name") or spec.get("airline_name") or "unknown supplier"
+            suppliers.append(f"{supplier_name} ({code})" if code else supplier_name)
         primary_spec = provider_items[0].get("itemSpec") or {}
-        origin = primary_spec.get("origin_iata")
-        destination = primary_spec.get("destination_iata")
-        cabin = primary_spec.get("cabin_class")
-        baggage = primary_spec.get("baggage_allowance_kg")
-        meal = primary_spec.get("meal_included")
+        origin = primary_spec.get("origin") or primary_spec.get("origin_iata")
+        destination = primary_spec.get("destination") or primary_spec.get("destination_iata")
+        variant = primary_spec.get("variant") or primary_spec.get("cabin_class")
         if origin and destination:
             lines.append(f"Route: {origin} to {destination}.")
-        if cabin:
-            lines.append(f"Cabin class: {cabin}.")
-        lines.append(f"Operated by: {', '.join(airlines)}.")
-        if baggage:
-            lines.append(f"Baggage allowance: {baggage} kg.")
-        if meal is not None:
-            lines.append(f"Meal included: {'yes' if meal else 'no'}.")
+        if variant:
+            lines.append(f"Variant: {variant}.")
+        lines.append(f"Provided by: {', '.join(suppliers)}.")
 
     if tiers:
         priced = [_format_price_tier(t) for t in tiers if t.get("pricePerUom") is not None]
         if priced:
-            lines.append(f"Fares: {', '.join(priced)}.")
+            lines.append(f"Pricing: {', '.join(priced)}.")
 
     if batches:
         rendered = []
         for b in batches[:5]:
-            flight_no = b.get("flightNumber") or b.get("batchNo")
+            batch_no = b.get("batchNo") or b.get("flightNumber")
             start = b.get("serviceStartAt")
             qty = b.get("availabilityQty")
-            seats = f", {int(qty)} seats" if qty is not None else ""
-            rendered.append(f"{flight_no} departing {start}{seats}")
-        lines.append(f"Scheduled flights: {'; '.join(rendered)}.")
+            qty_str = f", {int(qty)} units" if qty is not None else ""
+            rendered.append(f"{batch_no} starting {start}{qty_str}")
+        lines.append(f"Available batches: {'; '.join(rendered)}.")
 
     if policy:
         label = policy.get("label") or "Cancellation policy"
@@ -284,7 +277,7 @@ def compose_description(
             package_names.append(name)
     if package_names:
         lines.append(
-            "This flight can be used as a component in package templates: "
+            "This product can be used as a component in package templates: "
             + ", ".join(package_names)
             + "."
         )
@@ -468,10 +461,10 @@ def build_search_text(item: dict, provider_items: list[dict]) -> str:
         return external_id
     parts = [item.get("itemName")]
     spec = (provider_items[0].get("itemSpec") if provider_items else {}) or {}
-    if spec.get("airline_name"):
-        parts.append(spec["airline_name"])
-    if spec.get("cabin_class"):
-        parts.append(spec["cabin_class"])
+    if spec.get("supplier_name") or spec.get("airline_name"):
+        parts.append(spec.get("supplier_name") or spec.get("airline_name"))
+    if spec.get("variant") or spec.get("cabin_class"):
+        parts.append(spec.get("variant") or spec.get("cabin_class"))
     return " ".join(p for p in parts if p)
 
 
@@ -612,13 +605,13 @@ def generate() -> dict:
                 "providerItemExternalId": provider_item.get(
                     "providerItemExternalId"
                 ),
-                "airlineCode": spec.get("airline_code"),
+                "supplierCode": spec.get("supplier_code") or spec.get("airline_code"),
                 "route": (
-                    f"{spec.get('origin_iata')}-{spec.get('destination_iata')}"
-                    if spec.get("origin_iata") and spec.get("destination_iata")
+                    f"{spec.get('origin') or spec.get('origin_iata')}-{spec.get('destination') or spec.get('destination_iata')}"
+                    if (spec.get("origin") or spec.get("origin_iata")) and (spec.get("destination") or spec.get("destination_iata"))
                     else None
                 ),
-                "cabinClass": spec.get("cabin_class"),
+                "variant": spec.get("variant") or spec.get("cabin_class"),
                 "bundleComponents": [
                     {
                         "bundleUuid": component.get("bundleUuid"),
