@@ -102,8 +102,8 @@ fake = Faker()
 UPDATED_BY = "prepare_quotes"
 OUTPUT_FILE = os.path.join(os.path.dirname(__file__), "quotes.json")
 REQUESTS_INPUT = os.path.join(os.path.dirname(__file__), "requests.json")
-FLIGHTS_INPUT = os.getenv("SEED_PRODUCTS_INPUT") or os.path.join(
-    os.path.dirname(__file__), "products.json"
+PRODUCTS_INPUT = os.getenv("SEED_PRODUCTS_INPUT") or os.path.join(
+    os.path.dirname(__file__), os.getenv("SEED_PRODUCT_OUTPUT_DIR", "dds"), "products.json"
 )
 FX_INPUT = os.path.join(os.path.dirname(__file__), "fx_rates.json")
 
@@ -398,12 +398,12 @@ def generate(engine: RFQEngine) -> dict:
             f"No requests in {REQUESTS_INPUT}. Run prepare_requests.py first."
         )
 
-    flight_data = _safe_load(FLIGHTS_INPUT)
+    flight_data = _safe_load(PRODUCTS_INPUT)
     pi_uuid_to_corp = _provider_corp_ids(flight_data)
     all_corps = sorted(set(pi_uuid_to_corp.values()))
     if not all_corps:
         raise RuntimeError(
-            f"No providerCorpExternalId values in {FLIGHTS_INPUT}. "
+            f"No providerCorpExternalId values in {PRODUCTS_INPUT}. "
             "Run prepare_flight_products.py first."
         )
 

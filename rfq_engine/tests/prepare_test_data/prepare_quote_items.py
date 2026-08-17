@@ -106,8 +106,8 @@ UPDATED_BY = "prepare_quote_items"
 OUTPUT_FILE = os.path.join(os.path.dirname(__file__), "quote_items.json")
 QUOTES_INPUT = os.path.join(os.path.dirname(__file__), "quotes.json")
 REQUESTS_INPUT = os.path.join(os.path.dirname(__file__), "requests.json")
-FLIGHTS_INPUT = os.getenv("SEED_PRODUCTS_INPUT") or os.path.join(
-    os.path.dirname(__file__), "products.json"
+PRODUCTS_INPUT = os.getenv("SEED_PRODUCTS_INPUT") or os.path.join(
+    os.path.dirname(__file__), os.getenv("SEED_PRODUCT_OUTPUT_DIR", "dds"), "products.json"
 )
 
 DISCOUNT_PROB = float(os.getenv("SEED_QITEM_DISCOUNT_PROB", "0.4"))
@@ -352,11 +352,11 @@ def generate(engine: RFQEngine) -> dict:
             f"No requests in {REQUESTS_INPUT}. Run prepare_requests.py first."
         )
 
-    flight_data = _safe_load(FLIGHTS_INPUT) or {}
+    flight_data = _safe_load(PRODUCTS_INPUT) or {}
     segment_uuid = flight_data.get("segmentUuid")
     if not segment_uuid:
         raise RuntimeError(
-            f"No segmentUuid in {FLIGHTS_INPUT}. "
+            f"No segmentUuid in {PRODUCTS_INPUT}. "
             "prepare_flight_products.py must run first."
         )
     pi_by_corp_item = _index_provider_items_by_corp(

@@ -91,7 +91,7 @@ fake = Faker()
 
 UPDATED_BY = "prepare_fx_rates"
 OUTPUT_FILE = os.path.join(os.path.dirname(__file__), "fx_rates.json")
-FLIGHTS_INPUT = os.path.join(os.path.dirname(__file__), "products.json")
+PRODUCTS_INPUT = os.path.join(os.path.dirname(__file__), os.getenv("SEED_PRODUCT_OUTPUT_DIR", "dds"), "products.json")
 
 BASE_CURRENCIES = [
     c.strip().upper()
@@ -243,13 +243,13 @@ def run_mutation(engine: RFQEngine, variables: dict) -> dict | None:
 
 
 def discover_native_currencies() -> set[str]:
-    if not os.path.isfile(FLIGHTS_INPUT):
+    if not os.path.isfile(PRODUCTS_INPUT):
         return set()
     try:
-        with open(FLIGHTS_INPUT, "r", encoding="utf-8") as f:
+        with open(PRODUCTS_INPUT, "r", encoding="utf-8") as f:
             data = json.load(f)
     except Exception as exc:
-        logger.warning("Failed to read %s: %s", FLIGHTS_INPUT, exc)
+        logger.warning("Failed to read %s: %s", PRODUCTS_INPUT, exc)
         return set()
     found: set[str] = set()
     for batch in data.get("provider_item_batches", []) or []:

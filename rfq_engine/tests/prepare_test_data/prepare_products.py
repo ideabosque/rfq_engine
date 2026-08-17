@@ -1,12 +1,12 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 """
-Seed product data for the RFQ Engine — domain-agnostic.
+Seed product data for the RFQ Engine — domain-agnostic and configurable.
 
 Looks up an existing ``Segment`` (run ``prepare_segments_and_contacts.py``
 first) and generates a coherent product catalog across seven tables:
 
-    Item                 — a product/service (e.g. "Product A->B Standard")
+    Item                 — a product/service
     ProviderItem         — a supplier's offering of that product
     CancellationPolicy   — refund/cancellation tiers
     ProviderItemBatch    — a specific inventory lot with service window
@@ -14,28 +14,39 @@ first) and generates a coherent product catalog across seven tables:
     Bundle               — reusable multi-component package template
     BundleComponent      — components inside the package template
 
-The domain (product type, UOM, pricing mode, reference data) is driven by
-the ``SEED_PRODUCT_DOMAIN`` env var.  Built-in domains:
+The domain is driven by ``SEED_PRODUCT_DOMAIN`` env var. Built-in domains:
 
     flight   — flight cabin products (IATA codes, airlines, cabin classes)
     hotel    — hotel room-night products (cities, hotel chains, room types)
     generic  — generic B2B products (product categories, suppliers, tiers)
 
+Output JSON is written to ``<SEED_PRODUCT_OUTPUT_DIR>/products.json``.
+By default the output directory is the script's own directory, but you can
+set ``SEED_PRODUCT_OUTPUT_DIR=dds`` or ``SEED_PRODUCT_OUTPUT_DIR=travel``
+to store domain-specific data in subfolders.
+
 Usage::
 
+    # Flight domain (default), output to top level
     python rfq_engine/tests/prepare_test_data/prepare_products.py
+
+    # Hotel domain, output to travel/ subfolder
+    SEED_PRODUCT_DOMAIN=hotel SEED_PRODUCT_OUTPUT_DIR=travel \\
+        python rfq_engine/tests/prepare_test_data/prepare_products.py
+
+    # Generic B2B, output to dds/ subfolder
+    SEED_PRODUCT_DOMAIN=generic SEED_PRODUCT_OUTPUT_DIR=dds \\
+        python rfq_engine/tests/prepare_test_data/prepare_products.py
 
 Configurable via env vars::
 
-    SEED_PRODUCT_DOMAIN=flight       # flight | hotel | generic
-    SEED_NUM_ROUTES=5                # number of Item rows
-    SEED_BATCHES_PER_ROUTE=2         # ProviderItemBatch rows per item
+    SEED_PRODUCT_DOMAIN=flight        # flight | hotel | generic
+    SEED_PRODUCT_OUTPUT_DIR=.         # subfolder for output JSON
+    SEED_NUM_ROUTES=5                 # number of Item rows
+    SEED_BATCHES_PER_ROUTE=2          # ProviderItemBatch rows per item
     SEED_NUM_BUNDLES=2               # package templates to create
     SEED_BUNDLE_SIZE=3               # max components per bundle
     SEED_PRODUCT_SEGMENT_UUID=...    # pin a specific segment
-
-Writes results to ``products.json`` next to this script (or the
-domain-specific filename if ``SEED_PRODUCT_INPUT`` is set).
 """
 from __future__ import annotations
 
@@ -78,10 +89,13 @@ fake = Faker()
 
 UPDATED_BY = "prepare_products"
 DOMAIN = os.getenv("SEED_PRODUCT_DOMAIN", "flight")
-OUTPUT_FILE = os.path.join(
-    os.path.dirname(__file__),
-    os.getenv("SEED_PRODUCT_OUTPUT", "products.json"),
+# Default output subfolder matches the domain name (dds, travel, etc.)
+# Override with SEED_PRODUCT_OUTPUT_DIR if you want a different subfolder or "." for top level.
+DEFAULT_OUTPUT_DIR = "dds" if DOMAIN == "generic" else DOMAIN
+OUTPUT_DIR = os.path.join(
+    os.path.dirname(__file__), os.getenv("SEED_PRODUCT_OUTPUT_DIR", DEFAULT_OUTPUT_DIR)
 )
+OUTPUT_FILE = os.path.join(OUTPUT_DIR, "products.json")
 
 NUM_ROUTES = int(os.getenv("SEED_NUM_ROUTES", "5"))
 BATCHES_PER_ROUTE = int(os.getenv("SEED_BATCHES_PER_ROUTE", "2"))
@@ -438,7 +452,7 @@ def seed_bundle(engine: RFQEngine, legs: list[dict], idx: int) -> dict | None:
     data = run_graphql(engine, BUNDLE_MUTATION, {
         "code": code, "name": name[:180], "type": CONFIG["bundle_type"],
         "desc": f"Multi-component {CONFIG['item_type']} package template.",
-        "extra": {"source": "prepare_products", "componentCount": len(legs), "routes": labels},
+        "extra": {"source": "prepare_products", "domain": DOMAIN, "componentCount": len(legs), "routes": labels},
         "stat": "active", "by": UPDATED_BY,
     })
     if not data:
@@ -497,7 +511,7 @@ def generate(engine: RFQEngine) -> dict:
         "provider_item_batches": [], "item_price_tiers": [],
         "bundles": [], "bundle_components": [],
     }
-    logger.info("--- Domain=%s: %d items, %d batches each ---", DOMAIN, NUM_ROUTES, BATCHES_PER_ROUTE)
+    logger.info("--- Domain=%s: %d items, %d batches each → %s ---", DOMAIN, NUM_ROUTES, BATCHES_PER_ROUTE, OUTPUT_FILE)
     policy_by_variant: dict[str, str] = {}
     for route_idx in range(NUM_ROUTES):
         route = pick_route(); variant = pick_variant(); supplier = pick_supplier()
@@ -529,6 +543,7 @@ def generate(engine: RFQEngine) -> dict:
 
 
 def write_output(output: dict) -> None:
+    os.makedirs(OUTPUT_DIR, exist_ok=True)
     with open(OUTPUT_FILE, "w", encoding="utf-8") as f:
         json.dump(output, f, indent=2)
     logger.info(

@@ -91,8 +91,8 @@ OUTPUT_FILE = os.path.join(os.path.dirname(__file__), "requests.json")
 SEGMENTS_INPUT = os.path.join(
     os.path.dirname(__file__), "segments_and_contacts.json"
 )
-FLIGHTS_INPUT = os.getenv("SEED_PRODUCTS_INPUT") or os.path.join(
-    os.path.dirname(__file__), "products.json"
+PRODUCTS_INPUT = os.getenv("SEED_PRODUCTS_INPUT") or os.path.join(
+    os.path.dirname(__file__), os.getenv("SEED_PRODUCT_OUTPUT_DIR", "dds"), "products.json"
 )
 
 NUM_REQUESTS = int(os.getenv("SEED_REQUEST_NUM_REQUESTS", "5"))
@@ -544,11 +544,11 @@ def generate(engine: RFQEngine) -> dict:
             "endpoint_id and part_id must be set in tests/.env before running"
         )
 
-    flight_data = _safe_load(FLIGHTS_INPUT)
+    flight_data = _safe_load(PRODUCTS_INPUT)
     items = (flight_data or {}).get("items") or []
     if not items:
         raise RuntimeError(
-            f"No items in {FLIGHTS_INPUT}. Run prepare_flight_products.py first."
+            f"No items in {PRODUCTS_INPUT}. Run prepare_flight_products.py first."
         )
     provider_items = (flight_data or {}).get("provider_items") or []
     batches = (flight_data or {}).get("provider_item_batches") or []

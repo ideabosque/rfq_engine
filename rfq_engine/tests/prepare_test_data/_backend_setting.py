@@ -67,7 +67,7 @@ def build_setting() -> Dict[str, Any]:
 
     setting: Dict[str, Any] = {
         "functs_on_local": {
-            "ai_rfq_graphql": {
+            "rfq_graphql": {
                 "module_name": "rfq_engine",
                 "class_name": "RFQEngine",
             },

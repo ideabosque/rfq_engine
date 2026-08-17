@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 """
 Ingest RFQ products into the knowledge graph and bridge them back via
-``ItemCatalogRef`` — domain-agnostic.
+``ItemCatalogRef`` — domain-agnostic and configurable.
 
 End-to-end flow per item in ``products.json``:
 
@@ -15,7 +15,7 @@ End-to-end flow per item in ``products.json``:
        (passed to KGE as ``documentExternalId``).
     4. Call ``insertUpdateItemCatalogRef`` on the RFQ Engine for each
        (item, provider_item) pair, linking
-       ``namespace + nodeId → (item_uuid, provider_item_uuid)``.
+       ``namespace + nodeId -> (item_uuid, provider_item_uuid)``.
 
 Both engines are invoked through ``silvaengine_utility.Invoker``'s
 ``invoke_funct_on_local`` so the cross-project call shape mirrors the
@@ -28,14 +28,16 @@ Usage::
 
 Configurable via env vars::
 
-    SEED_CATALOG_INPUT=products.json          # filename in this directory
+    SEED_CATALOG_INPUT=products.json          # filename in SEED_CATALOG_INPUT_DIR
+    SEED_CATALOG_INPUT_DIR=.                  # subfolder (e.g. dds, travel)
+    SEED_CATALOG_OUTPUT_DIR=.                 # subfolder for output
     SEED_CATALOG_NAMESPACE=CATALOG            # ItemCatalogRef namespace
     SEED_CATALOG_SKIP_INGEST=0                # 1 = link-only; search KGE for an existing node
     SEED_CATALOG_SEARCH_MODE=vector           # used when SKIP_INGEST=1
     SEED_CATALOG_TOP_K=5                      # used when SKIP_INGEST=1
     SEED_CATALOG_FALLBACK_TO_EXTERNAL_ID=1    # link-only fallback when KGE returns nothing
 
-Writes ``catalog_refs.json`` next to this script.
+Writes ``catalog_refs.json`` to ``SEED_CATALOG_OUTPUT_DIR``.
 """
 from __future__ import annotations
 
@@ -72,11 +74,15 @@ logger = logging.getLogger("prepare_catalog_refs")
 
 
 UPDATED_BY = "prepare_catalog_refs"
-INPUT_FILE = os.path.join(
-    os.path.dirname(__file__),
-    os.getenv("SEED_CATALOG_INPUT", "products.json"),
-)
-OUTPUT_FILE = os.path.join(os.path.dirname(__file__), "catalog_refs.json")
+HERE = os.path.dirname(os.path.abspath(__file__))
+
+# Default subfolder is "dds" for generic/B2B domain, otherwise the domain name.
+# Override with SEED_CATALOG_INPUT_DIR / SEED_CATALOG_OUTPUT_DIR if needed.
+DEFAULT_SUBDIR = os.getenv("SEED_CATALOG_SUBDIR", "dds")
+INPUT_DIR = os.path.join(HERE, os.getenv("SEED_CATALOG_INPUT_DIR", DEFAULT_SUBDIR))
+OUTPUT_DIR = os.path.join(HERE, os.getenv("SEED_CATALOG_OUTPUT_DIR", DEFAULT_SUBDIR))
+INPUT_FILE = os.path.join(INPUT_DIR, os.getenv("SEED_CATALOG_INPUT", "products.json"))
+OUTPUT_FILE = os.path.join(OUTPUT_DIR, "catalog_refs.json")
 
 NAMESPACE = os.getenv("SEED_CATALOG_NAMESPACE", "CATALOG")
 SKIP_INGEST = os.getenv("SEED_CATALOG_SKIP_INGEST", "0") == "1"
@@ -89,7 +95,7 @@ FALLBACK_TO_EXTERNAL_ID = os.getenv(
 from _backend_setting import build_setting  # noqa: E402
 
 SETTING = build_setting()
-# KGE integration needs the knowledge_graph_engine funct alongside ai_rfq_graphql.
+# KGE integration needs the knowledge_graph_engine funct alongside rfq_graphql.
 SETTING.setdefault("functs_on_local", {})["knowledge_graph_graphql"] = {
     "module_name": "knowledge_graph_engine",
     "class_name": "KnowledgeGraphEngine",
@@ -97,7 +103,6 @@ SETTING.setdefault("functs_on_local", {})["knowledge_graph_graphql"] = {
 
 
 # --- GraphQL ---------------------------------------------------------------- #
-
 
 EXECUTE_EXTRACT_MUTATION = """
 mutation ExecuteExtract(
@@ -140,17 +145,14 @@ mutation InsertUpdateItemCatalogRef(
 
 # --- Invocation ------------------------------------------------------------- #
 
-
 def invoke(funct: str, query: str, variables: dict) -> dict | None:
-    """
-    Call either ``ai_rfq_graphql`` or ``knowledge_graph_graphql`` through
+    """Call either ``rfq_graphql`` or ``knowledge_graph_graphql`` through
     ``Invoker.invoke_funct_on_local``. The helper unwraps the body /
-    error envelope for us and returns the GraphQL ``data`` payload.
+    error envelope and returns the GraphQL ``data`` payload.
 
     KGE requires its own ``pg_table_prefix`` (e.g. ``kge_``) — the Invoker
     passes the full setting dict to the target class constructor, so we
     create a copy with the prefix overridden from ``kge_pg_table_prefix``.
-    This mirrors the production RFQ catalog handler pattern.
     """
     try:
         if funct == "knowledge_graph_graphql":
@@ -180,7 +182,6 @@ def invoke(funct: str, query: str, variables: dict) -> dict | None:
 
 
 # --- Description composer --------------------------------------------------- #
-
 
 def _format_price_tier(tier: dict) -> str:
     pax = tier.get("paxType") or "unit"
@@ -254,7 +255,7 @@ def compose_description(
     if batches:
         rendered = []
         for b in batches[:5]:
-            batch_no = b.get("batchNo") or b.get("flightNumber")
+            batch_no = b.get("batchNo")
             start = b.get("serviceStartAt")
             qty = b.get("availabilityQty")
             qty_str = f", {int(qty)} units" if qty is not None else ""
@@ -287,13 +288,8 @@ def compose_description(
 
 # --- KGE ingestion ---------------------------------------------------------- #
 
-
 def ingest_into_kge(item: dict, text: str) -> dict | None:
-    """
-    Push ``text`` into KGE via ``executeExtract``. Returns the extract
-    result (status, documentUuid, entitiesExtracted, relationshipsExtracted)
-    or ``None`` if the call failed.
-    """
+    """Push ``text`` into KGE via ``executeExtract``."""
     external_id = item.get("itemExternalId") or item.get("itemUuid")
     variables = {
         "text": text,
@@ -318,19 +314,11 @@ def ingest_into_kge(item: dict, text: str) -> dict | None:
 
 # --- KGE search-based lookup (used when SKIP_INGEST=1) ---------------------- #
 
-
 _NODE_ID_KEYS = (
-    "elementId",
-    "element_id",
-    "nodeId",
-    "node_id",
-    "id",
-    "documentExternalId",
-    "document_external_id",
-    "documentUuid",
-    "document_uuid",
-    "externalId",
-    "external_id",
+    "elementId", "element_id", "nodeId", "node_id", "id",
+    "documentExternalId", "document_external_id",
+    "documentUuid", "document_uuid",
+    "externalId", "external_id",
 )
 
 
@@ -361,7 +349,7 @@ def lookup_existing_node(query_text: str) -> dict | None:
             "limit": TOP_K,
         },
     }
-    data = invoke("ai_rfq_graphql", INQUIRE_CATALOG_QUERY, variables)
+    data = invoke("rfq_graphql", INQUIRE_CATALOG_QUERY, variables)
     if not data:
         return None
     inquire = data.get("inquireCatalog") or {}
@@ -385,7 +373,6 @@ def lookup_existing_node(query_text: str) -> dict | None:
 
 # --- Catalog ref seeder ----------------------------------------------------- #
 
-
 def upsert_catalog_ref(
     *,
     item: dict,
@@ -394,7 +381,7 @@ def upsert_catalog_ref(
     extra: dict,
 ) -> dict | None:
     data = invoke(
-        "ai_rfq_graphql",
+        "rfq_graphql",
         ITEM_CATALOG_REF_MUTATION,
         {
             "ns": NAMESPACE,
@@ -430,7 +417,6 @@ def upsert_catalog_ref(
 
 
 # --- Orchestrator ----------------------------------------------------------- #
-
 
 def load_input() -> dict:
     if not os.path.isfile(INPUT_FILE):
@@ -474,24 +460,24 @@ def generate() -> dict:
             "endpoint_id and part_id must be set in tests/.env before running"
         )
 
-    flight_data = load_input()
-    items = flight_data.get("items") or []
+    products_data = load_input()
+    items = products_data.get("items") or []
     provider_items_by_item = index_by(
-        flight_data.get("provider_items") or [], "itemUuid"
+        products_data.get("provider_items") or [], "itemUuid"
     )
     batches_by_item = index_by(
-        flight_data.get("provider_item_batches") or [], "itemUuid"
+        products_data.get("provider_item_batches") or [], "itemUuid"
     )
     tiers_by_item = index_by(
-        flight_data.get("item_price_tiers") or [], "itemUuid"
+        products_data.get("item_price_tiers") or [], "itemUuid"
     )
     bundle_components_by_item = index_by(
-        flight_data.get("bundle_components") or [], "itemUuid"
+        products_data.get("bundle_components") or [], "itemUuid"
     )
-    bundles_by_uuid = index_one_by(flight_data.get("bundles") or [], "bundleUuid")
+    bundles_by_uuid = index_one_by(products_data.get("bundles") or [], "bundleUuid")
     policies_by_uuid = {
         p.get("policyUuid"): p
-        for p in (flight_data.get("cancellation_policies") or [])
+        for p in (products_data.get("cancellation_policies") or [])
         if p.get("policyUuid")
     }
 
@@ -653,6 +639,7 @@ def generate() -> dict:
 
 
 def write_output(output: dict) -> None:
+    os.makedirs(OUTPUT_DIR, exist_ok=True)
     with open(OUTPUT_FILE, "w", encoding="utf-8") as f:
         json.dump(output, f, indent=2)
     logger.info(

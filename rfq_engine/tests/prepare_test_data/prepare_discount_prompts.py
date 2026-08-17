@@ -86,8 +86,8 @@ OUTPUT_FILE = os.path.join(os.path.dirname(__file__), "discount_prompts.json")
 SEGMENTS_INPUT = os.path.join(
     os.path.dirname(__file__), "segments_and_contacts.json"
 )
-FLIGHTS_INPUT = os.getenv("SEED_PRODUCTS_INPUT") or os.path.join(
-    os.path.dirname(__file__), "products.json"
+PRODUCTS_INPUT = os.getenv("SEED_PRODUCTS_INPUT") or os.path.join(
+    os.path.dirname(__file__), os.getenv("SEED_PRODUCT_OUTPUT_DIR", "dds"), "products.json"
 )
 
 NUM_GLOBAL = int(os.getenv("SEED_DISCOUNT_NUM_GLOBAL", "3"))
@@ -450,7 +450,7 @@ def generate(engine: RFQEngine) -> dict:
     else:
         logger.info("Skipping segment-scoped prompts (no segments_and_contacts.json)")
 
-    flights_data = _safe_load(FLIGHTS_INPUT)
+    flights_data = _safe_load(PRODUCTS_INPUT)
     items = (flights_data or {}).get("items") or []
     provider_items = (flights_data or {}).get("provider_items") or []
     provider_items_by_item = _index_provider_items(provider_items)
