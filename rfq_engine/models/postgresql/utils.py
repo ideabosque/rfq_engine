@@ -10,6 +10,8 @@ __author__ = "bibow"
 import logging
 from typing import Any, Dict, List
 
+from sqlalchemy import text
+
 from .base import Base
 
 
@@ -24,6 +26,18 @@ def initialize_tables(logger: logging.Logger, db_session: Any) -> None:
     _import_all_models()
 
     engine = db_session.get_bind()
+
+    # item_uuid and other UUID primary/foreign key columns default to
+    # uuid_generate_v4() (see e.g. models/postgresql/item.py) — the same
+    # requirement the Alembic migrations declare explicitly as their first
+    # step (migration/alembic/versions/0001_create_items.py). This
+    # convenience path (DB_BACKEND=postgresql + initialize_tables=1) bypasses
+    # Alembic, so it must provision the extension itself or create_all()
+    # fails with "function uuid_generate_v4() does not exist" the moment a
+    # deployment's Postgres doesn't already have it enabled.
+    with engine.begin() as conn:
+        conn.execute(text('CREATE EXTENSION IF NOT EXISTS "uuid-ossp"'))
+
     Base.metadata.create_all(bind=engine, checkfirst=True)
     logger.info("PostgreSQL tables initialized (create_all with checkfirst=True).")
 
