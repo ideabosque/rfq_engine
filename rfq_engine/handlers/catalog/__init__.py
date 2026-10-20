@@ -1,14 +1,17 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
-"""Catalog inquiry invoked through the knowledge_graph_engine public API."""
+"""Catalog inquiry invoked through the knowledge_engine public API."""
 from __future__ import annotations
 
 __author__ = "bibow"
 
 from .handler import (
+    AccessDeniedError,
     CatalogHandlerError,
     CatalogReference,
     CatalogResponse,
+    ConfigurationError,
+    NotFoundError,
     OperationUnsupportedError,
     SystemError as CatalogSystemError,
     SystemTimeoutError,
@@ -16,9 +19,12 @@ from .handler import (
 )
 
 __all__ = [
+    "AccessDeniedError",
     "CatalogHandlerError",
     "CatalogReference",
     "CatalogResponse",
+    "ConfigurationError",
+    "NotFoundError",
     "OperationUnsupportedError",
     "CatalogSystemError",
     "SystemTimeoutError",

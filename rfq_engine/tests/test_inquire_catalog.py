@@ -4,26 +4,28 @@
 Integration tests for ``resolve_inquire_catalog`` (schema.py:resolve_inquire_catalog
 -> queries/catalog_inquiry.resolve_inquire_catalog -> handlers/catalog/handler.dispatch_inquire).
 
-The resolver wraps the KGE-backed catalog handler, which routes through
-``aws_lambda_invoker`` to ``knowledge_graph_engine.knowledge_graph_graphql``.
-These tests require:
+The resolver wraps the knowledge_engine-backed catalog handler, which routes
+in-process through ``Invoker.invoke_funct_on_local`` to
+``knowledge_engine.knowledge_engine_graphql``. These tests require:
 
-  * RFQ Engine reachable (DynamoDB credentials + base_dir set in tests/.env)
-  * knowledge_graph_engine importable on sys.path
-  * KGE has a Neo4j instance registered for the partition AND extracted
-    content present (run prepare_flight_catalog_refs.py first so the
-    "queryable hits" tests find something).
+  * RFQ Engine reachable (DB credentials + base_dir set in tests/.env)
+  * knowledge_engine importable on sys.path and initialized (gateway mount,
+    Phase 0 T0.1) with LLM/embedding/Neo4j config groups for the partition
+  * KE content present (run the ingestion bridge or KE seed data first so
+    the "queryable hits" tests find something)
 
 Covered scenarios:
 
-  1. Happy path -- text query returns a non-empty payload from KGE.
-  2. Node-by-id inquiry is reported as unsupported (per current handler
-     design -- KGE doesn't expose a node-by-id query yet).
+  1. Happy path — semantic query returns the legacy ``{results, total}``
+     payload envelope from KE ``searchKnowledges``.
+  2. Node-by-id inquiry via ``nodeId`` succeeds against KE ``knowledge(id)``
+     (restriction lifted — INT-019).
   3. Missing/invalid query payload surfaces ``errorCode="system_error"``
      without raising a GraphQL transport error.
-  4. Round-trip -- the ``nodeId`` returned by KGE matches the
-     ``itemExternalId`` we passed at ingestion time, so it can be looked
-     up in ``ItemCatalogRefModel`` to resolve a concrete ``item_uuid``.
+  4. ask/graph/cypher modes route to their KE operations.
+  5. Write→read loop — ``ingestKnowledgeFromRfq`` then
+     ``inquireCatalog(nodeId)`` resolves end-to-end when ingestion settings
+     are provisioned.
 """
 from __future__ import annotations
 
@@ -49,9 +51,9 @@ SETTING = {
             "module_name": "rfq_engine",
             "class_name": "RFQEngine",
         },
-        "knowledge_graph_graphql": {
-            "module_name": "knowledge_graph_engine",
-            "class_name": "KnowledgeGraphEngine",
+        "knowledge_engine_graphql": {
+            "module_name": "knowledge_engine",
+            "class_name": "KnowledgeEngine",
         },
     },
     "endpoint_id": os.getenv("endpoint_id"),
@@ -59,6 +61,15 @@ SETTING = {
     "execute_mode": os.getenv("execute_mode", "local"),
     "initialize_tables": os.getenv("initialize_tables", "0") == "1",
     "cache_enabled": os.getenv("cache_enabled", "0") == "1",
+    # Phase 0 T0.2 provisioning (recorded per tenant):
+    "knowledge_engine_ingest": {
+        "domain_id": os.getenv("ke_domain_id"),
+        "type_ids": {
+            "item": os.getenv("ke_type_item"),
+        },
+        "namespace": os.getenv("ke_ingest_namespace", "KE"),
+        "sync_item_catalog_ref": os.getenv("ke_sync_refs", "1") == "1",
+    },
 }
 
 BASE_DIR = os.getenv("base_dir") or os.path.abspath(
@@ -67,23 +78,13 @@ BASE_DIR = os.getenv("base_dir") or os.path.abspath(
 sys.path.insert(0, BASE_DIR)
 sys.path.insert(0, os.path.join(BASE_DIR, "silvaengine_utility"))
 sys.path.insert(1, os.path.join(BASE_DIR, "silvaengine_dynamodb_base"))
-sys.path.insert(2, os.path.join(BASE_DIR, "rfq_engine"))
-sys.path.insert(3, os.path.join(BASE_DIR, "knowledge_graph_engine"))
+sys.path.insert(2, BASE_DIR if "rfq_engine" in BASE_DIR else os.path.join(BASE_DIR, "rfq_engine"))
+sys.path.insert(3, os.getenv("ke_base_dir") or os.path.join(BASE_DIR, "knowledge_engine"))
 
 try:
     from rfq_engine import RFQEngine
 except ImportError:
     RFQEngine = None
-
-
-# Optional companion JSON written by prepare_flight_catalog_refs.py -- when
-# present, the round-trip test pulls a known nodeId from it; otherwise that
-# test is skipped.
-_CATALOG_REFS_JSON = os.path.join(
-    os.path.dirname(__file__),
-    "prepare_test_data",
-    "flight_catalog_refs.json",
-)
 
 
 # --- Fixtures -------------------------------------------------------------- #
@@ -96,13 +97,16 @@ def engine():
     if not SETTING.get("endpoint_id") or not SETTING.get("part_id"):
         pytest.skip("endpoint_id / part_id missing from tests/.env")
     try:
-        from neo4j import GraphDatabase
+        import knowledge_engine  # noqa: F401
 
-        driver = GraphDatabase.driver("bolt://localhost:7687")
-        driver.verify_connectivity()
-        driver.close()
+        from knowledge_engine.handlers.config import Config as KEConfig
+
+        if not KEConfig._initialized:
+            pytest.skip(
+                "knowledge_engine not initialized (gateway mount / Phase 0 T0.1)"
+            )
     except Exception:
-        pytest.skip("Neo4j not reachable on localhost:7687")
+        pytest.skip("knowledge_engine not importable on sys.path")
     try:
         e = RFQEngine(logger, **SETTING)
         setattr(e, "__is_real__", True)
@@ -122,14 +126,11 @@ def part_id():
 
 
 @pytest.fixture(scope="module")
-def catalog_refs_seed() -> dict | None:
-    if not os.path.isfile(_CATALOG_REFS_JSON):
-        return None
-    try:
-        with open(_CATALOG_REFS_JSON, "r", encoding="utf-8") as f:
-            return json.load(f)
-    except Exception:
-        return None
+def ingest_ready():
+    ingest = SETTING.get("knowledge_engine_ingest") or {}
+    if not ingest.get("domain_id") or not ingest.get("type_ids", {}).get("item"):
+        pytest.skip("ke_domain_id / ke_type_item not set in tests/.env (T0.2)")
+    return ingest
 
 
 # --- GraphQL helper -------------------------------------------------------- #
@@ -149,10 +150,34 @@ query InquireCatalog($namespace: String, $nodeId: String, $query: JSONCamelCase)
 }
 """
 
+_INGEST_KNOWLEDGE_MUTATION = """
+mutation IngestKnowledgeFromRfq(
+    $entityType: String!,
+    $uuid: String!
+) {
+    ingestKnowledgeFromRfq(entityType: $entityType, uuid: $uuid) {
+        result {
+            status
+            entityType
+            entityUuid
+            knowledgeId
+            errorCode
+            errorMessage
+        }
+    }
+}
+"""
 
-def _graphql(engine, variables: Dict[str, Any], endpoint_id: str, part_id: str) -> Dict[str, Any]:
-    response = engine.ai_rfq_graphql(
-        query=_INQUIRE_CATALOG_QUERY,
+
+def _graphql(
+    engine,
+    query: str,
+    variables: Dict[str, Any],
+    endpoint_id: str,
+    part_id: str,
+) -> Dict[str, Any]:
+    response = engine.rfq_graphql(
+        query=query,
         variables=variables,
         endpoint_id=endpoint_id,
         part_id=part_id,
@@ -167,35 +192,38 @@ def _graphql(engine, variables: Dict[str, Any], endpoint_id: str, part_id: str) 
             parsed = Serializer.json_loads(parsed["body"])
         except Exception:
             pass
-    if parsed.get("errors"):
+    if isinstance(parsed, dict) and parsed.get("errors"):
         raise RuntimeError(f"GraphQL errors: {parsed['errors']}")
-    return parsed.get("data", parsed).get("inquireCatalog") or {}
+    data = parsed.get("data", parsed) if isinstance(parsed, dict) else {}
+    return data
+
+
+def _inquire(engine, variables, endpoint_id, part_id) -> Dict[str, Any]:
+    return _graphql(
+        engine, _INQUIRE_CATALOG_QUERY, variables, endpoint_id, part_id
+    ).get("inquireCatalog") or {}
 
 
 # --- Tests ----------------------------------------------------------------- #
 
 
 class TestInquireCatalog:
-    """Integration coverage for the inquire_catalog GraphQL resolver."""
+    """Integration coverage for the KE-backed inquire_catalog resolver."""
 
     @pytest.mark.integration
-    def test_text_query_returns_payload(self, engine, endpoint_id, part_id):
-        """
-        A well-formed text query reaches KGE and comes back with a
-        searchable payload. KGE must have content (run
-        prepare_flight_catalog_refs.py first); empty graphs return an
-        empty results list but should still return the payload envelope.
-        """
-        print("\n=== test_text_query_returns_payload ===", flush=True)
-        result = _graphql(
+    def test_semantic_query_returns_legacy_envelope(
+        self, engine, endpoint_id, part_id
+    ):
+        """Default semantic mode hits KE searchKnowledges and returns the
+        ``{results, total, page, limit}`` envelope."""
+        print("\n=== test_semantic_query_returns_legacy_envelope ===", flush=True)
+        result = _inquire(
             engine,
             {
-                "namespace": "FLIGHTS",
+                "namespace": "KE",
                 "query": {
-                    "queryText": "Business class flight",
-                    "searchMode": "vector",
-                    "topK": 5,
-                    "page": 1,
+                    "queryText": "onsen",
+                    "searchMode": "semantic",
                     "limit": 5,
                 },
             },
@@ -204,201 +232,114 @@ class TestInquireCatalog:
         )
         print(
             f"errorCode={result.get('errorCode')!r} "
-            f"namespace={result.get('namespace')!r} "
-            f"fetchedAt={result.get('fetchedAt')!r}",
-            flush=True,
-        )
-        payload = result.get("payload") or {}
-        results = payload.get("results") if isinstance(payload, dict) else None
-        print(
-            f"payload.results count = {len(results) if isinstance(results, list) else 'N/A'}",
-            flush=True,
-        )
-        if isinstance(results, list):
-            for i, hit in enumerate(results[:3]):
-                score = (hit.get("metadata") or {}).get("score") if isinstance(hit, dict) else None
-                print(f"  [{i}] score={score} keys={list(hit.keys()) if isinstance(hit, dict) else type(hit).__name__}", flush=True)
-        assert result.get("errorCode") is None, (
-            f"unexpected error: {result.get('errorCode')} / "
-            f"{result.get('errorMessage')}"
-        )
-        assert result.get("namespace") == "FLIGHTS"
-        assert isinstance(payload, dict), f"payload should be a dict, got {payload!r}"
-        # KGE always returns `results` (possibly empty) on a well-formed query.
-        assert "results" in payload, f"payload missing 'results': keys={list(payload)}"
-        assert isinstance(payload["results"], list)
-        print(f"PASS -- {len(payload['results'])} result(s) returned", flush=True)
-
-    @pytest.mark.integration
-    def test_node_id_lookup_reports_unsupported(self, engine, endpoint_id, part_id):
-        """
-        Passing ``nodeId`` directly triggers the documented
-        OperationUnsupportedError, surfaced as an in-band errorCode.
-        """
-        print("\n=== test_node_id_lookup_reports_unsupported ===", flush=True)
-        result = _graphql(
-            engine,
-            {
-                "namespace": "FLIGHTS",
-                "nodeId": "FLIGHT-JFK-LAX-BUS",
-            },
-            endpoint_id,
-            part_id,
-        )
-        print(
-            f"errorCode={result.get('errorCode')!r} "
             f"errorMessage={result.get('errorMessage')!r}",
             flush=True,
         )
-        assert result.get("errorCode") == "operation_unsupported", result
-        print("PASS -- node-by-id lookup rejected as expected", flush=True)
+        assert result.get("errorCode") is None, result
+        payload = result.get("payload") or {}
+        assert isinstance(payload, dict), f"payload should be a dict, got {payload!r}"
+        assert "results" in payload, f"payload missing 'results': keys={list(payload)}"
+        assert isinstance(payload["results"], list)
+        assert payload["total"] == len(payload["results"])
+        print(
+            f"PASS -- {payload['total']} result(s) returned in legacy envelope",
+            flush=True,
+        )
 
     @pytest.mark.integration
     def test_missing_query_text_returns_system_error(
         self, engine, endpoint_id, part_id
     ):
-        """
-        A browse inquiry without ``queryText`` should not raise -- the
-        handler converts it to an in-band ``errorCode="system_error"``.
-        """
+        """A browse inquiry without ``queryText`` must not raise — the
+        handler converts it to in-band ``errorCode="system_error"``."""
         print("\n=== test_missing_query_text_returns_system_error ===", flush=True)
-        result = _graphql(
+        result = _inquire(
             engine,
-            {
-                "namespace": "FLIGHTS",
-                "query": {"searchMode": "vector"},  # missing queryText
-            },
+            {"query": {"searchMode": "semantic"}},  # missing queryText
             endpoint_id,
             part_id,
-        )
-        print(
-            f"errorCode={result.get('errorCode')!r} "
-            f"errorMessage={result.get('errorMessage')!r}",
-            flush=True,
         )
         assert result.get("errorCode") == "system_error", result
         print("PASS -- missing queryText surfaced as system_error", flush=True)
 
     @pytest.mark.integration
-    def test_nodeid_round_trip_via_catalog_ref(
-        self, engine, endpoint_id, part_id, catalog_refs_seed
+    def test_unknown_mode_returns_operation_unsupported(
+        self, engine, endpoint_id, part_id
     ):
-        """
-        End-to-end round trip:
-          KGE search for a known ingested item
-            -> response payload contains the item's documentExternalId
-            -> that value matches an ItemCatalogRef row's nodeId
-            -> which resolves to the internal item_uuid we ingested under.
-
-        Skipped when prepare_flight_catalog_refs.py hasn't been run (no
-        seed JSON, nothing to look up by).
-        """
-        print("\n=== test_nodeid_round_trip_via_catalog_ref ===", flush=True)
-        if not catalog_refs_seed:
-            print(
-                "SKIP -- flight_catalog_refs.json not on disk; run "
-                "prepare_flight_catalog_refs.py first",
-                flush=True,
-            )
-            pytest.skip(
-                "flight_catalog_refs.json not present -- run "
-                "prepare_flight_catalog_refs.py first to populate KGE + refs"
-            )
-
-        # Pick any successfully-linked ref to round-trip.
-        candidates = catalog_refs_seed.get("matched") or []
-        candidates += catalog_refs_seed.get("fallbacks") or []
-        if not candidates:
-            print("SKIP -- no linked catalog refs in seed JSON", flush=True)
-            pytest.skip("no linked catalog refs in seed JSON")
-        ref = candidates[0]
-        node_id = ref.get("nodeId")
-        item_uuid = ref.get("itemUuid")
-        assert node_id and item_uuid
-
-        # Use the airline/cabin/route prose as a search query so vector
-        # search has something semantic to lean on.
-        extra = ref.get("extra") or {}
-        query_text = " ".join(
-            str(p)
-            for p in [
-                extra.get("airlineCode"),
-                extra.get("cabinClass"),
-                extra.get("route"),
-            ]
-            if p
-        ) or node_id
-
-        print(f"querying KGE with: {query_text!r}", flush=True)
-        print(f"expecting nodeId={node_id!r} item_uuid={item_uuid!r}", flush=True)
-
-        result = _graphql(
+        result = _inquire(
             engine,
-            {
-                "namespace": catalog_refs_seed.get("namespace") or "FLIGHTS",
-                "query": {
-                    "queryText": query_text,
-                    "searchMode": "vector",
-                    "topK": 10,
-                    "page": 1,
-                    "limit": 10,
-                },
-            },
+            {"query": {"queryText": "x", "searchMode": "quantum"}},
             endpoint_id,
             part_id,
         )
-        assert result.get("errorCode") is None, result
-        payload = result.get("payload") or {}
-        results = payload.get("results") or []
-        print(f"KGE returned {len(results)} result(s)", flush=True)
-        for i, hit in enumerate(results[:3]):
-            score = (hit.get("metadata") or {}).get("score") if isinstance(hit, dict) else None
-            text = ""
-            md = hit.get("metadata") if isinstance(hit, dict) else None
-            if isinstance(md, dict):
-                node = md.get("node") if isinstance(md, dict) else None
-                if isinstance(node, dict):
-                    text = (node.get("text") or "")[:120]
-            print(f"  [{i}] score={score} text={text!r}", flush=True)
-        assert results, (
-            f"KGE returned 0 results for query={query_text!r}; "
-            "is the partition populated?"
-        )
+        assert result.get("errorCode") == "operation_unsupported", result
 
-        # KGE's vector search returns Chunk nodes (text fragments produced
-        # by neo4j-graphrag's chunker), not the Document node -- so the
-        # literal ``documentExternalId`` lives on the Document, one hop
-        # away from what comes back here. The matching evidence we DO have
-        # is that the chunks' prose contains the airline / route / cabin
-        # we passed in at extract time. Assert on that prose round-trip.
-        expected_route = (extra.get("route") or "").replace("-", "->")
-        expected_cabin = extra.get("cabinClass") or ""
+    @pytest.mark.integration
+    def test_ask_graph_cypher_modes_route(
+        self, engine, endpoint_id, part_id
+    ):
+        """ask/graph/cypher route to their KE operations; graph/cypher may
+        legitimately fail-closed on access (INT-021) but must stay in-band."""
+        for mode in ("ask", "graph", "cypher"):
+            query: Dict[str, Any] = {"queryText": "onsen", "searchMode": mode}
+            if mode == "cypher":
+                query["retrievalQuery"] = "MATCH (n:Entity) RETURN n LIMIT 5"
+            result = _inquire(
+                engine, {"query": query}, endpoint_id, part_id
+            )
+            assert result.get("errorCode") in (
+                None,
+                "access_denied",
+                "system_error",
+            ), result
+            print(
+                f"mode={mode} -> errorCode={result.get('errorCode')!r}",
+                flush=True,
+            )
+
+    @pytest.mark.integration
+    def test_write_read_loop_via_node_inquiry(
+        self, engine, endpoint_id, part_id, ingest_ready
+    ):
+        """T2.7/DoD-3: ingest an RFQ entity then resolve it through
+        ``inquireCatalog(nodeId)`` — the write→read loop closes with
+        ``node_id`` = KE knowledge id."""
+        print("\n=== test_write_read_loop_via_node_inquiry ===", flush=True)
+        ingest = (
+            _graphql(
+                engine,
+                _INGEST_KNOWLEDGE_MUTATION,
+                {"entityType": "item", "uuid": "u-item-1"},
+                endpoint_id,
+                part_id,
+            ).get("ingestKnowledgeFromRfq")
+            or {}
+        ).get("result") or {}
+        status = ingest.get("status")
         print(
-            f"asserting top chunk contains route={expected_route!r} "
-            f"and cabin={expected_cabin!r}",
+            f"ingest status={status!r} error={ingest.get('errorMessage')!r}",
             flush=True,
         )
-        assert results[0].get("metadata"), f"first result missing metadata: {results[0]}"
-        # The route (e.g. "CDG->JFK") and cabin class (e.g. "Business") MUST
-        # appear in the top-ranked chunk for the ingest->search round trip
-        # to be considered correct.
-        top = json.dumps(results[0], default=str)
-        assert expected_route in top and expected_cabin in top, (
-            f"top result missing route={expected_route!r} and/or cabin="
-            f"{expected_cabin!r}; got: {top[:500]!r}"
+        assert status == "ok", ingest
+        knowledge_id = ingest.get("knowledgeId")
+        assert knowledge_id
+
+        result = _inquire(
+            engine, {"namespace": "KE", "nodeId": knowledge_id}, endpoint_id, part_id
         )
+        assert result.get("errorCode") is None, result
+        payload = result.get("payload") or {}
+        assert payload.get("id") == str(knowledge_id)
+        assert payload.get("code") == "item-u-item-1"
         print(
-            f"PASS -- KGE found the ingested item; round-trip works "
-            f"(nodeId={node_id!r} -> item_uuid={item_uuid!r})",
+            f"PASS -- nodeId {knowledge_id} resolved end-to-end",
             flush=True,
         )
 
 
 if __name__ == "__main__":
     # Make `python test_inquire_catalog.py` work the same as
-    # `pytest test_inquire_catalog.py -v -s`. Pytest collection + fixtures
-    # require pytest to run; calling python on this file directly otherwise
-    # just imports the module and exits without running any tests.
+    # `pytest test_inquire_catalog.py -v -s`.
     import sys as _sys
 
     _sys.exit(
