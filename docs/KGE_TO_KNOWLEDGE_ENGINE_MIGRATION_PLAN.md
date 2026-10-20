@@ -284,6 +284,7 @@ done by direct clients of KGE (e.g., `mcp_kg_inquirer`, gateway routes), not by 
 | 2026-10-19 | goose (via bibow) | Delivered Phase-4 tooling + green baseline: KE suite fully green after installing `capability_engine` (592/592 unit + 42/42 e2e); T4.1 shadow-comparison script (contract + coverage verdict per case); T4.2 backfill/reconciliation script (batched bridge replay + ref re-point + KE domain counts, dry-run mode); 6 more GraphQL documents schema-validated. |
 | 2026-10-19 | goose (via bibow) | Delivered operational tooling + offline certification: KE provisioning script (T0.2), gateway manifest verified (T0.1), KE baseline executed (T0.4: 590/592 unit + 42/42 e2e, 2 env failures), `prepare_catalog_refs.py` re-pointed to the KE bridge (T3.2), certification report skeleton (T3.4) with 19 offline function results. |
 | 2026-10-19 | goose (via bibow) | Implemented Phases 1–3 in `rfq_engine`: KE inquiry handler (all modes + node lookup + error mapping + dual-run flag), ingestion bridge (upsert-by-code, deterministic idempotency, batch accounting, file import, catalog-ref sync), 59 unit tests (27 handler + 32 ingest, all green; full-suite regressions identical to baseline), KE document validation against the live KE schema, SOP INT-019 rewrite + INT-020/021, deploy-manifest actions + label-drift fix. See §13 for resolved decisions and deviations. |
+| 2026-10-20 | goose (via bibow) | **Gateway E2E certified (travel sample, 13/13)**: booted docker-banyanos-gateway with rfq_engine + knowledge_engine in-process; travel data + KE provisioning executed through the gateway HTTP; INT-019/020 battery live (single ingest, idempotent replay, write-read loop via node inquiry, batch 10/10 items+provider items, partial-failure attribution, in-band error contracts incl. unknown mode/missing node, ask/graph/cypher modes, inline-base64 file import). Findings: KEM-005 gateway pg-volume wipe bug (FIXED - volume retargeted to /var/lib/postgresql/data), KEM-006 rfq_engine manifest missing auth_bridge: banyan (FIXED - was the S1 knowledge:write denial), KEM-003 KE error envelope drops BIZ_* codes (OPEN, KE-side), KEM-004 ImportTaskType datetime serialization (WORKED AROUND in RFQ by minimal field selection). New deliverable: run_gateway_e2e.py driver + gateway_e2e_report.json. |
 
 ---
 
@@ -348,6 +349,11 @@ done by direct clients of KGE (e.g., `mcp_kg_inquirer`, gateway routes), not by 
 
 ### 13.4 Remaining (operational)
 
+- **T0.2 (executed for the E2E tenant)** — domain `rfq-catalog` + 6 knowledge
+  types provisioned through the gateway HTTP by the E2E driver (see
+  `gateway_e2e_state.json`); the staging-tenant run remains. Also fixed:
+  the gateway pg-volume wipe bug (KEM-005), so tenant data survives
+  container recreation.
 - **T0.2 (execution)** — run `prepare_ke_provisioning.py` per staging
   tenant and paste the emitted `knowledge_engine_ingest` block into the
   RFQ deployment settings (tooling delivered; script + documents

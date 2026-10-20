@@ -298,7 +298,6 @@ mutation ImportKnowledge($input: ImportKnowledgeInput!, $idempotencyKey: ID!) {
         size
         format
         status
-        createdAt
     }
 }
 """
@@ -311,7 +310,6 @@ mutation ImportKnowledgeFromUrl($input: ImportUrlInput!, $idempotencyKey: ID!) {
         size
         format
         status
-        createdAt
     }
 }
 """

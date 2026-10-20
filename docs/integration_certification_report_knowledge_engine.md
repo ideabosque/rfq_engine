@@ -1,6 +1,6 @@
 # Integration Certification Report — RFQ Engine ↔ knowledge_engine Migration (KGE → KE)
 
-> Status: **In progress — offline stages certified; live staging execution (INT-019/020/021) pending.**
+> Status: **Gateway E2E certified — docker-banyanos-gateway live run of INT-019/020 battery (13/13) on travel sample data; full staging run + sign-off still pending.**
 > Scope: `docs/KGE_TO_KNOWLEDGE_ENGINE_MIGRATION_PLAN.md` Phases 0–4
 > Report date: 2026-10-19
 > Environment: dev (offline verification) / staging (live stages pending)
@@ -38,7 +38,7 @@ reconciliation (plan T4.2).
 
 | Dependency | Status | Evidence |
 |---|---|---|
-| Gateway route manifest `module_routes/knowledge_engine.yaml` (T0.1) | **Verified** | Manifest exists: `POST /{endpoint_id}/knowledge_engine_graphql`, `dispatch: knowledge_engine.main:dispatch_graphql`, `config_init_style: kwargs`, auth bridge `banyan` |
+| Gateway route manifest `module_routes/knowledge_engine.yaml` (T0.1) | **Verified + booted** | Manifest exists: `POST /{endpoint_id}/knowledge_engine_graphql`, `dispatch: knowledge_engine.main:dispatch_graphql`, `config_init_style: kwargs`, auth bridge `banyan` |
 | RFQ setting `functs_on_local.knowledge_engine_graphql` (T0.3) | Code-ready | Handler checks + fails fast with in-band `configuration_error`; staging value to be set by ops |
 | Tenant provisioning: KE domain `rfq-catalog` + 6 knowledge types (T0.2) | **Tooling delivered — execution pending** | `rfq_engine/tests/prepare_test_data/prepare_ke_provisioning.py` (idempotent; emits `knowledge_engine_ingest` settings + `ke_*` env lines) |
 | KE baseline suite (T0.4) | **Executed — fully green** | `tests/unit`: **592/592**; `tests/e2e`: **42/42** (banyanos venv, 2026-10-19, after installing the sibling `capability_engine` package that the 2 earlier failures were missing). No PostgreSQL/Neo4j/LLM connection failures. |
@@ -70,13 +70,15 @@ reconciliation (plan T4.2).
 | 17 | Deploy manifest actions registered; label drift fixed (`itemPriceTierList`, `discountPrompt`) | **PASS** |
 | 18 | Provisioning script documents vs KE schema | **PASS** |
 | 19 | Seed script (catalog_refs) documents vs RFQ schema | **PASS** |
+| 20 | **LIVE gateway E2E battery (S1–S13, travel sample)** — single ingest, idempotent replay, write→read loop, semantic envelope, batch (10/10), partial-failure attribution, in-band errors, ask/graph/cypher contracts, inline-base64 file import | **13/13 PASS** (docker-banyanos-gateway; report: `gateway_e2e_report.json`) |
+| 21 | **LIVE KE provisioning via gateway** — domain `rfq-catalog` + 6 knowledge types through `knowledge_engine_graphql` with the platform admin | **PASS** |
 
 ## Live Staging Results (pending)
 
 | Scenario | Status | Notes |
 |---|---|---|
-| INT-019 inquire_catalog against staging KE (all modes + node inquiry) | **PENDING** | Requires T0.2 provisioning + KE content |
-| INT-020 ingestion bridge (single/batch ≥50 with partial-failure drill/file/idempotent replay) | **PENDING** | Requires T0.2 provisioning + KE write permission for the RFQ operator |
+| INT-019 inquire_catalog against KE (all modes + node inquiry) | **PASS (gateway E2E, 2026-10-20)** | docker-banyanos-gateway live run: semantic envelope {results,total,page,limit} ok, graph/cypher return nodes/edges, in-band error contracts verified (unknown mode, missing node) — 13/13 battery on travel sample data (`rfq_engine/tests/prepare_test_data/gateway_e2e_report.json`) |
+| INT-020 ingestion bridge (single/batch with partial-failure drill/file/idempotent replay) | **PASS (gateway E2E, 2026-10-20)** | Single ingest ok; idempotent replay returned the same knowledgeId; write→read loop closed via nodeId inquiry; batch of 5 items × (item+provider item) = 10/10 ok; bogus-uuid partial failure attributed in-band as not_found; inline-base64 file import returned sourceId; catalog-ref auto-sync present | Requires T0.2 provisioning + KE write permission for the RFQ operator |
 | INT-021 resilience drills (KE down / Neo4j down / LLM down / timeout / backend flag flip) | **PENDING** | Requires staging fault injection |
 | T4.1 dual-run shadow comparison (N days) | **PENDING** | Flag supports `"kge"` ↔ `"knowledge_engine"`; run `shadow_compare_catalog_inquiry.py` over the soak window for per-case contract/coverage evidence |
 | T4.2 data backfill + `ItemCatalogRef` re-point reconciliation | **PENDING** | Run `backfill_catalog_to_knowledge.py` (batched bridge replay + ref re-point + KE domain counts); verify `backfill_reconciliation.json` |
@@ -98,6 +100,10 @@ reconciliation (plan T4.2).
 | ID | Severity | Description | Status |
 |---|---|---|---|
 | KEM-001 | Info | KE baseline: 2 unit-test failures due to missing sibling `capability_engine` package (graceful `PENDING_MANUAL` fallback); no KE code defect | **Resolved** — `capability_engine` installed into the shared venv; suite re-run green (592/592 unit + 42/42 e2e) |
+| KEM-003 | Medium | KE's GraphQL error envelope drops the structured ``BIZ_KNOWLEDGE_*`` code (only the human message survives serialization), so RFQ-side error granularity degrades to ``system_error`` for not-found/access cases (in-band contract still holds) | Open — KE-side fix recommended (embed ``error_code`` in the message or as a GraphQL extension); RFQ's code-based mapping activates automatically once codes are present |
+| KEM-004 | Info | KE ``ImportTaskType``/``RefreshTaskType`` lack the defensive datetime coercion ``KnowledgeType`` already has; a space-separated timestamp can fail graphene DateTime serialization and poison the import response | Open — worked around in RFQ by selecting a minimal field set (no ``createdAt``) in the import documents; KE-side fix recommended |
+| KEM-005 | High (fixed) | ``docker-banyanos-gateway/docker-compose.yml`` mounted the pg volume at ``/var/lib/postgresql`` while the image's ``VOLUME`` lives at ``/var/lib/postgresql/data``; an anonymous volume shadowed the data path so **every container recreate wiped the entire database** | **Fixed** — volume retargeted to ``/var/lib/postgresql/data``; data now survives recreates |
+| KEM-006 | Medium (fixed) | RFQ's gateway manifest lacked ``auth_bridge: banyan``: only FlexJWT ran, so ``state.user`` carried raw token claims without roles and every in-process RFQ→KE mutation failed with ``knowledge:write`` denied | **Fixed** — ``auth_bridge: banyan`` added to ``module_routes/rfq_engine.yaml`` (local gateway overlay); E2E confirms role resolution + PDP grants flow |
 | KEM-002 | Accepted-risk | RFQ pre-existing failures (2 × cache-management, 12 × SafeFloat integration errors) reproduce identically on unmodified `HEAD`; out of migration scope | Tracked separately |
 
 ## Open Risks and Mitigation Plan
