@@ -39,6 +39,11 @@ from .mutations.file import DeleteFile, InsertUpdateFile
 from .mutations.installment import DeleteInstallment, InsertUpdateInstallment
 from .mutations.item import DeleteItem, InsertUpdateItem
 from .mutations.item_price_tier import DeleteItemPriceTier, InsertUpdateItemPriceTier
+from .mutations.knowledge_ingest import (
+    IngestCatalogToKnowledge,
+    IngestKnowledgeFromRfq,
+    IngestRfqFileToKnowledge,
+)
 from .mutations.provider_item import DeleteProviderItem, InsertUpdateProviderItem
 from .mutations.provider_item_batches import (
     DeleteProviderItemBatch,
@@ -755,3 +760,6 @@ class Mutations(ObjectType):
     delete_fx_rate = DeleteFxRate.Field()
     insert_update_item_catalog_ref = InsertUpdateItemCatalogRef.Field()
     delete_item_catalog_ref = DeleteItemCatalogRef.Field()
+    ingest_knowledge_from_rfq = IngestKnowledgeFromRfq.Field()
+    ingest_catalog_to_knowledge = IngestCatalogToKnowledge.Field()
+    ingest_rfq_file_to_knowledge = IngestRfqFileToKnowledge.Field()

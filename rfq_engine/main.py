@@ -71,15 +71,15 @@ def deploy() -> List:
                             "label": "View Item Price Tier",
                         },
                         {
-                            "action": "itemPriceTieList",
+                            "action": "itemPriceTierList",
                             "label": "View Item Price Tier List",
                         },
                         {
-                            "action": "discountRule",
+                            "action": "discountPrompt",
                             "label": "View Discount Rule",
                         },
                         {
-                            "action": "discountRuleList",
+                            "action": "discountPromptList",
                             "label": "View Discount Rule List",
                         },
                         {
@@ -173,11 +173,11 @@ def deploy() -> List:
                             "label": "Delete Item Price Tier",
                         },
                         {
-                            "action": "insertUpdateDiscountRule",
+                            "action": "insertUpdateDiscountPrompt",
                             "label": "Create Update Discount Rule",
                         },
                         {
-                            "action": "deleteDiscountRule",
+                            "action": "deleteDiscountPrompt",
                             "label": "Delete Discount Rule",
                         },
                         {
@@ -219,6 +219,18 @@ def deploy() -> List:
                         {
                             "action": "deleteFile",
                             "label": "Delete File",
+                        },
+                        {
+                            "action": "ingestKnowledgeFromRfq",
+                            "label": "Ingest RFQ Entity To Knowledge",
+                        },
+                        {
+                            "action": "ingestCatalogToKnowledge",
+                            "label": "Ingest Catalog To Knowledge",
+                        },
+                        {
+                            "action": "ingestRfqFileToKnowledge",
+                            "label": "Ingest RFQ File To Knowledge",
                         },
                     ],
                     "type": "RequestResponse",
