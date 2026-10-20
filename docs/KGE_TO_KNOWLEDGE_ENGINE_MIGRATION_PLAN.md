@@ -2,7 +2,7 @@
 
 > Project: `rfq_engine`
 > Goal: replace the `knowledge_graph_engine` (KGE, `silvaengine/knowledge_graph_engine`) catalog integration with the new Banyanos `knowledge_engine` (`C:\Users\bibo7\gitrepo\banyanos\knowledge_engine`, v3.0.0), and add a new RFQ → knowledge ingestion bridge (a capability that does not exist today).
-> Status: **Draft — plan only; no code changed yet.**
+> Status: **In progress — Phases 1–3 implemented (inquiry swap, ingestion bridge, unit tests, SOP); Phase 0/4 operational tasks pending. See §13.**
 > Last reviewed: 2026-10-19
 > Verified against source on: 2026-10-19 (`rfq_engine` handlers/queries/types/tests, `banyanos/knowledge_engine` schema/main/mutations/types, both engines' integration SOPs)
 
@@ -281,3 +281,91 @@ done by direct clients of KGE (e.g., `mcp_kg_inquirer`, gateway routes), not by 
 | Date | Author | Change |
 |---|---|---|
 | 2026-10-19 | goose (via bibow) | Initial plan drafted from source audit of `rfq_engine` (KGE integration inventory) and `banyanos/knowledge_engine` v3.0.0 (API surface, deployment, prerequisites) |
+| 2026-10-19 | goose (via bibow) | Delivered Phase-4 tooling + green baseline: KE suite fully green after installing `capability_engine` (592/592 unit + 42/42 e2e); T4.1 shadow-comparison script (contract + coverage verdict per case); T4.2 backfill/reconciliation script (batched bridge replay + ref re-point + KE domain counts, dry-run mode); 6 more GraphQL documents schema-validated. |
+| 2026-10-19 | goose (via bibow) | Delivered operational tooling + offline certification: KE provisioning script (T0.2), gateway manifest verified (T0.1), KE baseline executed (T0.4: 590/592 unit + 42/42 e2e, 2 env failures), `prepare_catalog_refs.py` re-pointed to the KE bridge (T3.2), certification report skeleton (T3.4) with 19 offline function results. |
+| 2026-10-19 | goose (via bibow) | Implemented Phases 1–3 in `rfq_engine`: KE inquiry handler (all modes + node lookup + error mapping + dual-run flag), ingestion bridge (upsert-by-code, deterministic idempotency, batch accounting, file import, catalog-ref sync), 59 unit tests (27 handler + 32 ingest, all green; full-suite regressions identical to baseline), KE document validation against the live KE schema, SOP INT-019 rewrite + INT-020/021, deploy-manifest actions + label-drift fix. See §13 for resolved decisions and deviations. |
+
+---
+
+## 13. Implementation Log (2026-10-19, Phases 1–3)
+
+### 13.1 Delivered
+
+| Area | Files | Notes |
+|---|---|---|
+| Inquiry swap (T1.1–T1.6) | `handlers/catalog/handler.py` (rewritten) | KE query documents for `searchKnowledges`, `knowledge`, `askKnowledgeBase`, `knowledgeGraph`, `knowledgeGraphByCypher`; mode router (default `semantic`); legacy KGE mode aliases (`text2cypher`/`vector`/`hybrid`) logged + remapped; node-by-id inquiry lifts the `OperationUnsupportedError` restriction; `BIZ_KNOWLEDGE_*` error mapping (`system_timeout`/`not_found`/`access_denied`/`system_error`) with timeout string-sniff fallback; `filters.domain_ids` → `domainIds`; search limit clamped to KE max 100; legacy `{results, total, page, limit}` envelope preserved |
+| Dual-run / rollback (T4.1/T4.4) | `handlers/catalog/handler.py` | `catalog_knowledge_backend` setting selects `"knowledge_engine"` (default) or the retained KGE path; R4-mitigated `_ke_setting()` strips RFQ backend keys and merges `knowledge_engine_setting` overrides; identity claims (user/tenant_id/roles/permissions) forwarded to KE context |
+| Ingestion bridge (T2.1–T2.7) | `handlers/catalog/ingest.py` (new) | `dispatch_ingest_knowledge` / `dispatch_ingest_catalog` / `dispatch_ingest_file`; upsert-by-code with optimistic-lock retry and lost-race convergence; deterministic idempotency keys `rfq:{partition_key}:{entity_type}:{uuid}:{updated_at/content hash}`; markdown projection (D1); bounded-concurrency batch with per-item accounting; file transport via presigned URL (D2) or inline base64 with validation; `ItemCatalogRef` auto-sync (`node_id` = KE knowledge id, best-effort); settings fail-fast `configuration_error` (R2) |
+| Mutation surface (T2.2) | `mutations/knowledge_ingest.py`, `types/knowledge_ingest.py` (new), `schema.py`, `main.py` | `ingestKnowledgeFromRfq`, `ingestCatalogToKnowledge`, `ingestRfqFileToKnowledge` registered in schema + deploy manifest; in-band `KnowledgeIngestResultType`/`KnowledgeIngestBatchType`; pre-existing manifest label drift fixed (`itemPriceTieList`→`itemPriceTierList`, `discountRule`→`discountPrompt`) |
+| Tests (T1.7, T3.1) | `tests/test_catalog_handler.py` (rewritten, 27), `tests/test_knowledge_ingest.py` (new, 32), `tests/test_inquire_catalog.py` (rewritten, KE integration) | All green; full-suite run identical to pre-change baseline (526 passed; the 2 cache-management failures and 12 SafeFloat errors reproduce on unmodified `HEAD`) |
+| Document validation (T1.1) | — | All 10 RFQ-side GraphQL documents validate against the real `knowledge_engine` schema (graphene `validate`) |
+| SOP (T3.3) | `docs/INTEGRATION_SCENARIOS_SOP.md` | INT-019 rewritten for KE (all modes + node inquiry + failure injection); INT-020 (ingestion bridge) and INT-021 (resilience drills) added; readiness/cadence/evidence tables updated |
+| Provisioning tooling (T0.2) | `rfq_engine/tests/prepare_test_data/prepare_ke_provisioning.py` (new) | Idempotent tenant provisioning: ensures KE domain `rfq-catalog` + 6 knowledge types via `createKnowledgeDomain`/`createKnowledgeType` (deterministic idempotency keys, code-matched reuse); emits the `knowledge_engine_ingest` settings block + `ke_*` env lines; all 4 GraphQL documents validate against the KE schema. Execution against staging is the remaining ops step. |
+| Gateway mount verification (T0.1) | — | `silvaengine_gateway/module_routes/knowledge_engine.yaml` already present with the exact expected dispatch (`knowledge_engine.main:dispatch_graphql`, `config_init_style: kwargs`, `POST /{endpoint_id}/knowledge_engine_graphql`) — verified, no change needed |
+| Seed-script re-point (T3.2) | `rfq_engine/tests/prepare_test_data/prepare_catalog_refs.py` (rewritten) | KGE `executeExtract` path removed; ingestion now goes through the RFQ bridge mutation `ingestKnowledgeFromRfq` (markdown projection + idempotency + upsert owned by the bridge); `node_id` = KE `knowledgeId`; link-only mode searches KE via `inquireCatalog` (semantic) with exact-`code` preference; external-id fallback removed (KE node ids are knowledge UUIDs); all 3 documents validate against the RFQ schema |
+| Dual-run shadow tooling (T4.1) | `rfq_engine/tests/prepare_test_data/shadow_compare_catalog_inquiry.py` (new) | Runs the same `inquire_catalog` through both backends (`catalog_knowledge_backend` injected per call), records per-backend error codes + payload key sets + totals, checks the legacy `{results, total}` contract on both, flags coverage shortfalls (`ke_total < kge_total * SHADOW_COVERAGE_RATIO`), and writes `shadow_report.json` with a PASS/REVIEW verdict for the T4.1 soak acceptance |
+| Backfill + reconciliation tooling (T4.2) | `rfq_engine/tests/prepare_test_data/backfill_catalog_to_knowledge.py` (new) | Lists all items (`itemList` pages) → replays in batches through `ingestCatalogToKnowledge` (bridge owns projection/idempotency/upsert/auto-sync) → lists all `ItemCatalogRef` rows and re-points stale `node_id`s to KE knowledge ids (dry-run mode) → reads KE `knowledgeDomain` entity/relation/vector counts → writes `backfill_reconciliation.json` (entity counts reconcile + refs re-pointed). All 6 documents schema-validated |
+| KE baseline green (T0.4 closure) | — | Installed the missing sibling `capability_engine` package into the shared venv; KE suite now fully green: `tests/unit` **592/592**, `tests/e2e` **42/42** (2026-10-19) |
+| Certification report (T3.4 skeleton) | `docs/integration_certification_report_knowledge_engine.md` (new) | Mirrors the existing certification reports: offline stages certified (19 function results, resilience matrix, defect log), live staging stages marked pending; blocks final certification on INT-019/020/021 + backfill reconciliation |
+
+### 13.2 Resolved decisions
+
+| # | Decision (options in §9) | Resolution |
+|---|---|---|
+| D1 | Ingested content format | **(b) Markdown** — `# {Entity}: {label}` + labeled field bullets + prose description blocks |
+| D2 | File transport | **(b) presigned URL** (`importKnowledgeFromUrl`) with inline base64 fallback (`importKnowledge`, validated) and an optional `knowledge_engine_ingest.file_bucket` presign convention |
+| D3 | Modes at GA | **All four** — `semantic`, `ask`, `graph`, `cypher` + node-by-id; legacy KGE mode names accepted as aliases |
+| D4 | Domain topology | Single `rfq-catalog` domain per tenant (per `knowledge_engine_ingest.domain_id` setting) |
+| D5 | Sync vs async | Synchronous mutations returning in-band status; repair path = re-ingest (upsert) or KE `refreshKnowledge` |
+
+### 13.3 Deviations / corrections discovered during implementation
+
+1. **KE tenant model (§3.1 correction):** KE v3.0.0 isolates rows by the
+   `tenant_id` **claim** (plus fail-closed PDP/owner access checks), not by
+   `info.context["partition_key"]` as originally recorded. The RFQ handler
+   forwards the caller's identity claims (`user`, `tenant_id`, `user_id`,
+   `roles`, `permissions`, `is_admin`) into the KE GraphQL context so
+   access control and tenant scoping carry over; `endpoint_id`/`part_id`
+   continue to flow as top-level Invoker params as with KGE.
+2. **Upsert, not blind create (T2.3/T2.4 refinement):** KE
+   `KnowledgeRepository.insert` raises `BIZ_KNOWLEDGE_ALREADY_EXISTS` on a
+   duplicate `code` (the `autoOverDuplicates` flag is metadata-only in
+   v3.0.0). The bridge therefore performs lookup-by-code →
+   create-or-update, retries once on `BIZ_KNOWLEDGE_VERSION_CONFLICT`, and
+   treats unchanged content as a replay no-op.
+3. **Backend flag default:** `catalog_knowledge_backend` defaults to
+   `knowledge_engine` from Phase 1 (T4.1 suggested defaulting to `kge`
+   until certification). The flag still flips back to the retained KGE
+   path for rollback rehearsals (T4.4); flip the default at hard cutover
+   sign-off if a slower soak is preferred.
+4. **R4 resolution:** KE's `Config.initialize` is `_initialized`-guarded,
+   so gateway-initialized KE is never clobbered by the Invoker's
+   per-call instantiation. As belt-and-braces, RFQ passes a sanitized
+   setting copy (`db_backend`/`initialize_tables`/`pg_table_prefix`
+   stripped) plus `knowledge_engine_setting` overrides.
+   `kge_pg_table_prefix` is kept for the legacy path only and is removed
+   at T4.3.
+
+### 13.4 Remaining (operational)
+
+- **T0.2 (execution)** — run `prepare_ke_provisioning.py` per staging
+  tenant and paste the emitted `knowledge_engine_ingest` block into the
+  RFQ deployment settings (tooling delivered; script + documents
+  schema-validated).
+- **T0.4 (baseline recorded, fully green)** — KE's own suite executed
+  on 2026-10-19: `tests/unit` **592/592**, `tests/e2e` **42/42** after
+  installing the missing sibling `capability_engine` package into the
+  shared venv (the 2 prior failures were environmental and are resolved).
+  No PostgreSQL/Neo4j/LLM failures.
+- **T3.4 (live execution)** — run INT-019/020/021 against staging and
+  fill the live-staging section of
+  `docs/integration_certification_report_knowledge_engine.md`
+  (offline stages already certified there).
+- **T4.1/T4.2 (tooling delivered)** — run
+  `shadow_compare_catalog_inquiry.py` over the soak window for the
+  dual-run evidence, and `backfill_catalog_to_knowledge.py` for the
+  catalog replay + `ItemCatalogRef.node_id` re-point reconciliation.
+- **T4.3/T4.4 (pending certification)** — after INT-019/020/021 pass and
+  the backfill reconciles: remove the legacy KGE path +
+  `kge_pg_table_prefix` + `functs_on_local.knowledge_graph_graphql`
+  (grep-clean per DoD #6), flip the flag, rehearse rollback.

@@ -51,7 +51,7 @@
   - Static adoption guard (no `models.dynamodb` imports in `queries/` / `mutations/` / `types/`).
 - **Out of scope:**
   - The `mcp_rfq_processor` companion package (separate service, separate certification).
-  - KGE / `inquire_catalog` live external graph endpoints (handler is integrated; live KGE calls require external owner sign-off — see INT-019).
+  - `inquire_catalog` / ingestion live knowledge-engine endpoints (handler + bridge are integrated; live KE calls follow INT-019/020/021 — see INT-019).
   - AI-driven negotiation logic itself (prompt *storage* and *retrieval* are in scope; AI *decision-making* is not).
   - Performance benchmarking beyond a smoke-level timing check (Phase 5 benchmark work is tracked separately in `DUAL_BACKEND_DEVELOPMENT_PLAN.md`).
   - DynamoDB-to-PostgreSQL data migration execution (covered by `MIGRATION_DYNAMODB_TO_POSTGRESQL.md`; validated separately).
@@ -297,7 +297,9 @@ run, and what state it relies on. **Scenarios must execute in this order.**
 | 16 | INT-015 (occupancy pricing) | INT-004, INT-006 | Item `pricing_mode="occupancy"`; tier with `base_occupancy` + `extra_pax_surcharges`; quote_item pricing resolution works |
 | 17 | INT-016 (Backend parity) | INT-003 through INT-010 | All DynamoDB scenarios passed; PostgreSQL schema provisioned (INT-017) |
 | 18 | INT-018 (Cache invalidation) | INT-003, INT-006 | Item + quote with items exist; `cache_enabled=true` |
-| 19 | INT-019 (inquire_catalog handler) | INT-004 | `ItemCatalogRef` rows exist; KGE mocked |
+| 19 | INT-019 (inquire_catalog handler) | INT-004 | `functs_on_local.knowledge_engine_graphql` configured; KE mounted (T0.1); `ItemCatalogRef` rows exist |
+| 20 | INT-020 (knowledge ingestion bridge) | INT-004, INT-019 | KE domain/types provisioned per tenant (`knowledge_engine_ingest` settings, T0.2); item + provider item rows exist |
+| 21 | INT-021 (knowledge-engine resilience drills) | INT-019, INT-020 | Staging KE reachable; fault injection available (Neo4j/LLM/KE stop) |
 
 **Dependency chain (visual):**
 
@@ -321,6 +323,8 @@ INT-017 ──┘
           └──> INT-016 (depends on INT-003..INT-010 + INT-017)
                  │
                  └──> INT-019 (depends on INT-004)
+                 └──> INT-020 (depends on INT-004 + INT-019; write->read loop)
+                 └──> INT-021 (depends on INT-019 + INT-020; fault drills)
 ```
 
 **Critical path (P1 must-pass sequence):**
@@ -672,22 +676,55 @@ INT-013 skips if INT-011 or INT-012 fail (no validated hold lifecycle).
 | **Validation points** | cache_purged, cascade_purged, fresh_data_returned |
 | **Cross-system checks** | Post-mutation query returns updated field values |
 
-### INT-019 — inquire_catalog handler integration (offline)
+### INT-019 — inquire_catalog against knowledge_engine (all modes)
 
 | Field | Value |
 |---|---|
 | **ID** | INT-019 |
-| **Name** | `inquire_catalog` returns mapped catalog refs without live KGE |
-| **Priority** | P3 |
-| **Type** | API (handler) |
-| **CI trigger** | nightly |
-| **Preconditions** | `ItemCatalogRef` rows exist; KGE handler stubbed/mocked |
-| **Dependencies** | `handlers.catalog`, `item_catalog_ref` |
-| **Test data** | 2 catalog refs |
-| **Steps** | 1. `mutation insertUpdateItemCatalogRef` insert rows. 2. `query inquireCatalog(namespace: ..., query: ...)` with a mocked KGE response. 3. Verify the result maps `nodeId → itemUuid`. 4. Inject a `CatalogHandlerError`; verify the in-band error fields in the GraphQL response. |
-| **Expected behavior** | Mapping resolves; handler errors surface as in-band fields, not exceptions |
-| **Validation points** | mapping_resolved, error_in_band |
-| **Cross-system checks** | Live KGE calls are **out of scope** — requires external owner sign-off |
+| **Name** | `inquire_catalog` executes against knowledge_engine for semantic/ask/graph/cypher modes and node-by-id lookup |
+| **Priority** | P2 |
+| **Type** | API (handler, live KE) |
+| **CI trigger** | pre-release (live), nightly (mocked) |
+| **Preconditions** | `functs_on_local.knowledge_engine_graphql` configured; KE gateway-mounted and initialized (Phase 0 T0.1); staging KE content present; `ItemCatalogRef` rows exist for round-trip checks |
+| **Dependencies** | `handlers.catalog`, `queries.catalog_inquiry`, knowledge_engine `searchKnowledges`/`knowledge`/`askKnowledgeBase`/`knowledgeGraph`/`knowledgeGraphByCypher` |
+| **Test data** | 2 catalog refs + ingested KE content (INT-020) |
+| **Steps** | 1. `query inquireCatalog(query: {queryText: ..., searchMode: "semantic", limit: 5})` — verify legacy `{results, total, page, limit}` payload envelope. 2. `searchMode: "ask"` / `"graph"` / `"cypher"` (with `retrievalQuery`) — verify each routes to its KE operation; access failures must surface in-band. 3. `inquireCatalog(nodeId: <KE knowledge id>)` — verify the node payload (KGE-era restriction lifted). 4. Legacy KGE mode names (`text2cypher`, `vector`, `hybrid`) route to nearest KE mode and log. 5. Unknown mode → `errorCode="operation_unsupported"`. 6. Missing `queryText` → `errorCode="system_error"`; no GraphQL transport error. 7. Injected `BIZ_KNOWLEDGE_*` errors map to `system_timeout` / `not_found` / `access_denied` / `system_error`. |
+| **Expected behavior** | All modes return KE payloads behind the unchanged `CatalogInquiryResultType` contract; errors are in-band |
+| **Validation points** | envelope_compatible, node_inquiry_ok, mode_matrix_ok, legacy_alias_ok, error_in_band |
+| **Cross-system checks** | KE query logs show `searchKnowledges`/`knowledge`/`askKnowledgeBase`/`knowledgeGraph`/`knowledgeGraphByCypher` under the RFQ tenant context; `ItemCatalogRef.node_id` values resolve via `knowledge(id)` |
+
+### INT-020 — RFQ → knowledge ingestion bridge (NEW capability)
+
+| Field | Value |
+|---|---|
+| **ID** | INT-020 |
+| **Name** | `ingestKnowledgeFromRfq` / `ingestCatalogToKnowledge` / `ingestRfqFileToKnowledge` push RFQ data into the KE managed lifecycle |
+| **Priority** | P2 |
+| **Type** | API (mutation, live KE) |
+| **CI trigger** | pre-release |
+| **Preconditions** | KE domain (`rfq-catalog`) + knowledge types provisioned per tenant and recorded in `knowledge_engine_ingest` settings (T0.2); caller context carries KE write permission (roles/permissions claims); `functs_on_local.knowledge_engine_graphql` configured |
+| **Dependencies** | `handlers.catalog.ingest`, `mutations.knowledge_ingest`, KE `createKnowledge`/`updateKnowledge`/`importKnowledge`/`importKnowledgeFromUrl` |
+| **Test data** | 1 item with 1 provider item; 1 request file |
+| **Steps** | 1. `mutation ingestKnowledgeFromRfq(entityType: "item", uuid: ...)` — verify `status="ok"`, KE `code = item-<uuid>`, markdown content, deterministic `idempotencyKey`. 2. Replay the same mutation — verify no duplicate KE entry (existing state returned). 3. Mutate the RFQ entity, re-ingest → verify `updateKnowledge` ran (upsert-by-code). 4. `ingestCatalogToKnowledge(itemUuids: [50 items])` — verify batch counters and per-item result rows. 5. Partial-failure drill: mix valid + missing uuids — verify `not_found` attribution while healthy items ingest. 6. `ingestRfqFileToKnowledge` with a presigned URL and with inline base64 — verify `sourceId` returned. 7. Verify auto-synced `ItemCatalogRef` row has `node_id` = KE knowledge id; then `inquireCatalog(nodeId)` closes the write→read loop. |
+| **Expected behavior** | Idempotent single/batch/file ingestion with honest per-item accounting; no KE duplicates on replay; in-band `configuration_error` when `knowledge_engine_ingest` settings are missing (domains/types are never auto-created) |
+| **Validation points** | upsert_ok, replay_idempotent, batch_accounting_ok, partial_failure_attributed, file_import_ok, catalog_ref_synced |
+| **Cross-system checks** | KE `knowledges(filter: {code})` finds the ingested entity; audit rows in the KE audit trail show `knowledge.created`/`knowledge.updated` under the RFQ operator |
+
+### INT-021 — knowledge-engine resilience drills
+
+| Field | Value |
+|---|---|
+| **ID** | INT-021 |
+| **Name** | Catalog inquiry + ingestion degrade gracefully when KE dependencies fail |
+| **Priority** | P2 |
+| **Type** | resilience (fault injection) |
+| **CI trigger** | pre-release |
+| **Preconditions** | INT-019 and INT-020 pass in staging; fault injection available for KE unreachable / Neo4j down / LLM-embedding down / timeout |
+| **Dependencies** | `handlers.catalog` error mapping; KE has no PG graph fallback (driver down = graph/vector queries fail hard) |
+| **Test data** | any seeded tenant |
+| **Steps** | 1. Stop the KE module (unmount) — `inquireCatalog` returns in-band `system_error`/`configuration_error`, never a GraphQL transport error. 2. Stop Neo4j — `graph`/`cypher` modes surface `system_error`; `semantic` mode degrades per KE fallbacks. 3. Stop LLM/embedding — ingestion reports in-band `system_timeout`/`error` rows. 4. Inject a timeout — `errorCode="system_timeout"` (string sniff + `BIZ_KNOWLEDGE_TIMEOUT` code paths). 5. Flip `catalog_knowledge_backend` to `"kge"` and back — verify the dual-run rollback path works end-to-end. |
+| **Expected behavior** | All failures surface as in-band `error_code`/`error_message`; no unhandled exceptions; RFQ core mutations unaffected |
+| **Validation points** | ke_down_in_band, neo4j_down_in_band, llm_down_in_band, timeout_mapped, backend_flag_flip_ok |
 
 ## 8. Failure and Resilience Scenarios
 
@@ -699,7 +736,7 @@ INT-013 skips if INT-011 or INT-012 fail (no validated hold lifecycle).
 | database_failures | PostgreSQL connection drop mid-query | `pool_pre_ping=True` detects; retry or graceful error; no silent corruption |
 | authentication_failures | AWS credentials missing in DynamoDB mode | `Config.initialize` raises; engine fails fast |
 | service_outages | DynamoDB table missing / PostgreSQL schema not provisioned | `initialize_tables` raises; tests skip with explicit reason |
-| third_party_outages | KGE endpoint unreachable for `inquire_catalog` | `CatalogHandlerError` surfaced as in-band `error_code`/`error_message`; no exception |
+| third_party_outages | knowledge_engine unreachable for `inquire_catalog` / ingestion | `CatalogHandlerError` surfaced as in-band `error_code`/`error_message` (`system_error`/`configuration_error`/`system_timeout`); no exception; batch rows carry per-item attribution |
 | cache_failures | `HybridCacheEngine` miss/stale | SafeDataLoader falls back to fresh query; `normalize_model` normalizes cached shape |
 | contention_overbook | Concurrent hold acquisitions exceed `availability_qty` | Exactly `availability_qty` succeed; the rest fail closed; no overbooking |
 | unknown_hold_token | `releaseAvailabilityHold` / `confirm` with unknown token | Mutation fails closed; returns error in-band |
@@ -751,8 +788,8 @@ INT-013 skips if INT-011 or INT-012 fail (no validated hold lifecycle).
 | Trigger | Scope run | Required to pass |
 |---|---|---|
 | On pull request | INT-001, INT-002, INT-003, INT-011 (smoke) | yes — blocks merge |
-| Nightly | INT-001 through INT-015 + INT-018 + INT-019 | report only (non-blocking) |
-| Pre-release | Full suite INT-001 through INT-019 + resilience (Section 8) + reconciliation (Section 9) | yes — blocks release |
+| Nightly | INT-001 through INT-015 + INT-018 + INT-019 (mocked) | report only (non-blocking) |
+| Pre-release | Full suite INT-001 through INT-021 + resilience (Section 8) + reconciliation (Section 9) | yes — blocks release |
 
 > CI cadence targets are `<pending confirmation>` until the team confirms the
 > PR-block vs nightly-report split.
@@ -811,7 +848,7 @@ Each call block must contain:
 
 #### GraphQL Call Recording (mandatory for all transaction and resilience scenarios)
 
-Every call to `RFQEngine.ai_rfq_graphql(query=..., variables=..., endpoint_id=..., part_id=...)` must be recorded with the **full GraphQL document** and the **full response payload** — not a summary or paraphrase. This applies to all INT-003 through INT-015, INT-018, INT-019 transaction scenarios and all Phase 11 resilience scenarios.
+Every call to `RFQEngine.ai_rfq_graphql(query=..., variables=..., endpoint_id=..., part_id=...)` must be recorded with the **full GraphQL document** and the **full response payload** — not a summary or paraphrase. This applies to all INT-003 through INT-015, INT-018 through INT-021 transaction scenarios and all Phase 11 resilience scenarios.
 
 **Arguments block for a GraphQL call must include:**
 
@@ -939,10 +976,10 @@ All pending items resolved for this certification cycle:
 6. **CI cadence** — pre-release full suite (all P1 scenarios must pass).
 7. **Distribution** — certification report written to `rfq_engine/docs/test_results/`.
 8. **Sign-off roles** — all assigned to User.
-9. **Live KGE (INT-019)** — mocked only (no live external calls).
+9. **Live knowledge engine (INT-019/020/021)** — mocked only (no live external calls).
 10. **Scope** — `mcp_rfq_processor` and data-migration execution remain out of scope.
 
-**Execution method amendment:** All GraphQL operations (INT-003 through INT-019)
+**Execution method amendment:** All GraphQL operations (INT-003 through INT-021)
 are executed through the `silvaengine_gateway` HTTP endpoint
 `POST /{endpoint_id}/rfq_graphql` with JWT Bearer auth and `Part-Id` header,
 not in-process `RFQEngine.ai_rfq_graphql()` calls. This validates the full
