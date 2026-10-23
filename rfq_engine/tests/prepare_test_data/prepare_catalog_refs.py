@@ -1,41 +1,43 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 """
-Ingest RFQ products into the knowledge graph and bridge them back via
-``ItemCatalogRef`` — domain-agnostic and configurable.
+Ingest RFQ catalog items into the knowledge_engine and bridge them back
+via ``ItemCatalogRef`` (KE-era replacement for the KGE seed script).
 
-End-to-end flow per item in ``products.json``:
+End-to-end flow per item in ``products.json`` (items must already exist in
+the RFQ store — run ``prepare_products.py`` first):
 
-    1. Compose a natural-language description from the bundled item +
-       provider item(s) + batches + tiers + cancellation policy.
-    2. Call ``executeExtract`` on ``knowledge_graph_engine`` so the
-       neo4j-graphrag pipeline writes entities/relationships into Neo4j
-       and a ``kge-documents`` row.
-    3. Use the local ``itemExternalId`` as the stable bridge identifier
-       (passed to KGE as ``documentExternalId``).
-    4. Call ``insertUpdateItemCatalogRef`` on the RFQ Engine for each
-       (item, provider_item) pair, linking
-       ``namespace + nodeId -> (item_uuid, provider_item_uuid)``.
+    1. ``mutation ingestKnowledgeFromRfq(entityType: "item", uuid: ...)``
+       on the RFQ Engine — the ingestion bridge projects the item to
+       markdown, derives a deterministic idempotency key, upserts a KE
+       knowledge entry (``code = item-{uuid}``), and auto-syncs an
+       ``ItemCatalogRef`` row.
+    2. The returned KE ``knowledgeId`` is the stable bridge identifier —
+       ``node_id`` semantics are KE knowledge ids (migration plan §3.2).
+    3. For each provider item, ``insertUpdateItemCatalogRef`` links
+       ``namespace + nodeId -> (item_uuid, provider_item_uuid)`` with the
+       search-relevant ``extra`` metadata.
 
-Both engines are invoked through ``silvaengine_utility.Invoker``'s
-``invoke_funct_on_local`` so the cross-project call shape mirrors the
-production aws_lambda_invoker path used by
-``rfq_engine/handlers/catalog/handler.py``.
+Everything runs through ``silvaengine_utility.Invoker``'s
+``invoke_funct_on_local`` against ``rfq_graphql`` — the same call shape
+as ``handlers/catalog/ingest.py`` (the bridge validates its own settings
+and fails in-band with ``configuration_error`` when the tenant is not
+provisioned — run ``prepare_ke_provisioning.py`` first).
 
 Usage::
 
     python rfq_engine/tests/prepare_test_data/prepare_catalog_refs.py
 
-Configurable via env vars::
+Configurable via env vars (see ``prepare_ke_provisioning.py`` for the
+``ke_domain_id`` / ``ke_type_*`` provisioning values)::
 
     SEED_CATALOG_INPUT=products.json          # filename in SEED_CATALOG_INPUT_DIR
-    SEED_CATALOG_INPUT_DIR=.                  # subfolder (e.g. dds, travel)
-    SEED_CATALOG_OUTPUT_DIR=.                 # subfolder for output
-    SEED_CATALOG_NAMESPACE=CATALOG            # ItemCatalogRef namespace
-    SEED_CATALOG_SKIP_INGEST=0                # 1 = link-only; search KGE for an existing node
-    SEED_CATALOG_SEARCH_MODE=vector           # used when SKIP_INGEST=1
-    SEED_CATALOG_TOP_K=5                      # used when SKIP_INGEST=1
-    SEED_CATALOG_FALLBACK_TO_EXTERNAL_ID=1    # link-only fallback when KGE returns nothing
+    SEED_CATALOG_INPUT_DIR=dds               # subfolder (e.g. dds, travel)
+    SEED_CATALOG_OUTPUT_DIR=dds               # subfolder for output
+    SEED_CATALOG_NAMESPACE=KE                 # ItemCatalogRef namespace
+    SEED_CATALOG_SKIP_INGEST=0                # 1 = link-only; search KE for an existing node
+    SEED_CATALOG_SEARCH_MODE=semantic         # used when SKIP_INGEST=1
+    SEED_CATALOG_TOP_K=10                      # used when SKIP_INGEST=1
 
 Writes ``catalog_refs.json`` to ``SEED_CATALOG_OUTPUT_DIR``.
 """
@@ -47,7 +49,7 @@ import json
 import logging
 import os
 import sys
-from typing import Any
+from typing import Any, Dict, List, Optional
 
 from dotenv import load_dotenv
 
@@ -57,15 +59,19 @@ load_dotenv(os.path.join(TESTS_DIR, ".env"))
 BASE_DIR = os.getenv("base_dir") or os.path.abspath(
     os.path.join(TESTS_DIR, "..", "..")
 )
-sys.path.insert(0, BASE_DIR)
-sys.path.insert(0, os.path.join(BASE_DIR, "silvaengine_utility"))
-sys.path.insert(1, os.path.join(BASE_DIR, "silvaengine_dynamodb_base"))
-sys.path.insert(2, os.path.join(BASE_DIR, "silvaengine_constants"))
-sys.path.insert(3, os.path.join(BASE_DIR, "rfq_engine"))
-sys.path.insert(3, os.path.join(BASE_DIR, "knowledge_graph_engine"))
+for sibling in (
+    "silvaengine_utility",
+    "silvaengine_dynamodb_base",
+    "silvaengine_constants",
+    "rfq_engine",
+):
+    path = os.path.join(BASE_DIR, sibling)
+    if path and path not in sys.path:
+        sys.path.insert(0, path)
 
 from silvaengine_utility import Invoker  # noqa: E402
 
+from _backend_setting import build_setting  # noqa: E402
 
 logging.basicConfig(
     level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s"
@@ -76,51 +82,64 @@ logger = logging.getLogger("prepare_catalog_refs")
 UPDATED_BY = "prepare_catalog_refs"
 HERE = os.path.dirname(os.path.abspath(__file__))
 
-# Default subfolder is "dds" for generic/B2B domain, otherwise the domain name.
-# Override with SEED_CATALOG_INPUT_DIR / SEED_CATALOG_OUTPUT_DIR if needed.
 DEFAULT_SUBDIR = os.getenv("SEED_CATALOG_SUBDIR", "dds")
 INPUT_DIR = os.path.join(HERE, os.getenv("SEED_CATALOG_INPUT_DIR", DEFAULT_SUBDIR))
 OUTPUT_DIR = os.path.join(HERE, os.getenv("SEED_CATALOG_OUTPUT_DIR", DEFAULT_SUBDIR))
 INPUT_FILE = os.path.join(INPUT_DIR, os.getenv("SEED_CATALOG_INPUT", "products.json"))
 OUTPUT_FILE = os.path.join(OUTPUT_DIR, "catalog_refs.json")
 
-NAMESPACE = os.getenv("SEED_CATALOG_NAMESPACE", "CATALOG")
+NAMESPACE = os.getenv("SEED_CATALOG_NAMESPACE", "KE")
 SKIP_INGEST = os.getenv("SEED_CATALOG_SKIP_INGEST", "0") == "1"
-SEARCH_MODE = os.getenv("SEED_CATALOG_SEARCH_MODE", "vector")
-TOP_K = int(os.getenv("SEED_CATALOG_TOP_K", "5"))
-FALLBACK_TO_EXTERNAL_ID = os.getenv(
-    "SEED_CATALOG_FALLBACK_TO_EXTERNAL_ID", "1"
-) == "1"
+SEARCH_MODE = os.getenv("SEED_CATALOG_SEARCH_MODE", "semantic")
+TOP_K = int(os.getenv("SEED_CATALOG_TOP_K", "10"))
 
-from _backend_setting import build_setting  # noqa: E402
 
 SETTING = build_setting()
-# KGE integration needs the knowledge_graph_engine funct alongside rfq_graphql.
-SETTING.setdefault("functs_on_local", {})["knowledge_graph_graphql"] = {
-    "module_name": "knowledge_graph_engine",
-    "class_name": "KnowledgeGraphEngine",
+# The ingestion bridge invokes KE in-process; it needs both funct entries
+# and the per-tenant provisioning values (T0.2 — run
+# prepare_ke_provisioning.py first, which emits these env values).
+SETTING.setdefault("functs_on_local", {})["knowledge_engine_graphql"] = {
+    "module_name": "knowledge_engine",
+    "class_name": "KnowledgeEngine",
 }
+_ingest_type_ids = {
+    entity: os.getenv(f"ke_type_{entity}")
+    for entity in (
+        "item",
+        "provider_item",
+        "request",
+        "quote",
+        "bundle",
+        "discount_prompt",
+    )
+}
+if os.getenv("ke_domain_id"):
+    SETTING["knowledge_engine_ingest"] = {
+        "domain_id": os.getenv("ke_domain_id"),
+        "type_ids": {k: v for k, v in _ingest_type_ids.items() if v},
+        "namespace": NAMESPACE,
+        "sync_item_catalog_ref": os.getenv("ke_sync_refs", "1") == "1",
+    }
 
 
 # --- GraphQL ---------------------------------------------------------------- #
 
-EXECUTE_EXTRACT_MUTATION = """
-mutation ExecuteExtract(
-    $text: String!,
-    $documentSource: String,
-    $documentExternalId: String
-) {
-    executeExtract(
-        text: $text,
-        documentSource: $documentSource,
-        documentExternalId: $documentExternalId
-    ) {
-        status documentUuid entitiesExtracted relationshipsExtracted
+_INGEST_KNOWLEDGE_MUTATION = """
+mutation IngestKnowledgeFromRfq($entityType: String!, $uuid: String!) {
+    ingestKnowledgeFromRfq(entityType: $entityType, uuid: $uuid) {
+        result {
+            status
+            entityType
+            entityUuid
+            knowledgeId
+            errorCode
+            errorMessage
+        }
     }
 }
 """
 
-INQUIRE_CATALOG_QUERY = """
+_INQUIRE_CATALOG_QUERY = """
 query InquireCatalog($namespace: String, $query: JSONCamelCase) {
     inquireCatalog(namespace: $namespace, query: $query) {
         namespace nodeId payload errorCode errorMessage
@@ -145,214 +164,101 @@ mutation InsertUpdateItemCatalogRef(
 
 # --- Invocation ------------------------------------------------------------- #
 
-def invoke(funct: str, query: str, variables: dict) -> dict | None:
-    """Call either ``rfq_graphql`` or ``knowledge_graph_graphql`` through
-    ``Invoker.invoke_funct_on_local``. The helper unwraps the body /
-    error envelope and returns the GraphQL ``data`` payload.
+def invoke(query: str, variables: dict) -> dict | None:
+    """Call ``rfq_graphql`` through ``Invoker.invoke_funct_on_local``.
 
-    KGE requires its own ``pg_table_prefix`` (e.g. ``kge_``) — the Invoker
-    passes the full setting dict to the target class constructor, so we
-    create a copy with the prefix overridden from ``kge_pg_table_prefix``.
+    The helper unwraps the body / error envelope and returns the GraphQL
+    ``data`` payload.
     """
     try:
-        if funct == "knowledge_graph_graphql":
-            kge_setting = dict(SETTING)
-            kge_setting["pg_table_prefix"] = SETTING.get("kge_pg_table_prefix", "")
-            return Invoker.invoke_funct_on_local(
-                logger,
-                kge_setting,
-                funct,
-                query=query,
-                variables=variables,
-                endpoint_id=SETTING["endpoint_id"],
-                part_id=SETTING["part_id"],
-            )
         return Invoker.invoke_funct_on_local(
             logger,
             SETTING,
-            funct,
+            "rfq_graphql",
             query=query,
             variables=variables,
             endpoint_id=SETTING["endpoint_id"],
             part_id=SETTING["part_id"],
         )
     except Exception as exc:
-        logger.error("Invoke %s failed: %s", funct, exc)
+        logger.error("Invoke rfq_graphql failed: %s", exc)
         return None
 
 
-# --- Description composer --------------------------------------------------- #
+# --- Bridge ingestion -------------------------------------------------------- #
 
-def _format_price_tier(tier: dict) -> str:
-    pax = tier.get("paxType") or "unit"
-    price = tier.get("pricePerUom")
-    currency = tier.get("currency") or "USD"
-    return f"{pax} {currency} {price}"
+def ingest_into_ke(item: dict) -> dict | None:
+    """Push one RFQ item into the knowledge engine via the ingestion bridge.
 
-
-def _format_policy_tiers(tiers_blob: Any) -> str:
-    if not isinstance(tiers_blob, dict):
-        return ""
-    tiers = tiers_blob.get("tiers")
-    if not isinstance(tiers, list):
-        return ""
-    parts = []
-    for t in tiers:
-        if not isinstance(t, dict):
-            continue
-        gate = (
-            t.get("hours_before_service_gte")
-            or t.get("hours_before_departure_gte")
-            or t.get("days_before_service_gte")
-        )
-        refund = t.get("refund_pct")
-        if gate is not None and refund is not None:
-            parts.append(f"{gate}h+: {int(refund * 100)}% refund")
-    return "; ".join(parts)
-
-
-def compose_description(
-    *,
-    item: dict,
-    provider_items: list[dict],
-    batches: list[dict],
-    tiers: list[dict],
-    policy: dict | None,
-    bundle_components: list[dict] | None = None,
-    bundles_by_uuid: dict[str, dict] | None = None,
-) -> str:
-    """Build the prose KGE will run extraction over — domain-agnostic."""
-    lines: list[str] = []
-    name = item.get("itemName") or item.get("itemExternalId") or item.get("itemUuid")
-    description = item.get("itemDescription")
-    item_type = item.get("itemType") or "product"
-    lines.append(f"{item_type.title()} product: {name}.")
-    if description:
-        lines.append(description)
-
-    if provider_items:
-        suppliers = []
-        for pi in provider_items:
-            spec = pi.get("itemSpec") or {}
-            code = spec.get("supplier_code") or spec.get("airline_code") or ""
-            supplier_name = spec.get("supplier_name") or spec.get("airline_name") or "unknown supplier"
-            suppliers.append(f"{supplier_name} ({code})" if code else supplier_name)
-        primary_spec = provider_items[0].get("itemSpec") or {}
-        origin = primary_spec.get("origin") or primary_spec.get("origin_iata")
-        destination = primary_spec.get("destination") or primary_spec.get("destination_iata")
-        variant = primary_spec.get("variant") or primary_spec.get("cabin_class")
-        if origin and destination:
-            lines.append(f"Route: {origin} to {destination}.")
-        if variant:
-            lines.append(f"Variant: {variant}.")
-        lines.append(f"Provided by: {', '.join(suppliers)}.")
-
-    if tiers:
-        priced = [_format_price_tier(t) for t in tiers if t.get("pricePerUom") is not None]
-        if priced:
-            lines.append(f"Pricing: {', '.join(priced)}.")
-
-    if batches:
-        rendered = []
-        for b in batches[:5]:
-            batch_no = b.get("batchNo")
-            start = b.get("serviceStartAt")
-            qty = b.get("availabilityQty")
-            qty_str = f", {int(qty)} units" if qty is not None else ""
-            rendered.append(f"{batch_no} starting {start}{qty_str}")
-        lines.append(f"Available batches: {'; '.join(rendered)}.")
-
-    if policy:
-        label = policy.get("label") or "Cancellation policy"
-        tiers_text = _format_policy_tiers(policy.get("tiers"))
-        if tiers_text:
-            lines.append(f"{label}: {tiers_text}.")
-        elif policy.get("description"):
-            lines.append(f"{label}: {policy['description']}.")
-
-    package_names = []
-    for component in bundle_components or []:
-        bundle = (bundles_by_uuid or {}).get(component.get("bundleUuid"), {})
-        name = bundle.get("bundleName") or bundle.get("bundleCode")
-        if name and name not in package_names:
-            package_names.append(name)
-    if package_names:
-        lines.append(
-            "This product can be used as a component in package templates: "
-            + ", ".join(package_names)
-            + "."
-        )
-
-    return " ".join(lines)
-
-
-# --- KGE ingestion ---------------------------------------------------------- #
-
-def ingest_into_kge(item: dict, text: str) -> dict | None:
-    """Push ``text`` into KGE via ``executeExtract``."""
-    external_id = item.get("itemExternalId") or item.get("itemUuid")
-    variables = {
-        "text": text,
-        "documentSource": "ai_rfq_seed",
-        "documentExternalId": external_id,
-    }
-    data = invoke("knowledge_graph_graphql", EXECUTE_EXTRACT_MUTATION, variables)
-    if not data:
+    The bridge owns markdown projection, deterministic idempotency keys,
+    upsert-by-code, and the ItemCatalogRef auto-sync (T2.7).
+    """
+    item_uuid = item.get("itemUuid")
+    if not item_uuid:
+        logger.error("  item missing itemUuid; skipping")
         return None
-    result = data.get("executeExtract") if isinstance(data, dict) else None
-    if not result:
-        logger.warning("  KGE executeExtract returned no payload for %s", external_id)
+    data = invoke(
+        _INGEST_KNOWLEDGE_MUTATION,
+        {"entityType": "item", "uuid": item_uuid},
+    )
+    result = (
+        ((data or {}).get("ingestKnowledgeFromRfq") or {}).get("result")
+        if isinstance(data, dict)
+        else None
+    )
+    if not isinstance(result, dict):
+        logger.warning("  bridge returned no payload for %s", item_uuid)
+        return None
+    if result.get("status") != "ok":
+        logger.warning(
+            "  ingest failed for %s: status=%s error=%s %s",
+            item_uuid,
+            result.get("status"),
+            result.get("errorCode"),
+            result.get("errorMessage"),
+        )
         return None
     logger.info(
-        "  KGE ingest: documentUuid=%s entities=%s relationships=%s",
-        result.get("documentUuid"),
-        result.get("entitiesExtracted"),
-        result.get("relationshipsExtracted"),
+        "  KE ingest: knowledgeId=%s code=item-%s",
+        result.get("knowledgeId"),
+        item_uuid,
     )
     return result
 
 
-# --- KGE search-based lookup (used when SKIP_INGEST=1) ---------------------- #
+# --- KE search-based lookup (used when SKIP_INGEST=1) ------------------------ #
 
-_NODE_ID_KEYS = (
-    "elementId", "element_id", "nodeId", "node_id", "id",
-    "documentExternalId", "document_external_id",
-    "documentUuid", "document_uuid",
-    "externalId", "external_id",
-)
+def extract_node_identity(result: Any, item_uuid: str) -> dict | None:
+    """Pick the KE knowledge id for an item from a search result row.
 
-
-def extract_node_identity(result: Any) -> dict | None:
+    The KE envelope results carry ``{id, code, name, ...}``; the exact
+    match is the row whose ``code`` equals ``item-{item_uuid}``.
+    """
     if not isinstance(result, dict):
         return None
-    metadata = result.get("metadata") if isinstance(result.get("metadata"), dict) else {}
-    for key in _NODE_ID_KEYS:
-        candidate = result.get(key) or metadata.get(key)
-        if candidate:
-            return {
-                "node_id": str(candidate),
-                "key": key,
-                "metadata": metadata,
-                "score": metadata.get("score") or result.get("score"),
-            }
-    return None
-
-
-def lookup_existing_node(query_text: str) -> dict | None:
-    variables = {
-        "namespace": NAMESPACE,
-        "query": {
-            "queryText": query_text,
-            "searchMode": SEARCH_MODE,
-            "topK": TOP_K,
-            "page": 1,
-            "limit": TOP_K,
-        },
-    }
-    data = invoke("rfq_graphql", INQUIRE_CATALOG_QUERY, variables)
-    if not data:
+    node_id = result.get("id")
+    if not node_id:
         return None
-    inquire = data.get("inquireCatalog") or {}
+    matched_via = (
+        "code:exact" if result.get("code") == f"item-{item_uuid}" else "search:top"
+    )
+    return {"node_id": str(node_id), "key": matched_via, "code": result.get("code")}
+
+
+def lookup_existing_node(item: dict, query_text: str) -> dict | None:
+    item_uuid = item.get("itemUuid")
+    data = invoke(
+        _INQUIRE_CATALOG_QUERY,
+        {
+            "namespace": NAMESPACE,
+            "query": {
+                "queryText": query_text,
+                "searchMode": SEARCH_MODE,
+                "limit": TOP_K,
+            },
+        },
+    )
+    inquire = (data or {}).get("inquireCatalog") or {}
     if inquire.get("errorCode"):
         logger.warning(
             "  inquire_catalog error: %s %s",
@@ -364,14 +270,19 @@ def lookup_existing_node(query_text: str) -> dict | None:
     results = payload.get("results") if isinstance(payload, dict) else None
     if not isinstance(results, list):
         return None
+    # Prefer the exact-code match, then the top hit.
     for result in results:
-        identity = extract_node_identity(result)
+        identity = extract_node_identity(result, item_uuid or "")
+        if identity and identity["key"] == "code:exact":
+            return identity
+    for result in results:
+        identity = extract_node_identity(result, item_uuid or "")
         if identity:
             return identity
     return None
 
 
-# --- Catalog ref seeder ----------------------------------------------------- #
+# --- Catalog ref seeder ------------------------------------------------------- #
 
 def upsert_catalog_ref(
     *,
@@ -381,7 +292,6 @@ def upsert_catalog_ref(
     extra: dict,
 ) -> dict | None:
     data = invoke(
-        "rfq_graphql",
         ITEM_CATALOG_REF_MUTATION,
         {
             "ns": NAMESPACE,
@@ -416,7 +326,7 @@ def upsert_catalog_ref(
     return record
 
 
-# --- Orchestrator ----------------------------------------------------------- #
+# --- Orchestrator ------------------------------------------------------------ #
 
 def load_input() -> dict:
     if not os.path.isfile(INPUT_FILE):
@@ -442,15 +352,11 @@ def index_one_by(items: list[dict], key: str) -> dict[str, dict]:
 
 
 def build_search_text(item: dict, provider_items: list[dict]) -> str:
-    external_id = item.get("itemExternalId")
-    if external_id:
-        return external_id
-    parts = [item.get("itemName")]
+    """Semantic query text for link-only mode (item identity first)."""
+    parts = [item.get("itemName"), item.get("itemExternalId")]
     spec = (provider_items[0].get("itemSpec") if provider_items else {}) or {}
     if spec.get("supplier_name") or spec.get("airline_name"):
         parts.append(spec.get("supplier_name") or spec.get("airline_name"))
-    if spec.get("variant") or spec.get("cabin_class"):
-        parts.append(spec.get("variant") or spec.get("cabin_class"))
     return " ".join(p for p in parts if p)
 
 
@@ -459,130 +365,96 @@ def generate() -> dict:
         raise RuntimeError(
             "endpoint_id and part_id must be set in tests/.env before running"
         )
+    if not SKIP_INGEST and not SETTING.get("knowledge_engine_ingest"):
+        raise RuntimeError(
+            "knowledge_engine_ingest settings missing — run "
+            "prepare_ke_provisioning.py first and export the ke_domain_id / "
+            "ke_type_item values (or set SEED_CATALOG_SKIP_INGEST=1)"
+        )
 
     products_data = load_input()
     items = products_data.get("items") or []
     provider_items_by_item = index_by(
         products_data.get("provider_items") or [], "itemUuid"
     )
-    batches_by_item = index_by(
-        products_data.get("provider_item_batches") or [], "itemUuid"
-    )
-    tiers_by_item = index_by(
-        products_data.get("item_price_tiers") or [], "itemUuid"
-    )
     bundle_components_by_item = index_by(
         products_data.get("bundle_components") or [], "itemUuid"
     )
     bundles_by_uuid = index_one_by(products_data.get("bundles") or [], "bundleUuid")
-    policies_by_uuid = {
-        p.get("policyUuid"): p
-        for p in (products_data.get("cancellation_policies") or [])
-        if p.get("policyUuid")
-    }
 
     output: dict[str, Any] = {
         "namespace": NAMESPACE,
         "skipIngest": SKIP_INGEST,
         "ingested": [],
         "matched": [],
-        "fallbacks": [],
         "unmatched": [],
     }
 
     mode = "link-only (skip ingest)" if SKIP_INGEST else "ingest + link"
-    logger.info("--- %s mode: %d items ---", mode, len(items))
+    logger.info("--- %s mode: %d items (KE bridge) ---", mode, len(items))
 
     for idx, item in enumerate(items, start=1):
-        external_id = item.get("itemExternalId") or item.get("itemUuid")
-        logger.info("[%d/%d] %s (%s)", idx, len(items), item.get("itemName"), external_id)
+        item_uuid = item.get("itemUuid")
+        external_id = item.get("itemExternalId") or item_uuid
+        logger.info(
+            "[%d/%d] %s (%s)", idx, len(items), item.get("itemName"), external_id
+        )
 
-        siblings = provider_items_by_item.get(item.get("itemUuid"), [])
+        siblings = provider_items_by_item.get(item_uuid, [])
         if not siblings:
             logger.warning("  no provider items; skipping")
             continue
 
-        item_batches = batches_by_item.get(item.get("itemUuid"), [])
-        item_tiers = tiers_by_item.get(item.get("itemUuid"), [])
-        item_components = bundle_components_by_item.get(item.get("itemUuid"), [])
-        policy = None
-        for b in item_batches:
-            pol_uuid = b.get("cancellationPolicyUuid")
-            if pol_uuid and pol_uuid in policies_by_uuid:
-                policy = policies_by_uuid[pol_uuid]
-                break
+        item_components = bundle_components_by_item.get(item_uuid, [])
 
         node_id: str | None = None
         ingest_result: dict | None = None
         matched_via: str | None = None
-        used_fallback = False
 
         if SKIP_INGEST:
             query_text = build_search_text(item, siblings)
-            identity = lookup_existing_node(query_text)
+            identity = lookup_existing_node(item, query_text)
             if identity:
                 node_id = identity["node_id"]
                 matched_via = identity.get("key")
                 logger.info(
-                    "  kge lookup: nodeId=%s (via %s) score=%s",
-                    node_id,
-                    matched_via,
-                    identity.get("score"),
-                )
-            elif FALLBACK_TO_EXTERNAL_ID and item.get("itemExternalId"):
-                node_id = item["itemExternalId"]
-                used_fallback = True
-                matched_via = "fallback:itemExternalId"
-                logger.warning(
-                    "  KGE returned nothing; falling back to itemExternalId=%s",
-                    node_id,
+                    "  KE lookup: nodeId=%s (via %s)", node_id, matched_via
                 )
             else:
-                logger.error("  no usable nodeId for %s; skipping", external_id)
+                logger.error("  no usable KE nodeId for %s; skipping", external_id)
                 output["unmatched"].append(
-                    {"itemUuid": item.get("itemUuid"), "queryText": query_text}
+                    {"itemUuid": item_uuid, "queryText": query_text}
                 )
                 continue
         else:
-            description = compose_description(
-                item=item,
-                provider_items=siblings,
-                batches=item_batches,
-                tiers=item_tiers,
-                policy=policy,
-                bundle_components=item_components,
-                bundles_by_uuid=bundles_by_uuid,
-            )
-            ingest_result = ingest_into_kge(item, description)
+            ingest_result = ingest_into_ke(item)
             if not ingest_result:
                 logger.error(
                     "  ingest failed for %s; skipping catalog ref", external_id
                 )
                 output["unmatched"].append(
                     {
-                        "itemUuid": item.get("itemUuid"),
+                        "itemUuid": item_uuid,
                         "itemExternalId": item.get("itemExternalId"),
-                        "reason": "kge_extract_failed",
+                        "reason": "ke_ingest_failed",
                     }
                 )
                 continue
-            node_id = item.get("itemExternalId") or ingest_result.get("documentUuid")
-            matched_via = "ingest:documentExternalId"
-            output["ingested"].append(
-                {
-                    "itemUuid": item.get("itemUuid"),
-                    "itemExternalId": item.get("itemExternalId"),
-                    "documentUuid": ingest_result.get("documentUuid"),
-                    "entitiesExtracted": ingest_result.get("entitiesExtracted"),
-                    "relationshipsExtracted": ingest_result.get(
-                        "relationshipsExtracted"
-                    ),
-                }
-            )
+            node_id = ingest_result.get("knowledgeId")
+            matched_via = "ingest:knowledgeId"
 
         if not node_id:
             logger.error("  resolved nodeId is empty for %s; skipping", external_id)
             continue
+
+        output["ingested"].append(
+            {
+                "itemUuid": item_uuid,
+                "itemExternalId": item.get("itemExternalId"),
+                "knowledgeId": node_id,
+                "matchedVia": matched_via,
+            }
+        )
 
         for provider_item in siblings:
             spec = provider_item.get("itemSpec") or {}
@@ -618,11 +490,9 @@ def generate() -> dict:
                     }
                     for component in item_components
                 ],
-                "kgeResolution": {
+                "keResolution": {
                     "matchedVia": matched_via,
-                    "documentUuid": (
-                        ingest_result.get("documentUuid") if ingest_result else None
-                    ),
+                    "knowledgeId": node_id,
                 },
             }
             record = upsert_catalog_ref(
@@ -632,8 +502,7 @@ def generate() -> dict:
                 extra=extra,
             )
             if record:
-                bucket = "fallbacks" if used_fallback else "matched"
-                output[bucket].append(record)
+                output["matched"].append(record)
 
     return output
 
@@ -643,10 +512,9 @@ def write_output(output: dict) -> None:
     with open(OUTPUT_FILE, "w", encoding="utf-8") as f:
         json.dump(output, f, indent=2)
     logger.info(
-        "Wrote: %d ingested, %d matched, %d fallback, %d unmatched -> %s",
+        "Wrote: %d ingested, %d matched, %d unmatched -> %s",
         len(output["ingested"]),
         len(output["matched"]),
-        len(output["fallbacks"]),
         len(output["unmatched"]),
         OUTPUT_FILE,
     )

@@ -1,11 +1,17 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 """
-GraphQL resolver for KGE-backed ``inquire_catalog`` (G7b).
+GraphQL resolver for knowledge-engine-backed ``inquire_catalog`` (G7b).
 
 Wraps ``handlers.catalog.dispatch_inquire`` and translates structured
 ``CatalogHandlerError`` subclasses into in-band ``CatalogInquiryResultType``
-fields. Graph-instance configuration and credentials remain owned by KGE.
+fields. Graph-instance configuration (domains, types, extraction,
+vector stores) remains owned by the knowledge engine.
+
+Supported inquiry modes behind ``query.search_mode``: ``semantic``
+(default; KE ``searchKnowledges``), ``ask`` (``askKnowledgeBase``),
+``graph`` (``knowledgeGraph``), ``cypher`` (``knowledgeGraphByCypher``),
+plus node-by-id lookup via the ``node_id`` argument (KE ``knowledge(id)``).
 """
 from __future__ import annotations
 

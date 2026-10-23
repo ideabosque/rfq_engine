@@ -21,8 +21,13 @@ class CatalogInquiryResultType(ObjectType):
     On success: ``payload`` is populated; ``error_code`` is null.
     On failure: ``error_code`` is one of the codes documented on
     ``handlers.catalog.CatalogHandlerError`` subclasses (``system_timeout``,
-    ``system_error``, ``operation_unsupported``);
+    ``system_error``, ``operation_unsupported``, ``not_found``,
+    ``access_denied``, ``configuration_error``);
     ``error_message`` carries the human-readable detail; ``payload`` is null.
+
+    Inquiry modes (``query.search_mode``): ``semantic`` (default),
+    ``ask``, ``graph``, ``cypher``; ``node_id`` performs a node-by-id
+    lookup against the knowledge engine.
     """
 
     # Identity echo (so callers can correlate batched inquiries)

@@ -65,13 +65,58 @@ def set_rls_context(session: Any, partition_key: str) -> None:
 def create_rls_policies(engine: Any) -> None:
     """Enable RLS and create tenant-isolation policies on all RFQ tables.
 
-    Idempotent: existing policies are dropped before re-creation.
+
+    Fast path (gateway-wedge fix 2026-10-20): tables that already have
+    ``ENABLE`` + ``FORCE`` row level security and the
+    ``tenant_isolation`` policy are skipped entirely, so the common
+    per-request initialization takes no ``ACCESS EXCLUSIVE`` DDL locks.
+    Previously every request ran 4 DDL statements per table; a single
+    lingering read transaction (an uncommitted read-side SELECT
+    anywhere) then blocked the next request's ALTERs and wedged the
+    whole gateway dispatch pool while it held the queue.
     """
     from ..models.postgresql.base import prefixed_table
 
     with engine.connect() as conn:
+        # Find (prefixed) table names where RLS is not yet fully applied.
+        pending = [
+            row[0]
+            for row in conn.execute(
+                text(
+                    """
+                    SELECT t
+                    FROM unnest(CAST(:names AS text[])) AS t
+                    WHERE NOT EXISTS (
+                        SELECT 1
+                        FROM pg_catalog.pg_class c
+                        WHERE c.relname = t
+                          AND pg_table_is_visible(c.oid)
+                          AND c.relrowsecurity
+                          AND c.relforcerowsecurity
+                          AND EXISTS (
+                              SELECT 1
+                              FROM pg_catalog.pg_policy pol
+                              WHERE pol.polrelid = c.oid
+                                AND pol.polname = 'tenant_isolation'
+                          )
+                    )
+                    """
+                ),
+                {"names": [prefixed_table(t) for t in _RLS_TABLES]},
+            ).fetchall()
+        ]
+
+        if not pending:
+            logger.debug(
+                "RLS policies verified for %d tables (fast path, no DDL).",
+                len(_RLS_TABLES),
+            )
+            return
         for table_name in _RLS_TABLES:
             actual_name = prefixed_table(table_name)
+            if actual_name not in pending:
+                logger.debug(f"RLS already applied to {actual_name} (skip).")
+                continue
             try:
                 conn.execute(
                     text(f"ALTER TABLE {actual_name} ENABLE ROW LEVEL SECURITY")
