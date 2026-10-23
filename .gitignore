@@ -177,3 +177,7 @@ docs/ARCHITECTURE_AND_ER_DIAGRAMS_B2B_MARKETPLACE.zh-TW.md
 .zed
 sample_dataset/
 test_results/
+
+# Local scratch/debug scripts in prepare_test_data (underscore-prefixed)
+rfq_engine/tests/prepare_test_data/_*
+!rfq_engine/tests/prepare_test_data/_backend_setting.py
