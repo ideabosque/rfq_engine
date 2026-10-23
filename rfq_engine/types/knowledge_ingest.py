@@ -35,6 +35,10 @@ class KnowledgeIngestResultType(ObjectType):
     idempotency_key = String()
     error_code = String()
     error_message = String()
+    processing_stage = String(
+        description="metadata_stored for entity upserts; import_submitted for "
+        "file import acknowledgement. Neither guarantees LLM processing or embeddings."
+    )
 
 
 class KnowledgeIngestBatchType(ObjectType):

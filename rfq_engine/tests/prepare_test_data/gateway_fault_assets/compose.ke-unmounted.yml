@@ -1,0 +1,9 @@
+services:
+  rfq_fault:
+    volumes:
+      - type: bind
+        source: ${RFQ_E2E_REPO_ROOT}/rfq_engine/tests/prepare_test_data/gateway_fault_assets/empty_ke
+        target: /app/modules/knowledge_engine
+        read_only: true
+        bind:
+          create_host_path: false

@@ -251,6 +251,20 @@ def test_node_id_inquiry_supported(info, monkeypatch):
 
 
 @pytest.mark.unit
+@pytest.mark.parametrize("answer", ["", "   ", None])
+def test_empty_llm_answer_is_an_explicit_failure(info, monkeypatch, answer):
+    from rfq_engine.handlers.catalog import dispatch_inquire
+    from rfq_engine.handlers.catalog import handler
+
+    monkeypatch.setattr(handler.Config, "get_setting", lambda: _KE_FUNCTS_ON_LOCAL_SETTING)
+    monkeypatch.setattr(handler.Invoker, "invoke_funct_on_local", MagicMock(
+        return_value={"askKnowledgeBase": {"answer": answer, "usage": {"retrieval_status": "NO_MATCH"}}}
+    ))
+    with pytest.raises(handler.SystemError, match="LLM answer generation"):
+        dispatch_inquire(info, query={"query_text": "flight", "search_mode": "ask"})
+
+
+@pytest.mark.unit
 def test_ask_mode(info, monkeypatch):
     from rfq_engine.handlers.catalog import dispatch_inquire
     from rfq_engine.handlers.catalog import handler as catalog_handler

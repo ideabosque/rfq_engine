@@ -441,7 +441,29 @@ def _fetch_entity(
     spec = _ENTITY_REGISTRY[entity_type]
     keys = spec["keys"](uuid, parent_uuid)
     keys.setdefault("partition_key", info.context.get("partition_key"))
-    return get_repo(spec["repo"]).get(**keys)
+    try:
+        return get_repo(spec["repo"]).get(**keys)
+    finally:
+        # Release the autobegin read transaction promptly (gateway-wedge fix
+        # 2026-10-20). A read-only ``.get()`` opens a transaction on the
+        # thread-local ``Config.db_session`` (sessionmaker autocommit=False)
+        # that nothing commits, so the SELECT keeps its ACCESS SHARE lock on
+        # the table after this worker thread finishes. The per-request table
+        # initialization then runs ``ALTER TABLE ... ENABLE/FORCE ROW LEVEL
+        # SECURITY`` (ACCESS EXCLUSIVE) in the NEXT request and waits on the
+        # lingering lock forever — wedging the whole gateway dispatch pool.
+        # Committing the empty read transaction releases the lock
+        # immediately; the connection (and its connection-level RLS
+        # ``SET app.tenant_id``) stays attached to this thread-local session.
+        # Same discipline as the write path's ``finally: remove()``.
+        if Config.db_session is not None:
+            try:
+                Config.db_session.commit()
+            except Exception:  # noqa: BLE001 - commit of empty read txn
+                try:
+                    Config.db_session.rollback()
+                except Exception:
+                    pass
 
 
 def _map_ingest_error(
@@ -530,6 +552,13 @@ def _result(
         "idempotency_key": idempotency_key,
         "error_code": error_code,
         "error_message": error_message,
+        # Entity upserts store metadata; they do not run an LLM or promise
+        # completed embeddings. File import only acknowledges submission.
+        "processing_stage": (
+            "metadata_stored" if status == STATUS_OK and knowledge_id
+            else "import_submitted" if status == STATUS_OK and source_id
+            else None
+        ),
     }
 
 

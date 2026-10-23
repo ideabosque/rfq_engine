@@ -1,0 +1,58 @@
+# Include after the normal gateway Compose files and the RFQ source overlay.
+# Creates a separate service; the working gateway is not recreated.
+services:
+  rfq_fault:
+    image: ${GATEWAY_IMAGE}
+    env_file:
+      - ${RFQ_E2E_GATEWAY_ROOT}/.env
+    container_name: banyanos-rfq-fault
+    ports: !override
+      - "127.0.0.1:18001:8000"
+    depends_on: !reset {}
+    restart: "no"
+    environment:
+      RFQ_E2E_FAULT_MODE: ${RFQ_E2E_FAULT_MODE:-baseline}
+      SETTING_SOURCE: json
+      SETTING_JSON_FILE: /app/env/se-configdata.local.json
+      db_backend: postgresql
+      PG_HOST: postgres
+      PG_PORT: "5432"
+      PG_USER: ${POSTGRES_USER}
+      PG_PASSWORD: ${POSTGRES_PASSWORD}
+      PG_DB: ${POSTGRES_DB}
+      ENDPOINT_ID: banyan
+      ADAPTER_STAGE: beta
+      ADAPTER_AREA: core
+      BANYAN_LOOPBACK_BASE_URL: http://127.0.0.1:8000/beta/core/banyan
+      PYTHONPATH: /app/modules/agent_engine:/app/modules/capability_engine:/app/modules/knowledge_engine:/app/modules/llm_engine:/app/modules/memory_engine:/app/modules/merchant_engine:/app/modules/monitor_engine:/app/modules/orchestration_engine:/app/modules/perm_engine:/app/modules/prompt_engine:/app/modules/setting_engine:/app/modules/user_engine:/app/modules/llm_provider_base:/app/modules/llm_provider_anthropic:/app/modules/llm_provider_openai:/app/modules/llm_provider_openai_chat:/app/modules/llm_provider_gemini:/app/modules/llm_provider_ollama:/app/extra_modules/rfq_engine
+    command:
+      - uvicorn
+      - scripts.rfq_e2e_fault:create_app_from_env
+      - --factory
+      - --host
+      - "0.0.0.0"
+      - --port
+      - "8000"
+    volumes:
+      - type: bind
+        source: ${RFQ_E2E_GATEWAY_ROOT}/..
+        target: /app/modules
+        read_only: true
+      - type: bind
+        source: ${RFQ_E2E_REPO_ROOT}
+        target: /app/extra_modules/rfq_engine
+        read_only: true
+      - type: bind
+        source: ${RFQ_E2E_GATEWAY_ROOT}/env/se-configdata.local.json
+        target: /app/env/se-configdata.local.json
+        read_only: true
+      - type: bind
+        source: ${RFQ_E2E_REPO_ROOT}/rfq_engine/tests/prepare_test_data/gateway_fault_assets/rfq.route.yaml
+        target: /usr/local/lib/python3.12/site-packages/silvaengine_gateway/module_routes/rfq_engine.yaml
+        read_only: true
+      - type: bind
+        source: ${RFQ_E2E_REPO_ROOT}/rfq_engine/tests/prepare_test_data/gateway_fault_assets/fault_factory.py
+        target: /app/scripts/rfq_e2e_fault.py
+        read_only: true
+        bind:
+          create_host_path: false

@@ -81,6 +81,20 @@ _ITEM_ROW = {
     "updated_at": "2026-10-01T00:00:00Z",
 }
 
+
+@pytest.mark.parametrize("identifiers,expected", [
+    ({"knowledge_id": "knowledge-1"}, "metadata_stored"),
+    ({"source_id": "source-1"}, "import_submitted"),
+])
+def test_success_reports_completed_processing_stage(identifiers, expected):
+    result = catalog_ingest._result(status=STATUS_OK, **identifiers)
+    assert result["processing_stage"] == expected
+
+
+def test_failure_does_not_claim_completed_processing():
+    result = catalog_ingest._result(status=STATUS_TIMEOUT, knowledge_id="knowledge-1")
+    assert result["processing_stage"] is None
+
 _PROVIDER_ITEM_ROW = {
     "provider_item_uuid": "u-pi-1",
     "item_uuid": "u-item-1",

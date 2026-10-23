@@ -9,10 +9,12 @@ from __future__ import print_function
 __author__ = "bibow"
 
 import traceback
+from decimal import Decimal
 from typing import Any, Dict, Optional
 
 import pendulum
 from graphene import ResolveInfo
+from sqlalchemy import func
 
 from ....handlers.config import Config
 from ....types.quote import QuoteListType, QuoteType
@@ -155,6 +157,27 @@ class QuotePGRepository(EntityRepository):
                 # Create new with server-generated UUID
                 row = self._create_row(info, **kwargs)
                 session.add(row)
+
+            if "shipping_amount" in kwargs:
+                # Shipping changes must update the derived final total in the
+                # same transaction, including zero/reset and empty quotes.
+                from ...postgresql.quote_item import QuoteItemModel
+
+                items_final_total = (
+                    session.query(
+                        func.coalesce(func.sum(QuoteItemModel.final_subtotal), 0)
+                    )
+                    .filter(
+                        QuoteItemModel.partition_key == row.partition_key,
+                        QuoteItemModel.request_uuid == row.request_uuid,
+                        QuoteItemModel.quote_uuid == row.quote_uuid,
+                    )
+                    .scalar()
+                )
+                row.final_total_quote_amount = (
+                    Decimal(str(items_final_total or 0))
+                    + Decimal(str(row.shipping_amount or 0))
+                )
 
             session.commit()
             session.refresh(row)

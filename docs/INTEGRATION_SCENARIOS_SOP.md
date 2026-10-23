@@ -1,5 +1,25 @@
 # Continuous Integration Scenarios SOP — RFQ Engine
 
+> **Current user-approved scope amendment (2026-10-20):** Legacy KGE rollback
+> is not required. INT-021 excludes backend flag-flip/legacy rollback; retain
+> healthy `knowledge_engine` operation and recovery testing. Earlier rollback
+> requirements below are historical and superseded by this amendment.
+>
+> **Corrected LLM contract:** Entity ingestion stores knowledge metadata without
+> LLM inference and returns `status=ok, processingStage=metadata_stored` when that
+> persistence succeeds, including during an LLM outage. This does not certify
+> embeddings or answer generation. File import acknowledgement reports
+> `processingStage=import_submitted`, not completed processing. Ask-mode with
+> an empty/unavailable LLM answer must return an explicit in-band error, never
+> a successful empty answer. Test that error, actual connection refusal, metadata
+> persistence and continued core CRUD during the outage. This corrects the prior
+> test's assumption that metadata persistence required an LLM.
+>
+> **Financial invariant:** Shipping changes must recompute the final total from
+> discounted quote items plus shipping in the same transaction. Zero shipping
+> and empty quotes are included. INT-006 must fail on a mismatch; the earlier
+> allowance for stale final totals is superseded.
+
 > **How to use this SOP.** This Standard Operating Procedure tells the
 > Autonomous Integration Testing Specialist *what* to test, *in what order*,
 > *against which environment*, and *what "done" means* for `rfq_engine`.
@@ -987,3 +1007,119 @@ gateway → dispatch → backend path including auth, rate limiting, and HTTP
 transport.
 
 SOP status: **approved**. The 13-phase certification may proceed.
+
+---
+
+## Amendment 2026-10-20 — Live-Gateway Certification Run (v1.1)
+
+Status: applied during the first full certification run of the unified runner
+(`rfq_engine/tests/prepare_test_data/run_sop_scenarios.py`); all items live-verified
+against the running docker-banyanos-gateway stack (POST /banyan/rfq_graphql, JWT + Part-Id).
+
+### Scenario-level corrections
+
+| Scenario | Amendment |
+|---|---|
+| INT-003 | 17 entity types (not 18): AvailabilityHold lifecycle covered by INT-011/012. `delete*` mutations take NO `updatedBy`; updates are partial upserts (carry full create variables); `provider_item.availabilityMode` ∈ {none, check_only, require_hold}; `providerItemBatch.batchNo` NOT NULL; `fxRate` create/update require `currencyPairDate` (String type); `installment` requires `requestUuid` + `paymentMethod`; `segment_contact` keyed by email (tests use per-run unique emails) |
+| INT-004 | Live gateway does NOT auto-backfill `quantityLessThen`; containing-tier selection validated via the `quantityValue` filter (observation recorded) |
+| INT-006 | Validates live behavior: request `items` persist (normalized camelCase), subtotal auto-calc from tiers, totals recomputed on quote-item insert, `shippingAmount` persists. Engine gaps recorded below |
+| INT-010 | Decisive check = per-quote-item back-links (`bundleUuid`/`bundleComponentUuid`); `quoteItemList`'s `bundleUuid` arg is accepted but silently ignored by the list filter (engine gap) |
+| INT-011 | Availability payloads expose `totalAvailableQty`; acquire/confirm/release/expire take no `updatedBy` and wrap results in `availability { … }` |
+| INT-012 | `expireAvailabilityHold` refuses a hold before `expiresAt` (in-band `unknown_hold` — recorded business rule); drill force-expires via direct DB write to `rfq_availability_holds.expires_at`, then validates API restore |
+| INT-013 | Concurrent acquires return in-band results (no top-level `errors`); success = `availability.available == true`; exactly 5/5 enforced ✓ |
+| INT-017 | Expected final alembic revision is **0019** (RLS policies), not 0018; upgrade → table inventory → downgrade −1 → restore on isolated DB `rfq_sop_migration` (prefix `sopmig_`) |
+| INT-016/INT-018 | Skipped (descope confirmed this cycle: PostgreSQL-only target) |
+| INT-019/INT-020 | Executed by reusing `run_gateway_e2e.phase_test` (13 battery checks mapped) |
+
+### Engine gaps recorded during certification (defect analysis; non-blocking, tracked)
+
+1. `quote.rounds` is stored but never incremented on the PostgreSQL path (no recompute on quote update; totals only recomputed by quote-item inserts).
+2. Request auto-transition to `in_progress` on items insert is not implemented in the PG request repo (items persist; status stays `initial`).
+3. `quote_item_repo.list` ignores the accepted `bundleUuid` list argument (filters support quote/item/provider_item/request/status only).
+4. `method_cache` (TTL 1800 s) caches `discountPrompts`/list resolvers in-process (HybridCache disk fallback: "Redis not configured"); stale results persist for the container lifetime — tests use fresh cache keys.
+5. `releaseAvailabilityHold` with an unknown token raises a raw DB cast error (`invalid input syntax for type uuid`) instead of an in-band `unknown_hold` code.
+6. Discount prompt scope constants are lowercase (`DiscountPromptScope.GLOBAL == "global"`) but mutation input is not normalized/validated against them — callers must pass lowercase scope values for loader filters to match; created prompts default to `in_review` and must be set `active` to participate.
+
+### Runner operational notes
+
+- Interpreter: `C:\Users\bibo7\gitrepo\banyanos\.venv\Scripts\python.exe -X utf8 run_sop_scenarios.py` (base C:\Python312 lacks dependencies).
+- Alembic subprocess `PYTHONPATH` must be the repo root (3 levels up from tests/prepare_test_data) EXACTLY — pointing at the rfq_engine package dir shadows stdlib `types` at interpreter startup (reproduced standalone).
+- Reports land in repo-root `docs/test_results/`: `call_log_sop_<date>.json` (per-call Function Results), `sop_scenario_results_<date>.json`, `sop_scenario_report_<date>.md`.
+- Certification outcome of the first full run (2026-10-20): **Ready with Conditions** — 19 pass / 2 skipped (descope) / INT-021 partial (Neo4j outage drill executed; 4 compose-level drills pending) — no blocking P1 defects; 6 engine gaps documented above.
+
+
+### Amendment 2026-10-20 (rev 2) - ask-mode catalog inquiry restored + gateway-wedge defect fixed
+
+Two defects made catalog inquiry in `ask` search mode fail; both were fixed and the
+battery re-certified the same day.
+
+**Defect A - askKnowledgeBase response serialization.** `AskResultType` uses
+`graphene.JSONString` for `sources` / `graph_paths` / `retrieved_chunks` / `usage`; the
+PostgreSQL keyword-leg rows (via `KnowledgeRepository.search` -> `rrf_fuse` ->
+`rerank`) carry `uuid.UUID` / `datetime` objects verbatim, so GraphQL serialization
+raised `Object of type UUID is not JSON serializable` at `retrievedChunks[0..N]`.
+Fix (knowledge_engine repo, bind-mounted live into the gateway image):
+`queries/knowledge_queries.py` gained `_json_safe()` (deep coercion: UUID->str,
+datetime/date/time->isoformat, Decimal->float, bytes->utf-8, sets->sorted lists,
+recursive dict/list) and `resolve_ask_knowledge_base` now returns
+`_json_safe(RetrievalPipeline.ask(...))`. This also covers KEM-004's datetime class
+of defects for the ask result envelope.
+
+**Defect B - LLM unconfigured (safe degradation).** `knowledge_engine` reads its LLM
+config from the `settings["llm"]` bucket (`handlers/config.py:_init_llm` ->
+`Config.LLM_API_BASE_URL/LLM_API_KEY/LLM_MODEL/LLM_EMBEDDING_MODEL`);
+`LLMService._is_configured` requires BOTH `api_key` and `api_base_url`, and the
+previous values were `https://ollama.com/v1` + empty key -> `LLM API 未配置` warnings,
+empty embeddings (`generate_embedding`) and degraded answer generation.
+Fix: gateway settings file `docker-banyanos-gateway/env/se-configdata.local.json`
+(gitignored `env/*.local.json`) `llm` bucket updated to `api.openai.com/v1` +
+`gpt-4o` + `text-embedding-3-small` + `embedding_dimensions` 1536 + `timeout` 120000.
+Values taken from the user-provided KE setup block (`llm_type=openai`,
+`llm_name=gpt-4o`, `embedding_provider=openai`, `embedding_model=`
+`text-embedding-3-small`). The key must NOT be copied into reports/skill files.
+
+**Deployment:** plain `docker restart banyanos-gateway` (host bind mounts
+`/app/modules` -> `gitrepo/banyanos` (rw) and `/app/extra_modules` ->
+`gitrepo/silvaengine` keep module code live; settings JSON is bind-mounted per
+file). No compose recreate - runtime assets preserved. Verified by startup log:
+`LLM 配置初始化成功: base_url=https://api.openai.com/v1, model=gpt-4o,
+embedding_model=text-embedding-3-small`.
+
+**Wedge defect found with the fix in place (gap 7) - and remediated this cycle:**
+the S7 partial-failure lookup (`item not found`) left its thread-local
+scoped-session transaction uncommitted (SQLAlchemy autobegin: a read-only
+`.get()` SELECT opens a txn that nothing commits), so the connection kept an
+`ACCESS SHARE` lock on `rfq_items` after the worker thread finished. Every rfq
+request re-applies RLS (`initialize_tables` -> `create_rls_policies`: 18 tables x 4
+DDL statements, each needing `ACCESS EXCLUSIVE`), so the next request's ALTERs
+queued behind the lingering lock forever and the gateway dispatched nothing - all
+subsequent rfq requests timed out client-side. Postgres `pg_stat_activity` showed
+the `ALTER TABLE rfq_items ENABLE ROW LEVEL SECURITY` lock waits; root-cause PID
+was the S7 bogus-uuid SELECT, idle-in-transaction. Remediation (rfq_engine,
+bind-mounted live): (a) `handlers/catalog/ingest.py:_fetch_entity` commits the
+autobegin read transaction in a `finally` (locks released promptly, connection-
+level RLS `SET app.tenant_id` preserved); (b) `utils/rls.py:create_rls_policies`
+gained a fast path that skips DDL for tables already carrying ENABLE+FORCE RLS +
+the `tenant_isolation` policy (catalog check `pg_class.relrowsecurity/`
+`relforcerowsecurity` + `pg_policy`), removing the per-request exclusive-lock
+dependency. Verification: terminated the lingering backend (`pg_terminate_backend`),
+queued ALTERs drained, battery re-run end-to-end 13/13 with no re-wedge.
+
+**Remaining observation (pre-existing, out of scope):** the KE Neo4j vector leg
+returns 0 rows - the `Chunk` nodes lack the `chunk_id` / `text` / `metadata`
+property keys `search_vectors` expects (Neo4j `UnknownPropertyKeyWarning`s while
+the `knowledge_embedding` vector index exists). Ask answers are served by the
+keyword leg + RRF fusion + LLM re-rank (`rerank[llm] input=5 output=5`).
+Recommendation: align the vector-ingest write path and `search_vectors` field
+names, and re-index existing chunks (future KE work item).
+
+**Re-certification run (2026-10-20, after rev-2 fixes, venv interpreter):** 19 pass
+/ 2 skipped (INT-016/018 descope unchanged) / 1 fail = INT-021 (4 compose-level
+drills pending) -> **Ready with Conditions** (unchanged); battery 13/13 including
+`S1x ask mode contract` `errorCode=None` with full payload keys
+(answer/confidence/graphPaths/retrievedChunks/sources/usage) and a real gpt-4o
+answer with 5 cited chunks (`rerank[llm]`, `reranker="llm"`). Evidence: regenerated
+`docs/test_results/` artifacts (334 calls) of the same date. NOTE: interpreter for
+runner + battery is `banyanos/.venv/Scripts/python.exe`; base C:\Python312 lacks
+`psycopg2`/`dotenv` (a full run under the wrong interpreter fails INT-012/INT-017
+with `No module named 'psycopg2'` runner exceptions - reproduced 2026-10-20).

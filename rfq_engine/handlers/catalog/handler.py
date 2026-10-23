@@ -512,6 +512,14 @@ def _ask_inquiry(
         raise SystemError(
             "Knowledge engine did not return an askKnowledgeBase payload"
         )
+    if not str(payload.get("answer") or "").strip():
+        # KE may safely degrade a failed/unconfigured LLM to an empty answer.
+        # Surface that failure through the RFQ in-band error contract instead
+        # of presenting it as a successful catalog answer.
+        raise SystemError(
+            "Knowledge engine returned no answer; LLM answer generation "
+            "is unavailable or failed"
+        )
     return _response(reference, payload)
 
 
